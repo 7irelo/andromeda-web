@@ -1,0 +1,117 @@
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.db.models import Q
+
+
+class User(AbstractUser):
+    """Extended user model for Andromeda."""
+
+    # Override AbstractUser.email to enforce uniqueness across all accounts
+    email = models.EmailField(unique=True, blank=False)
+
+    bio = models.TextField(blank=True, default='')
+    avatar = models.ImageField(upload_to='avatars/%Y/%m/', null=True, blank=True)
+    cover_photo = models.ImageField(upload_to='covers/%Y/%m/', null=True, blank=True)
+    location = models.CharField(max_length=120, blank=True)
+    website = models.URLField(blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
+
+    # Denormalised counters (updated by signals)
+    friends_count = models.PositiveIntegerField(default=0)
+    posts_count = models.PositiveIntegerField(default=0)
+
+    # Privacy settings
+    PRIVACY_EVERYONE = 'everyone'
+    PRIVACY_FRIENDS = 'friends'
+    PRIVACY_PRIVATE = 'private'
+
+    PROFILE_PRIVACY_CHOICES = [
+        ('everyone', 'Everyone'),
+        ('friends', 'Friends'),
+        ('private', 'Only Me'),
+    ]
+    MESSAGE_PRIVACY_CHOICES = [
+        ('everyone', 'Everyone'),
+        ('friends', 'Friends'),
+        ('nobody', 'Nobody'),
+    ]
+    FRIEND_REQUEST_PRIVACY_CHOICES = [
+        ('everyone', 'Everyone'),
+        ('friends_of_friends', 'Friends of Friends'),
+        ('nobody', 'Nobody'),
+    ]
+    POST_PRIVACY_CHOICES = [
+        ('public', 'Public'),
+        ('friends', 'Friends'),
+        ('private', 'Only Me'),
+    ]
+
+    privacy_profile = models.CharField(max_length=20, choices=PROFILE_PRIVACY_CHOICES, default='everyone')
+    privacy_messages = models.CharField(max_length=20, choices=MESSAGE_PRIVACY_CHOICES, default='everyone')
+    privacy_friend_requests = models.CharField(max_length=20, choices=FRIEND_REQUEST_PRIVACY_CHOICES, default='everyone')
+    privacy_friends_list = models.CharField(max_length=20, choices=PROFILE_PRIVACY_CHOICES, default='everyone')
+    default_post_privacy = models.CharField(max_length=20, choices=POST_PRIVACY_CHOICES, default='public')
+    show_online_status = models.BooleanField(default=True)
+    searchable = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'users'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.username
+
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'.strip() or self.username
+
+    @property
+    def avatar_url(self):
+        if self.avatar:
+            return self.avatar.url
+        return '/static/default_avatar.png'
+
+
+class FriendRequest(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_ACCEPTED = 'accepted'
+    STATUS_DECLINED = 'declined'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_ACCEPTED, 'Accepted'),
+        (STATUS_DECLINED, 'Declined'),
+    ]
+
+    sender = models.ForeignKey(User, related_name='sent_requests', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name='received_requests', on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'friend_requests'
+        unique_together = ('sender', 'receiver')
+        ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(sender=models.F('receiver')),
+                name='no_self_friend_request',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.sender} → {self.receiver} ({self.status})'
+
+
+class Block(models.Model):
+    blocker = models.ForeignKey(User, related_name='blocking_set', on_delete=models.CASCADE)
+    blocked = models.ForeignKey(User, related_name='blocked_by_set', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'blocks'
+        unique_together = ('blocker', 'blocked')

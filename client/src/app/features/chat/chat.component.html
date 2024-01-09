@@ -1,0 +1,74 @@
+<div class="chat-layout">
+  <!-- Room List -->
+  <aside class="room-list">
+    <div class="room-list-header">
+      <h2>Chats</h2>
+      <button mat-icon-button title="New Message" (click)="openNewChat()">
+        <mat-icon>edit_square</mat-icon>
+      </button>
+    </div>
+
+    <!-- New message search panel -->
+    <div class="new-chat-panel" *ngIf="showNewChat">
+      <div class="new-chat-search">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="Search people..."
+          [(ngModel)]="newChatQuery"
+          (ngModelChange)="searchNewChatUsers()"
+          class="new-chat-input"
+          autofocus
+        />
+        <button mat-icon-button (click)="closeNewChat()" class="close-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div *ngIf="newChatSearching" class="new-chat-spinner">Searching...</div>
+      <div
+        class="new-chat-result"
+        *ngFor="let user of newChatResults"
+        (click)="startDM(user)"
+      >
+        <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="user.username" />
+        <div class="new-chat-result-info">
+          <div class="font-semibold" style="font-size:14px">{{ user.full_name }}</div>
+          <div class="text-secondary text-xs">&#64;{{ user.username }}</div>
+        </div>
+      </div>
+      <div *ngIf="!newChatSearching && newChatQuery && newChatResults.length === 0" class="new-chat-empty">
+        No users found
+      </div>
+    </div>
+
+    <div class="room-item" *ngFor="let room of rooms" (click)="openRoom(room)" [routerLink]="['/chat', room.id]" routerLinkActive="active">
+      <img [src]="getRoomAvatar(room)" class="avatar md" [alt]="getRoomName(room)" />
+      <div class="room-info">
+        <div class="room-name">
+          {{ getRoomName(room) }}
+          <span class="unread-badge" *ngIf="room.unread_count > 0">{{ room.unread_count }}</span>
+        </div>
+        <div class="last-msg text-secondary text-xs">
+          {{ room.last_message?.content || 'No messages yet' }}
+          · {{ timeAgo(room.last_message?.created_at) }}
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && rooms.length === 0 && !showNewChat" class="empty-rooms">
+      <mat-icon>chat_bubble_outline</mat-icon>
+      <p>No conversations yet.<br/>Click the pencil icon to start one.</p>
+    </div>
+  </aside>
+
+  <!-- Chat Window -->
+  <div class="chat-window-area">
+    <router-outlet></router-outlet>
+
+    <div class="chat-placeholder" *ngIf="!showNewChat">
+      <mat-icon>forum</mat-icon>
+      <h3>Select a conversation</h3>
+      <p>Choose from your existing conversations or click <strong>✏</strong> to start a new one.</p>
+    </div>
+  </div>
+</div>

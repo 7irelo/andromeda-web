@@ -1,0 +1,144 @@
+.chat-layout {
+  display: flex;
+  height: calc(100vh - var(--header-height));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.room-list {
+  width: 340px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.room-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+
+  h2 { font-size: 20px; font-weight: 700; }
+}
+
+.room-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background .1s;
+
+  &:hover, &.active { background: var(--bg); }
+}
+
+.room-info { flex: 1; min-width: 0; }
+
+.room-name {
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.last-msg {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+  font-size: 13px;
+}
+
+.unread-badge {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 11px;
+  padding: 1px 6px;
+  font-weight: 700;
+}
+
+.chat-window-area { flex: 1; overflow: hidden; }
+
+.chat-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 40px;
+
+  mat-icon { font-size: 64px; width: 64px; height: 64px; opacity: .3; }
+  h3 { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+  p { font-size: 14px; }
+}
+
+.empty-rooms {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 16px;
+  color: var(--text-secondary);
+  gap: 8px;
+  text-align: center;
+  mat-icon { font-size: 40px; width: 40px; height: 40px; }
+}
+
+// ── New-chat panel ─────────────────────────────────────────────
+.new-chat-panel {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.new-chat-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+
+  .search-icon { color: var(--text-secondary); font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+}
+
+.new-chat-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--text-primary);
+  &::placeholder { color: var(--text-secondary); }
+}
+
+.new-chat-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background .1s;
+  &:hover { background: var(--bg); }
+}
+
+.new-chat-result-info { flex: 1; min-width: 0; }
+
+.new-chat-spinner, .new-chat-empty {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+}

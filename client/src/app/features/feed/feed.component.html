@@ -1,0 +1,109 @@
+<div class="feed-layout">
+  <!-- Left Sidebar -->
+  <aside class="left-sidebar">
+    <div class="sidebar-card" *ngIf="currentUser">
+      <a [routerLink]="'/profile/' + currentUser.username" class="profile-preview">
+        <img [src]="currentUser.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="currentUser.username" />
+        <div>
+          <div class="font-semibold">{{ currentUser.full_name }}</div>
+          <div class="text-secondary text-sm">&#64;{{ currentUser.username }}</div>
+        </div>
+      </a>
+      <div class="divider"></div>
+      <div class="stat-row">
+        <span class="text-secondary text-sm">Friends</span>
+        <span class="font-bold">{{ currentUser.friends_count }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="text-secondary text-sm">Posts</span>
+        <span class="font-bold">{{ currentUser.posts_count }}</span>
+      </div>
+    </div>
+
+    <!-- Shortcuts -->
+    <div class="sidebar-card sidebar-shortcuts">
+      <a routerLink="/friends" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)">
+          <mat-icon>people</mat-icon>
+        </span>
+        <span>Friends</span>
+      </a>
+      <a routerLink="/groups" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+          <mat-icon>group</mat-icon>
+        </span>
+        <span>Groups</span>
+      </a>
+      <a routerLink="/marketplace" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#059669,#10b981)">
+          <mat-icon>storefront</mat-icon>
+        </span>
+        <span>Marketplace</span>
+      </a>
+      <a routerLink="/watch" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#dc2626,#ef4444)">
+          <mat-icon>play_circle</mat-icon>
+        </span>
+        <span>Watch</span>
+      </a>
+      <a routerLink="/pages" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">
+          <mat-icon>auto_stories</mat-icon>
+        </span>
+        <span>Pages</span>
+      </a>
+      <a routerLink="/notifications" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+          <mat-icon>notifications</mat-icon>
+        </span>
+        <span>Notifications</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Feed -->
+  <main class="feed-main">
+    <!-- Create Post -->
+    <app-create-post (postCreated)="onPostCreated($event)" [currentUser]="currentUser"></app-create-post>
+
+    <!-- Posts -->
+    <div *ngIf="loading && posts.length === 0" class="loading-center">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <app-post-card
+      *ngFor="let post of posts; trackBy: trackById"
+      [post]="post"
+      (postDeleted)="onPostDeleted($event)"
+    ></app-post-card>
+
+    <div *ngIf="loading && posts.length > 0" class="loading-center">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+
+    <div *ngIf="!hasMore && posts.length > 0" class="end-message">
+      You're all caught up! 🎉
+    </div>
+
+    <div *ngIf="!loading && posts.length === 0" class="empty-feed">
+      <div class="empty-icon">
+        <mat-icon>dynamic_feed</mat-icon>
+      </div>
+      <h3>Your feed is empty</h3>
+      <p>Follow people or join groups to see posts in your feed</p>
+      <a routerLink="/friends" mat-flat-button color="primary" class="empty-cta">Find Friends</a>
+    </div>
+  </main>
+
+  <!-- Right Sidebar: Suggestions -->
+  <aside class="right-sidebar">
+    <div class="sidebar-card" *ngIf="suggestions.length > 0">
+      <h3 class="sidebar-title">People You May Know</h3>
+      <app-user-card
+        *ngFor="let user of suggestions"
+        [user]="user"
+        (actionDone)="loadSuggestions()"
+      ></app-user-card>
+    </div>
+  </aside>
+</div>

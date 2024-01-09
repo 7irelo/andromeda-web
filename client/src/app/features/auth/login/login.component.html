@@ -1,0 +1,82 @@
+<div class="auth-page">
+  <div class="auth-left">
+    <div class="auth-bg-particles"></div>
+    <div class="brand-hero">
+      <mat-icon class="hero-icon">hub</mat-icon>
+      <h1>Andromeda</h1>
+      <p class="hero-tagline">Connect with friends and the world around you.</p>
+
+      <div class="feature-highlights">
+        <div class="feature-item">
+          <mat-icon>people</mat-icon>
+          <span>Build meaningful connections</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>forum</mat-icon>
+          <span>Real-time messaging</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>groups</mat-icon>
+          <span>Join vibrant communities</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>play_circle</mat-icon>
+          <span>Share and discover videos</span>
+        </div>
+      </div>
+
+      <p class="social-proof">Trusted by creators, communities, and friends everywhere.</p>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <mat-icon class="card-logo">hub</mat-icon>
+        <h2>Welcome Back</h2>
+        <p class="text-secondary">Sign in to your account</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Username or Email</mat-label>
+          <input matInput formControlName="username" autocomplete="username" />
+          <mat-error *ngIf="form.get('username')?.invalid">Required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            formControlName="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            autocomplete="current-password"
+          />
+          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error *ngIf="form.get('password')?.invalid">At least 6 characters</mat-error>
+        </mat-form-field>
+
+        <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+        <button
+          mat-flat-button
+          color="primary"
+          class="submit-btn"
+          type="submit"
+          [disabled]="loading || form.invalid"
+        >
+          <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+          <span *ngIf="!loading">Log In</span>
+        </button>
+
+        <div class="divider"><span>or</span></div>
+
+        <p class="register-link">
+          Don't have an account? <a routerLink="/register">Sign Up</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>

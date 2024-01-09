@@ -1,0 +1,180 @@
+// Register-specific styles (base styles come from login.component.scss)
+
+.register-card {
+  max-width: 440px;
+}
+
+// Step indicator
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 24px;
+}
+
+.step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all .3s;
+
+  &.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+  }
+
+  &.done {
+    border-color: var(--success);
+    background: var(--success);
+    color: #fff;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.step-line {
+  width: 40px;
+  height: 2px;
+  background: var(--border);
+  transition: background .3s;
+
+  &.active {
+    background: var(--primary);
+  }
+}
+
+.step-content {
+  animation: fade-in-up .4s ease;
+}
+
+// Profile setup (step 2)
+.profile-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.setup-cover {
+  width: 100%;
+  height: 120px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  background: var(--surface-2);
+  border: 2px dashed var(--border);
+  transition: border-color .2s;
+
+  &:hover { border-color: var(--primary); }
+
+  .cover-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.setup-cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  gap: 4px;
+  font-size: 13px;
+
+  mat-icon { font-size: 28px; width: 28px; height: 28px; }
+}
+
+.setup-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--surface-2);
+  border: 3px solid var(--surface);
+  box-shadow: var(--shadow);
+  margin-top: -48px;
+  position: relative;
+  z-index: 2;
+
+  .avatar-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.setup-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+
+  mat-icon { font-size: 32px; width: 32px; height: 32px; }
+}
+
+.setup-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+
+  button { flex: 1; height: 44px; }
+}
+
+// Suggestions (step 3)
+.suggestions-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--border-radius-sm);
+  transition: background .15s;
+
+  &:hover { background: var(--surface-2); }
+}
+
+.suggestion-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-btn {
+  flex-shrink: 0;
+}
