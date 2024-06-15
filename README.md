@@ -1,4 +1,4 @@
-# Andromeda - Social Media Web Application
+# Andromeda
 
 ## Overview
 
