@@ -1,0 +1,14 @@
+{% extends 'main.html' %} {% block content %}
+
+<div>
+  <form action="" method="POST">
+    {% csrf_token %}
+    <div class="form__group">
+      <label for="text">Post</label>
+      <input required type="text" value="{{post.text}}" name="text"/>
+    </div>
+    <input type="submit" value="Submit" />
+  </form>
+</div>
+
+{% endblock %}
