@@ -3,9 +3,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from .models import Post, Comment, User
 from .forms import PostForm, UserForm, MyUserCreationForm
 
+@api_view(['GET'])
 def loginPage(request):
     page = "login"
 
@@ -53,14 +56,14 @@ def registerPage(request):
 def home(request):
     q = request.GET.get("q") if request.GET.get("q") != None else ""
 
-    rooms = Post.objects.filter(Q(user__name__icontains=q) | Q(text__icontains=q))
+    posts = Post.objects.filter(Q(user__name__icontains=q) | Q(text__icontains=q))
   
     post_count = post.count()
     comments = Comment.objects.filter(Q(post___text___icontains=q))
 
     context = {"posts": posts, "post_count": post_count, "comments": comments}
-    return render(request, 'profiles/home.html', context)
-
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data)
 
 def post(request, pk):
     post = Post.objects.get(id=pk)
@@ -76,14 +79,16 @@ def post(request, pk):
         post.participants.add(request.user)
         return redirect("post", pk=post.id)
     context = {"post": post, "comments": comments, "participants": participants}
-    return render(request, 'profiles/room.html', context)
+    serializer = PostSerializer(post, many=False)
+    return Response(serializer.data)
 
 def userProfile(request, pk):
     user = User.objects.get(id=pk)
     posts = user.post_set.all()
     comments = user.comment_set.all()
     context = {"user": user, "posts": posts, "comments": comments}
-    return render(request, 'profiles/profile.html', context)
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data)
 
 @login_required(login_url="login")
 def createPost(request):
@@ -102,7 +107,8 @@ def createPost(request):
             #post.save()
             return redirect("home")
     context = {"form": form}
-    return render(request, profiles/room_form.html', context)
+    serializer = PostSerializer(post, many=False)
+    return Response(serializer.data)
 
 @login_required(login_url="login")
 def updatePost(request, pk):
@@ -114,7 +120,8 @@ def updatePost(request, pk):
 
         return redirect("home")
     context = {"form": form, "topics": topics, "post":post}
-    return render(request, 'profile/room_form.html', context)
+    serializer = PostSerializer(post, many=False)
+    return Response(serializer.data)
 
 @login_required(login_url="login")
 def deletePost(request, pk):
@@ -123,7 +130,8 @@ def deletePost(request, pk):
         post.delete()
         return redirect("home")
 
-    return render(request, 'profile/delete.html', {"post": post})
+    serializer = PostSerializer(post, many=False)
+    return Response(serializer.data)
 
 @login_required(login_url="login")
 def deleteComment(request, pk):
@@ -132,7 +140,8 @@ def deleteComment(request, pk):
         comment.delete()
         return redirect("home")
 
-    return render(request, 'profiles/delete.html', {"comment": comment})
+    serializer = CommentSerializer(comment, many=False)
+    return Response(serializer.data)
 
 @login_required(login_url="login")
 def updateUser(request):
