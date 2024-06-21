@@ -34,10 +34,12 @@ def loginPage(request):
     context = {"page": page}
     return render(request, 'base/login_register.html', context)
 
+@api_view(['GET'])
 def logoutUser(request):
     logout(request)
     return redirect("home")
 
+@api_view(['GET'])
 def registerPage(request):
     form = MyUserCreationForm()
     if request.method == "POST":
@@ -53,6 +55,7 @@ def registerPage(request):
     context = {"form": form}
     return render(request, 'base/login_register.html', context)
 
+@api_view(['GET'])
 def home(request):
     q = request.GET.get("q") if request.GET.get("q") != None else ""
 
@@ -65,6 +68,7 @@ def home(request):
     serializer = PostSerializer(posts, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
 def post(request, pk):
     post = Post.objects.get(id=pk)
     comments = post.comment_set.all().order_by("created")
@@ -82,6 +86,7 @@ def post(request, pk):
     serializer = PostSerializer(post, many=False)
     return Response(serializer.data)
 
+@api_view(['GET'])
 def userProfile(request, pk):
     user = User.objects.get(id=pk)
     posts = user.post_set.all()
@@ -90,6 +95,7 @@ def userProfile(request, pk):
     serializer = PostSerializer(posts, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
 @login_required(login_url="login")
 def createPost(request):
   form = PostForm()
@@ -110,6 +116,7 @@ def createPost(request):
     serializer = PostSerializer(post, many=False)
     return Response(serializer.data)
 
+@api_view(['GET'])
 @login_required(login_url="login")
 def updatePost(request, pk):
     post = Post.objects.get(id=pk)
@@ -123,6 +130,7 @@ def updatePost(request, pk):
     serializer = PostSerializer(post, many=False)
     return Response(serializer.data)
 
+@api_view(['GET'])
 @login_required(login_url="login")
 def deletePost(request, pk):
     post = Post.objects.get(id=pk)
@@ -133,6 +141,7 @@ def deletePost(request, pk):
     serializer = PostSerializer(post, many=False)
     return Response(serializer.data)
 
+@api_view(['GET'])
 @login_required(login_url="login")
 def deleteComment(request, pk):
     comment = Comment.objects.get(id=pk)
@@ -143,6 +152,7 @@ def deleteComment(request, pk):
     serializer = CommentSerializer(comment, many=False)
     return Response(serializer.data)
 
+@api_view(['GET'])
 @login_required(login_url="login")
 def updateUser(request):
     user = request.user
