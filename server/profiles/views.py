@@ -8,10 +8,14 @@ from rest_framework.response import Response
 from rest_framework.Views import APIView
 from .models import Post, Comment, User
 from .forms import PostForm, UserForm, MyUserCreationForm
+from .serializers import UserSerializer
 
 class RegisterPage(APIView):
     def post(self, request):
-        pass
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 @api_view(['GET'])
 def loginPage(request):
