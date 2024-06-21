@@ -5,8 +5,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.Views import APIView
 from .models import Post, Comment, User
 from .forms import PostForm, UserForm, MyUserCreationForm
+
+class RegisterPage(APIView):
+    def post(self, request):
+        pass
 
 @api_view(['GET'])
 def loginPage(request):
