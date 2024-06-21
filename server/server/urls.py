@@ -12,8 +12,7 @@ from app import forms, views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('profiles.urls')),
-    path('api/', include("profiles.api.urls")),
+    path('api/', include('profiles.urls')),
     path('', views.home, name='home'),
     path('contact/', views.contact, name='contact'),
     path('about/', views.about, name='about'),
