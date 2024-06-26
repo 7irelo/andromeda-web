@@ -1,18 +1,19 @@
-"""
-Definition of forms.
-"""
+from django.forms import ModelForm
+from django.contrib.auth.forms import UserCreationForm
+from .models import Post, User
 
-from django import forms
-from django.contrib.auth.forms import AuthenticationForm
-from django.utils.translation import gettext_lazy as _
+class MyUserCreationForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name", "email", "password1", "password2"]
 
-class BootstrapAuthenticationForm(AuthenticationForm):
-    """Authentication form which uses boostrap CSS."""
-    username = forms.CharField(max_length=254,
-                               widget=forms.TextInput({
-                                   'class': 'form-control',
-                                   'placeholder': 'User name'}))
-    password = forms.CharField(label=_("Password"),
-                               widget=forms.PasswordInput({
-                                   'class': 'form-control',
-                                   'placeholder':'Password'}))
+class PostForm(ModelForm):
+    class Meta:
+        model = Post
+        fields = "__all__"
+        exclude = ["host", "participants"]
+
+class UserForm(ModelForm):
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name", "email"]
