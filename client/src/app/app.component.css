@@ -1,22 +1,15 @@
-﻿:host {
-    max-width: 1280px;
-    padding: 2rem;
-    text-align: center;
+.navbar {
+    display: flex;
+    padding: 5px;
 }
 
-tr:nth-child(even) {
-    background: #F2F2F2;
+.navbar ul {
+    display: flex;
+}
+.navbar li {
+    list-style: none;
 }
 
-tr:nth-child(odd) {
-    background: #FFF;
-}
-
-th, td {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-table {
-    margin: 0 auto;
+.navbar li a {
+    text-decoration: none;
 }
