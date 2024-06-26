@@ -1,1 +1,11 @@
-
+<form [formGroup]="form" (submit)="submit()" accept-charset="utf-8">
+    <label for="name">Name</label>
+    <input type="text" formControlName="name" id="name" value="" />
+    <label for="surname">Surname</label>
+    <input type="text" formControlName="surname" id="surname" value="" />
+    <label for="email">Email</label>
+    <input type="email" formControlName="email" id="email" value="" />
+    <label for="password">Password</label>
+    <input type="password" formControlName="password" id="password" value="" />
+    <input type="submit" name="" id="" value="Submit" />
+</form
