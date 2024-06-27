@@ -12,7 +12,7 @@ from .forms import PostForm, UserForm, MyUserCreationForm
 from .serializers import UserSerializer
 import jwt, datetime
 
-class UserView(APIView):
+class FriendsView(APIView):
     def get(self, request):
         token = request.COOKIES.get('jwt')
         if not token:
