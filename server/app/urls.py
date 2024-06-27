@@ -1,37 +1,23 @@
 from django.urls import path
-from . import views
-from views import RegisterView, LoginView, UserView, UpdateUser, LogoutView, HomeView, PostView, CreatePost, UpdatePost, DeletePost, DeleteComment
+from .views import (
+    RegisterView, LoginView, UserView, UpdateUserView, LogoutView, HomeView, 
+    PostView, CreatePostView, UpdatePostView, DeletePostView, DeleteCommentView
+)
 
 urlpatterns = [
-    path('', views.home, name='home'),
-    path('contact/', views.contact, name='contact'),
-    path('about/', views.about, name='about'),
-    path('login/',
-         LoginView.as_view
-         (
-             # template_name='profiles/login.html',
-             authentication_form=forms.BootstrapAuthenticationForm,
-             extra_context=
-             {
-                 'title': 'Log in',
-                 'year' : datetime.now().year,
-             }
-         ),
-         name='login'),
-    path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
-    
-    # path('login/', views.loginPage, name="login"),
-    # path('logout/', views.logoutUser, name="logout"),
-    # path('register/', views.registerPage, name="register"),
-    path('register/', RegisterView.as_view()),
-    
-    path("post/<str:pk>/", PostView, name="post"),
-    path("profile/<str:pk>/", UserView, name="profile"),
+    # authentication
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
 
-    path("create-post", CreatePost, name="create-post"),
-    path("update-post/<str:pk>/", UpdatePost, name="update-post"),
-    path("delete-post/<str:pk>/", DeletePost, name="delete-post"),
-    path("delete-comment/<str:pk>/", DeleteComment, name="delete-comment"),
+    # profile
+    path('<str:pk>/', UserView.as_view(), name='profile'),
+    path('update-user/', UpdateUserView.as_view(), name='update-user'),
 
-    path("profile/update-user/", UpdateUser, name="update-user"),
+    # posts
+    path('post/<str:pk>/', PostView.as_view(), name='post'),
+    path('create-post/', CreatePostView.as_view(), name='create-post'),
+    path('update-post/<str:pk>/', UpdatePostView.as_view(), name='update-post'),
+    path('delete-post/<str:pk>/', DeletePostView.as_view(), name='delete-post'),
+    path('delete-comment/<str:pk>/', DeleteCommentView.as_view(), name='delete-comment'),
 ]
