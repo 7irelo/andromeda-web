@@ -100,10 +100,14 @@
 ```
 andromeda/
 ├── backend/
-│   ├── andromeda/
-│   ├── users/
+│   ├── app/
+│   ├── friends/
+│   ├── marketplace/
+│   ├── messages/
+│   ├── notifications/
 │   ├── posts/
-│   ├── chat/
+│   ├── server/
+│   ├── watch/
 │   └── manage.py
 └── frontend/
     ├── src/
