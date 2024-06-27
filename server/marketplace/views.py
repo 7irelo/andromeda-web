@@ -4,7 +4,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Item, ItemComment
-from .forms import PostForm, UserForm, MyUserCreationForm
 from .serializers import ItemSerializer
 import jwt, datetime
 
