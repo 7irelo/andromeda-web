@@ -38,7 +38,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'profile.apps.BaseConfig',
+    'app.apps.BaseConfig',
+    'friends.apps.BaseConfig',
+    'messages.apps.BaseConfig',
+    'watch.apps.BaseConfig',
+    'notifications.apps.BaseConfig',
+    'marketplace.apps.BaseConfig',
+    'groups.apps.BaseConfig',
+    'pages.apps.BaseConfig',
     'rest_framework',
     'corsheaders'
 ]
