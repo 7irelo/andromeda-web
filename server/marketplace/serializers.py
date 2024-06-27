@@ -4,19 +4,19 @@ from .models import Item, ItemComment
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
-        fields = ['host', 'text', 'participants']
- 
+        fields = ['id', 'host', 'text', 'participants']
+
     def create(self, validated_data):
-        instance = self.Meta.model(**validated_data)
-        instance.save()
+        # Create a new instance of Item with the validated data
+        instance = Item.objects.create(**validated_data)
         return instance
 
 class ItemCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemComment
-        fields = ['user', 'item', 'text']
- 
+        fields = ['id', 'user', 'item', 'text']
+
     def create(self, validated_data):
-        instance = self.Meta.model(**validated_data)
-        instance.save()
+        # Create a new instance of ItemComment with the validated data
+        instance = ItemComment.objects.create(**validated_data)
         return instance
