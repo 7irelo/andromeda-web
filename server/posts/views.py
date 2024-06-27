@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from rest_framework import status
 from .models import Post, Comment
 from .serializers import UserSerializer, PostSerializer, CommentSerializer
-from .forms import PostForm, UserForm, MyUserCreationForm
 
 class PostView(APIView):
     def get(self, request, pk):
