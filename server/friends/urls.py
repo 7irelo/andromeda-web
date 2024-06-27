@@ -1,7 +1,6 @@
 from django.urls import path
-from . import views
-from views import FriendsView
+from .views import FriendsView
 
 urlpatterns = [
-    path('', FriendsView, name='friends'),
+    path('', FriendsView.as_view(), name='friends'),
 ]
