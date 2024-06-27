@@ -1,0 +1,11 @@
+<nav class="navbar">
+    <ul class="nav-links">
+        <li><a routerLink="/">Home</a></li>
+        <li><a routerLink="/profile">Profile</a></li>
+    </ul>
+    <ul class="reg-links" >
+        <li><a routerLink="/login" ngIf="!authenticated">Login</a></li>
+        <li><a routerLink="/register" ngIf="!authenticated">Signup</a></li>
+        <li><a routerLink="/login" ngIf="authenticated" (click)="logout()">Logout</a></li>
+    </ul>
+</nav>
