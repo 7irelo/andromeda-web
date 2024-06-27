@@ -24,9 +24,8 @@ class MarketplaceView(APIView):
 class ItemView(APIView):
     def get(self, request, pk):
         item = Items.objects.get(id=pk)
-        comments = post.comment_set.all().order_by("created")
-        participants = post.participants.all()
-        context = {"item": item, "comments": comments, "participants": participants}
+        comments = item.comment_set.all().order_by("created")
+        participants = item.participants.all()
         serializer = ItemSerializer(item, many=False)
         return Response(serializer.data)
 
