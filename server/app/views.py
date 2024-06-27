@@ -1,13 +1,15 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.conf import settings
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Post, Comment, User
-from .forms import PostForm, UserForm, MyUserCreationForm
-from .serializers import UserSerializer, PostSerializer, CommentSerializer
-import jwt, datetime
+from .models import User
+from posts.models import Post
+from .serializers import UserSerializer
+from posts.serializers import PostSerializer
+import jwt
+import datetime
 
 class RegisterView(APIView):
     def post(self, request):
@@ -30,7 +32,7 @@ class LoginView(APIView):
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
             'iat': datetime.datetime.utcnow()
         }
-        token = jwt.encode(payload, 'secret', algorithm='HS256')
+        token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm='HS256')
 
         response = Response()
         response.set_cookie(key='jwt', value=token, httponly=True)
@@ -44,27 +46,28 @@ class UserView(APIView):
             raise AuthenticationFailed('Unauthenticated')
 
         try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-        except jwt.ExpiredSignatureError:
+            payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=['HS256'])
+            user = User.objects.get(id=payload['id'])
+        except (jwt.ExpiredSignatureError, jwt.DecodeError):
             raise AuthenticationFailed('Unauthenticated')
+        except User.DoesNotExist:
+            raise AuthenticationFailed('User not found')
 
-        user = User.objects.filter(id=payload['id']).first()
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
 class UpdateUserView(APIView):
     def get(self, request):
         user = request.user
-        form = UserForm(instance=user)
-        return render(request, "profile/update_user.html", {"form": form})
-    
-    def post(self, request):
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def put(self, request):
         user = request.user
-        form = UserForm(request.POST, instance=user)
-        if form.is_valid():
-            form.save()
-            return redirect("user-profile", pk=user.id)
-        return render(request, "profile/update_user.html", {"form": form})
+        serializer = UserSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 class LogoutView(APIView):
     def post(self, request):
