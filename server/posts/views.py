@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from .models import Post, Comment
-from .serializers import UserSerializer, PostSerializer, CommentSerializer
+from .serializers import PostSerializer, CommentSerializer
 
 class PostView(APIView):
     def get(self, request, pk):
