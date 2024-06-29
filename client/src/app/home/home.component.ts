@@ -18,7 +18,7 @@ export class HomeComponent implements OnInit {
       ) {}
 
   ngOnInit(): void {
-      this.http.get('http://localhost:5000/api/user', { withCredentials:true }).subscribe(
+      this.http.get('http://localhost:8000/api', { withCredentials:true }).subscribe(
           (res: any) => {
               this.message = `Hello ${res.user}`
               Emitters.authEmmitter.emit(true);
