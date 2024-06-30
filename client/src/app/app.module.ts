@@ -10,6 +10,8 @@ import { FormsModule } from '@angular/forms';
 import { HomeComponent } from '.home/home.component';
 import { ReactiveFormsModule } from '@angular/forms';
 
+import { PostService } from './post.service';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -24,7 +26,7 @@ import { ReactiveFormsModule } from '@angular/forms';
     ReactiveFormsModule,
     HttpClientModule
   ],
-  providers: [],
+  providers: [PostService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
