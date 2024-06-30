@@ -10,7 +10,7 @@ export class PostService {
 
   constructor(private http: HttpClient) { }
 
-  getPosts(): Observable<any> {
-    return this.http.get<any>(this.apiUrl);
+  getPosts(query: string = ''): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}?q=${query}`);
   }
 }
