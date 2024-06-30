@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Router } from '@angular/router';
 import { PostService } from '../post.service';
 
 @Component({
@@ -11,16 +10,14 @@ import { PostService } from '../post.service';
 export class HomeComponent implements OnInit {
   posts: any[] = [];
   message: string = '';
-  form: FormGroup;
+  searchForm: FormGroup;
 
   constructor(
     private formBuilder: FormBuilder,
-    private router: Router,
     private postService: PostService
   ) {
-    this.form = this.formBuilder.group({
-      // Add your form controls here
-      // Example: name: ['']
+    this.searchForm = this.formBuilder.group({
+      query: ['']
     });
   }
 
@@ -28,8 +25,8 @@ export class HomeComponent implements OnInit {
     this.loadPosts();
   }
 
-  loadPosts(): void {
-    this.postService.getPosts().subscribe(
+  loadPosts(query: string = ''): void {
+    this.postService.getPosts(query).subscribe(
       data => {
         this.posts = data;
       },
@@ -38,5 +35,10 @@ export class HomeComponent implements OnInit {
         this.message = 'Error fetching posts';
       }
     );
+  }
+
+  onSearch(): void {
+    const query = this.searchForm.get('query')?.value || '';
+    this.loadPosts(query);
   }
 }
