@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Emitters } from '../emitters/emitters';
 import { PostService } from '../post.service';
 
 @Component({
@@ -17,7 +15,6 @@ export class HomeComponent implements OnInit {
 
   constructor(
     private formBuilder: FormBuilder,
-    private http: HttpClient,
     private router: Router,
     private postService: PostService
   ) {
@@ -28,18 +25,18 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadPosts();
+  }
+
+  loadPosts(): void {
     this.postService.getPosts().subscribe(
       data => {
         this.posts = data;
       },
       error => {
         console.error('Error fetching posts', error);
+        this.message = 'Error fetching posts';
       }
     );
-  }
-  
-  submit(): void {
-    this.http.post('http://localhost:8000/api/register', this.form.getRawValue())
-      .subscribe(() => this.router.navigate(['/login']));
   }
 }
