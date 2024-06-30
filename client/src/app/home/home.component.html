@@ -1,1 +1,20 @@
-{{message}}
+<div class="search-container">
+  <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+    <input formControlName="query" placeholder="Search posts...">
+    <button type="submit">Search</button>
+  </form>
+</div>
+
+<div *ngIf="posts.length > 0; else noPosts">
+  <div *ngFor="let post of posts" class="post-card">
+    <h2>{{ post.title }}</h2>
+    <p>{{ post.text }}</p>
+  </div>
+</div>
+<ng-template #noPosts>
+  <p>No posts available.</p>
+</ng-template>
+
+<div *ngIf="message" class="message">
+  {{ message }}
+</div>
