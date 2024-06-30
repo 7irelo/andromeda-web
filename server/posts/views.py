@@ -9,7 +9,7 @@ from .serializers import PostSerializer, CommentSerializer
 class PostsView(APIView):
     async def get(self, request):
         query = request.GET.get("q", "")
-        posts = await Post.objects.filter(Q(host__username__icontains=query) | Q(text__icontains=query)).all()
+        posts = await Post.objects.filter(Q(host__username__icontains=query) | Q(text__icontains(query))).all()
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -62,8 +62,29 @@ class DeletePostView(APIView):
         await post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class DeleteCommentView(APIView):
-    async def delete(self, request, pk):
-        comment = await get_object_or_404(Comment, pk=pk)
+class CommentView(APIView):
+    async def get(self, request, post_pk, pk):
+        comment = await get_object_or_404(Comment, post_id=post_pk, pk=pk)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    async def post(self, request, post_pk):
+        post = await get_object_or_404(Post, pk=post_pk)
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user, post=post)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    async def put(self, request, post_pk, pk):
+        comment = await get_object_or_404(Comment, post_id=post_pk, pk=pk)
+        serializer = CommentSerializer(comment, data=request.data, partial=True)
+        if serializer.is_valid():
+            await serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    async def delete(self, request, post_pk, pk):
+        comment = await get_object_or_404(Comment, post_id=post_pk, pk=pk)
         await comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
