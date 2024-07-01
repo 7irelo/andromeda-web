@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
 import { PostService } from '../post.service';
+import { SearchService } from '../search.service';
 
 @Component({
   selector: 'app-home',
@@ -10,18 +10,16 @@ import { PostService } from '../post.service';
 export class HomeComponent implements OnInit {
   posts: any[] = [];
   message: string = '';
-  searchForm: FormGroup;
 
   constructor(
-    private formBuilder: FormBuilder,
-    private postService: PostService
-  ) {
-    this.searchForm = this.formBuilder.group({
-      query: ['']
-    });
-  }
+    private postService: PostService,
+    private searchService: SearchService
+  ) {}
 
   ngOnInit(): void {
+    this.searchService.currentQuery.subscribe(query => {
+      this.loadPosts(query);
+    });
     this.loadPosts();
   }
 
@@ -36,10 +34,5 @@ export class HomeComponent implements OnInit {
         this.message = 'Error fetching posts';
       }
     );
-  }
-
-  onSearch(): void {
-    const query = this.searchForm.get('query')?.value || '';
-    this.loadPosts(query);
   }
 }
