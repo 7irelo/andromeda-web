@@ -13,6 +13,7 @@ from app import forms, views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('app.urls')),
+    path('api/users', include('users.urls')),
     path('api/posts', include('posts.urls')),
     path('api/friends', include('friends.urls')),
     path('api/messages', include('messages.urls')),
