@@ -38,6 +38,17 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  loadRecommendedPosts(): void {
+    this.postService.getRecommendedPosts().subscribe(
+      data => {
+        this.recommendedPosts = data;
+      },
+      error => {
+        console.error('Error fetching recommended posts', error);
+      }
+    );
+  }
+  
   loadPosts(query: string = ''): void {
     this.postService.getPosts(query).subscribe(
       data => {
