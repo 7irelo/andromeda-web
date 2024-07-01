@@ -1,31 +1,37 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router'
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuthService } from '../auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
-  form: FormGroup;
-  constructor(
-      private formBuilder: FormBuilder,
-      private http: HttpClient,
-      private router: Router
-      ) {}
+export class LoginComponent {
+  loginForm: FormGroup;
 
-  ngOnInit(): void {
-      this.form = this.formBuilder.group({
-          email: '',
-          password: ''
-      });
+  constructor(
+    private formBuilder: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.loginForm = this.formBuilder.group({
+      username: ['', Validators.required],
+      password: ['', Validators.required]
+    });
   }
-  
-  submit(): void {
-      this.http.post('http://localhost:8000/api/login', this.form.getRawValue, {withCredentials: true})
-      .subscribe(() => this.router.navigate(['/']));
+
+  onSubmit(): void {
+    if (this.loginForm.valid) {
+      this.authService.login(this.loginForm.value).subscribe(
+        response => {
+          this.router.navigate(['/']);
+        },
+        error => {
+          console.error('Login error', error);
+        }
+      );
+    }
   }
 }
-
