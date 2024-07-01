@@ -6,6 +6,17 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
+from .recommendations import get_recommended_posts
+
+
+class RecommendedPostsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        recommended_posts = get_recommended_posts(user)
+        serializer = PostSerializer(recommended_posts, many=True)
+        return Response(serializer.data)
 
 class PostsView(APIView):
     permission_classes = [IsAuthenticated]
