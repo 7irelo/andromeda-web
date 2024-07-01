@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PostService } from '../post.service';
 import { SearchService } from '../search.service';
+import { LogoutService } from '../logout.service';
 
 @Component({
   selector: 'app-home',
@@ -14,11 +15,13 @@ export class HomeComponent implements OnInit {
   showPostForm: boolean = false;
   postText: string = '';
   postForm: FormGroup;
+  showLogoutPopup: boolean = false;
 
   constructor(
     private postService: PostService,
     private searchService: SearchService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private logoutService: LogoutService
   ) {
     this.postForm = this.formBuilder.group({
       text: ['', Validators.required]
@@ -30,6 +33,9 @@ export class HomeComponent implements OnInit {
       this.loadPosts(query);
     });
     this.loadPosts();
+    this.logoutService.showLogoutPopup.subscribe(show => {
+      this.showLogoutPopup = show;
+    });
   }
 
   loadPosts(query: string = ''): void {
@@ -57,16 +63,23 @@ export class HomeComponent implements OnInit {
 
       this.postService.createPost(postData).subscribe(
         data => {
-          // Refresh posts after successful creation
           this.loadPosts();
-          this.showPostForm = false; // Hide the form after successful submission
-          this.postForm.reset(); // Reset the form
+          this.showPostForm = false;
+          this.postForm.reset();
         },
         error => {
           console.error('Error creating post', error);
-          // Handle error if needed
         }
       );
     }
+  }
+
+  confirmLogout(): void {
+    this.logoutService.logout();
+    this.showLogoutPopup = false;
+  }
+
+  cancelLogout(): void {
+    this.showLogoutPopup = false;
   }
 }
