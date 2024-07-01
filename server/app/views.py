@@ -1,24 +1,31 @@
-from django.conf import settings
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import AuthenticationFailed
+from django.db.models import Q
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from .models import User
-from posts.models import Post
 from .serializers import UserSerializer
+from posts.models import Post
 from posts.serializers import PostSerializer
 import jwt
 import datetime
 
 class RegisterView(APIView):
+    """
+    API view to register a new user.
+    """
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class LoginView(APIView):
+    """
+    API view to handle user login and JWT token creation.
+    """
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
@@ -40,36 +47,49 @@ class LoginView(APIView):
         return response
 
 class LogoutView(APIView):
+    """
+    API view to handle user logout and delete JWT token cookie.
+    """
     def post(self, request):
-        response = Response()
+        response = Response({'message': 'success'})
         response.delete_cookie('jwt')
-        response.data = {'message': 'success'}
         return response
-from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import User
-from .serializers import UserSerializer
-import jwt
 
-class ProfileView(APIView):
+class UserView(APIView):
+    """
+    API view to fetch and update user profile.
+    """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        user = request.user  # This will fetch the authenticated user directly
-
+    def get(self, request, pk):
+        """
+        Retrieve details of a specific user by primary key (pk).
+        """
+        user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
-    def put(self, request):
-        user = request.user
+    def put(self, request, pk):
+        """
+        Update details of the authenticated user.
+        """
+        user = get_object_or_404(User, pk=pk)
+        if user != request.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+
         serializer = UserSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-        
+
 class HomeView(APIView):
+    """
+    API view to search and retrieve posts.
+    """
     def get(self, request):
+        """
+        Retrieve posts based on search query (q).
+        """
         q = request.GET.get("q", "")
         posts = Post.objects.filter(Q(user__name__icontains=q) | Q(text__icontains=q))
         serializer = PostSerializer(posts, many=True)
