@@ -29,6 +29,7 @@ export class HomeComponent implements OnInit {
     this.postService.getPosts(query).subscribe(
       data => {
         this.posts = data;
+        this.message = this.posts.length ? '' : 'No posts found';
       },
       error => {
         console.error('Error fetching posts', error);
