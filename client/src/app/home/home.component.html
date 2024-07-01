@@ -1,18 +1,19 @@
-<div class="search-container">
-  <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
-    <input formControlName="query" placeholder="Search posts..." class="search-input">
-    <button type="submit" class="search-button">Search</button>
-  </form>
+<!-- Confirmation popup -->
+<div class="popup-overlay" *ngIf="showLogoutPopup">
+  <div class="popup">
+    <p>Are you sure you want to log out?</p>
+    <button (click)="confirmLogout()">Confirm</button>
+    <button (click)="cancelLogout()">Cancel</button>
+  </div>
 </div>
 
+<!-- Existing content -->
 <div *ngIf="message" class="message">
   {{ message }}
 </div>
 
-<!-- Toggle button for showing/hiding post form -->
 <button class="toggle-form-button" (click)="togglePostForm()">Create Post</button>
 
-<!-- Post form -->
 <div class="post-form" *ngIf="showPostForm">
   <form [formGroup]="postForm" (ngSubmit)="submitPost()">
     <textarea formControlName="text" placeholder="Write your post..." rows="3"></textarea>
@@ -20,7 +21,6 @@
   </form>
 </div>
 
-<!-- Display posts -->
 <div *ngIf="posts.length; else noPosts">
   <div *ngFor="let post of posts" class="card">
     <div class="card-header">
