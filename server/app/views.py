@@ -45,7 +45,29 @@ class LogoutView(APIView):
         response.delete_cookie('jwt')
         response.data = {'message': 'success'}
         return response
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import User
+from .serializers import UserSerializer
+import jwt
 
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user  # This will fetch the authenticated user directly
+
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def put(self, request):
+        user = request.user
+        serializer = UserSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+        
 class HomeView(APIView):
     def get(self, request):
         q = request.GET.get("q", "")
