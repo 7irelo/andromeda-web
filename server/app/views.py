@@ -54,38 +54,6 @@ class LogoutView(APIView):
         response.delete_cookie('jwt')
         return response
 
-class UserView(APIView):
-    """
-    API view to fetch and update user profile.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, username):
-        """
-        Retrieve details of a specific user by username.
-        """
-        user = User.objects.filter(username=username).first()
-        if not user:
-            raise NotFound(detail="User not found")
-
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-
-    def put(self, request, username):
-        """
-        Update details of the authenticated user by username.
-        """
-        user = User.objects.filter(username=username).first()
-        if not user:
-            raise NotFound(detail="User not found")
-        if user != request.user:
-            raise PermissionDenied("You do not have permission to perform this action.")
-
-        serializer = UserSerializer(user, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
 class HomeView(APIView):
     """
     API view to search and retrieve posts.
