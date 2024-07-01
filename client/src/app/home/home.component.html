@@ -1,11 +1,5 @@
-<div class="search-container">
-  <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
-    <input formControlName="query" placeholder="Search posts..." class="search-input">
-    <button type="submit" class="search-button">Search</button>
-  </form>
-  <div *ngIf="message" class="message">
-    {{ message }}
-  </div>
+<div *ngIf="message" class="message">
+  {{ message }}
 </div>
 
 <div *ngIf="posts.length; else noPosts">
