@@ -1,22 +1,22 @@
 <div class="search-container">
   <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
-    <input formControlName="query" placeholder="Search posts...">
-    <button type="submit">Search</button>
+    <input formControlName="query" placeholder="Search posts..." class="search-input">
+    <button type="submit" class="search-button">Search</button>
   </form>
   <div *ngIf="message" class="message">
-  {{ message }}
+    {{ message }}
   </div>
 </div>
 
-<div *ngIf="posts.length">
-    <div *ngFor="let post of posts" class="card">
-      <div class="card-header">
-        <strong>Post by {{ post.host.username }}</strong>
-      </div>
-      <div class="card-body">
-        {{ post.text }}
-      </div>
+<div *ngIf="posts.length; else noPosts">
+  <div *ngFor="let post of posts" class="card">
+    <div class="card-header">
+      <strong>Post by {{ post.host.username }}</strong>
     </div>
+    <div class="card-body">
+      {{ post.text }}
+    </div>
+  </div>
 </div>
 <ng-template #noPosts>
   <p>No posts available.</p>
