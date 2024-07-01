@@ -5,32 +5,41 @@ from .models import User
 from .serializers import UserSerializer
 import jwt
 
-class UserView(APIView):
-    def get(self, request):
-        token = request.COOKIES.get('jwt')
-        if not token:
-            raise AuthenticationFailed('Unauthenticated')
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
 
-        try:
-            payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=['HS256'])
-            user = User.objects.get(username=payload['username'])
-        except (jwt.ExpiredSignatureError, jwt.DecodeError):
-            raise AuthenticationFailed('Unauthenticated')
-        except User.DoesNotExist:
-            raise AuthenticationFailed('User not found')
+    def get(self, request):
+        user = request.user  # This will fetch the authenticated user directly
 
         serializer = UserSerializer(user)
         return Response(serializer.data)
-  
+
     def put(self, request):
         user = request.user
         serializer = UserSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+        
+class UserView(APIView):
+    permission_classes = [IsAuthenticated]
 
-class UpdateUserView(APIView):
-    def get(self, request):
-        user = request.user
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise NotFound(detail="User not found")
+
         serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise NotFound(detail="User not found")
+
+        serializer = UserSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data)
