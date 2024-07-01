@@ -6,9 +6,14 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { RegisterComponent } from '.register/register.component';
 import { LoginComponent } from '.login/login.component';
+import { ProfileComponent } from './profile/profile.component';
+import { NavComponent } from './nav/nav.component';
 import { FormsModule } from '@angular/forms';
 import { HomeComponent } from '.home/home.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { AuthService } from './auth.service';
+import { AuthGuard } from './auth.guard';
+import { Emitters } from './emitters/emitters';
 
 import { PostService } from './post.service';
 
@@ -18,6 +23,8 @@ import { PostService } from './post.service';
     RegisterComponent,
     LoginComponent,
     HomeComponent
+    ProfileComponent
+    NavComponent
   ],
   imports: [
     BrowserModule, HttpClientModule,
@@ -26,7 +33,7 @@ import { PostService } from './post.service';
     ReactiveFormsModule,
     HttpClientModule
   ],
-  providers: [PostService],
+  providers: [AuthService, AuthGuard, Emitters],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
