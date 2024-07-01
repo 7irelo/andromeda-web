@@ -10,6 +10,10 @@ export class PostService {
 
   constructor(private http: HttpClient) { }
 
+  getRecommendedPosts(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/posts/recommended/`);
+  }
+
   getPosts(query: string = ''): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/posts?q=${query}`);
   }
