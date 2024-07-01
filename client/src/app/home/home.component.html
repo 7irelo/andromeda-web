@@ -3,18 +3,21 @@
     <input formControlName="query" placeholder="Search posts...">
     <button type="submit">Search</button>
   </form>
+  <div *ngIf="message" class="message">
+  {{ message }}
+  </div>
 </div>
 
-<div *ngIf="posts.length > 0; else noPosts">
-  <div *ngFor="let post of posts" class="post-card">
-    <h2>{{ post.title }}</h2>
-    <p>{{ post.text }}</p>
-  </div>
+<div *ngIf="posts.length">
+    <div *ngFor="let post of posts" class="card">
+      <div class="card-header">
+        <strong>Post by {{ post.host.username }}</strong>
+      </div>
+      <div class="card-body">
+        {{ post.text }}
+      </div>
+    </div>
 </div>
 <ng-template #noPosts>
   <p>No posts available.</p>
 </ng-template>
-
-<div *ngIf="message" class="message">
-  {{ message }}
-</div>
