@@ -3,17 +3,13 @@
     <li><a routerLink="/">Home</a></li>
     <li><a routerLink="/profile">Profile</a></li>
   </ul>
-
-  <div class="search-container">
-    <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
-      <input formControlName="query" placeholder="Search posts..." class="search-input">
-      <button type="submit" class="search-button">Search</button>
-    </form>
-  </div>
-
+  <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form">
+    <input formControlName="query" placeholder="Search posts...">
+    <button type="submit">Search</button>
+  </form>
   <ul class="reg-links">
     <li *ngIf="!authenticated"><a routerLink="/login">Login</a></li>
     <li *ngIf="!authenticated"><a routerLink="/register">Signup</a></li>
-    <li *ngIf="authenticated"><a href="javascript:void(0);" (click)="logout()">Logout</a></li>
+    <li *ngIf="authenticated"><a (click)="logout()">Logout</a></li>
   </ul>
 </nav>
