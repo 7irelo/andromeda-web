@@ -14,6 +14,8 @@ export class NavComponent implements OnInit {
   searchForm: FormGroup;
 
   constructor(
+    private authService: AuthService,
+    private router: Router,
     private http: HttpClient,
     private formBuilder: FormBuilder,
     private searchService: SearchService
@@ -24,6 +26,13 @@ export class NavComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.authService.checkAuth().subscribe(
+      (auth: boolean) => {
+        this.authenticated = auth;
+        Emitters.authEmitter.emit(this.authenticated);
+      }
+    );
+    
     Emitters.authEmitter.subscribe(
       (auth: boolean) => {
         this.authenticated = auth;
@@ -32,10 +41,11 @@ export class NavComponent implements OnInit {
   }
   
   logout(): void {
-    this.http.post('http://localhost:8000/api/logout', {}, { withCredentials: true })
-      .subscribe(() => this.authenticated = false);
+    this.authService.logout().subscribe(() => {
+      this.authenticated = false;
+      this.router.navigate(['/login']);
+    });
   }
-
   onSearch(): void {
     const query = this.searchForm.get('query')?.value || '';
     this.searchService.changeQuery(query);
