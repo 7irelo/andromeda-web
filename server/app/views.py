@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -61,19 +60,24 @@ class UserView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, pk):
+    def get(self, request, username):
         """
-        Retrieve details of a specific user by primary key (pk).
+        Retrieve details of a specific user by username.
         """
-        user = get_object_or_404(User, pk=pk)
+        user = User.objects.filter(username=username).first()
+        if not user:
+            raise NotFound(detail="User not found")
+
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
-    def put(self, request, pk):
+    def put(self, request, username):
         """
-        Update details of the authenticated user.
+        Update details of the authenticated user by username.
         """
-        user = get_object_or_404(User, pk=pk)
+        user = User.objects.filter(username=username).first()
+        if not user:
+            raise NotFound(detail="User not found")
         if user != request.user:
             raise PermissionDenied("You do not have permission to perform this action.")
 
