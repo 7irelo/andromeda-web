@@ -13,8 +13,8 @@ class PostsView(APIView):
     def get(self, request):
         query = request.GET.get("q", "")
         posts = Post.objects.filter(
-            Q(host__username__icontains=query) | Q(text__icontains=query)
-        ).select_related('host').all()
+            Q(host__username__icontains(query) | Q(text__icontains(query))
+        ).select_related('host').prefetch_related('participants').all()
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -30,7 +30,7 @@ class PostView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        post = get_object_or_404(Post.objects.select_related('host'), pk=pk)
+        post = get_object_or_404(Post.objects.select_related('host').prefetch_related('participants'), pk=pk)
         comments = Comment.objects.filter(post=post).select_related('user').order_by("created").all()
         post_serializer = PostSerializer(post)
         comments_serializer = CommentSerializer(comments, many=True)
