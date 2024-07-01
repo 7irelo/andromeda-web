@@ -5,6 +5,7 @@ class Post(models.Model):
     host = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Host")
     text = models.TextField(max_length=50, verbose_name="Post Text")
     participants = models.ManyToManyField(User, related_name="post_participants", blank=True, verbose_name="Participants")
+    likes = models.ManyToManyField(User, related_name="post_likes", blank=True, verbose_name="Likes")
     updated = models.DateTimeField(auto_now=True, verbose_name="Last Updated")
     created = models.DateTimeField(auto_now_add=True, verbose_name="Date Created")
 
