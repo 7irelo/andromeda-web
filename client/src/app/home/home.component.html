@@ -1,16 +1,4 @@
-<!-- Confirmation popup -->
-<div class="popup-overlay" *ngIf="showLogoutPopup">
-  <div class="popup">
-    <p>Are you sure you want to log out?</p>
-    <button (click)="confirmLogout()">Confirm</button>
-    <button (click)="cancelLogout()">Cancel</button>
-  </div>
-</div>
-
 <!-- Existing content -->
-<div *ngIf="message" class="message">
-  {{ message }}
-</div>
 
 <button class="toggle-form-button" (click)="togglePostForm()">Create Post</button>
 
@@ -21,6 +9,22 @@
   </form>
 </div>
 
+<h2>Recommended Posts</h2>
+<div *ngIf="recommendedPosts.length; else noRecommendedPosts">
+  <div *ngFor="let post of recommendedPosts" class="card">
+    <div class="card-header">
+      <strong>Post by {{ post.host.username }}</strong>
+    </div>
+    <div class="card-body">
+      {{ post.text }}
+    </div>
+  </div>
+</div>
+<ng-template #noRecommendedPosts>
+  <p>No recommended posts available.</p>
+</ng-template>
+
+<h2>All Posts</h2>
 <div *ngIf="posts.length; else noPosts">
   <div *ngFor="let post of posts" class="card">
     <div class="card-header">
