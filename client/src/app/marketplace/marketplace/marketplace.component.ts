@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { MarketplaceService } from '../services/marketplace.service';
-import { Product } from '../models/product.model';
+import { MarketplaceService } from '../../services/marketplace.service';
+import { Product } from '../../models/product.model';
 
 @Component({
   selector: 'app-marketplace',
