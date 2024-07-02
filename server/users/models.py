@@ -12,7 +12,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.username  # Customize as needed
+        return self.username
 
     def get_full_name(self):
         """
