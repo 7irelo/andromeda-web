@@ -1,32 +1,51 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router'
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuthService } from '../auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
-  styleUrl: './register.component.css'
+  styleUrls: ['./register.component.css']
 })
 export class RegisterComponent implements OnInit {
   form: FormGroup;
+  errorMessage: string = '';
+  successMessage: string = '';
+
   constructor(
-      private formBuilder: FormBuilder,
-      private http: HttpClient,
-      private router: Router
-      ) {}
+    private formBuilder: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-      this.form = this.formBuilder.group({
-          name: '',
-          surname: '',
-          email: '',
-          password: ''
-      });
+    this.form = this.formBuilder.group({
+      name: ['', Validators.required],
+      surname: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
   }
-  
+
   submit(): void {
-      this.http.post('http://localhost:8000/api/register', this.form.getRawValue())
-      .subscribe(() => this.router.navigate(['/login']));
+    if (this.form.invalid) {
+      this.errorMessage = 'Please fill in all fields correctly.';
+      return;
+    }
+
+    this.authService.register(this.form.value)
+      .subscribe(
+        response => {
+          this.successMessage = 'Registration successful! Redirecting to login...';
+          setTimeout(() => {
+            this.router.navigate(['/login']);
+          }, 2000);
+        },
+        error => {
+          console.error('Error during registration:', error);
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
+      );
   }
 }
