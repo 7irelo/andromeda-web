@@ -1,22 +1,13 @@
+# marketplace/serializers.py
 from rest_framework import serializers
-from .models import Item, ItemComment
+from .models import Product, ProductComment
 
-class ItemSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Item
-        fields = ['id', 'host', 'text', 'participants']
+        model = Product
+        fields = '__all__'
 
-    def create(self, validated_data):
-        # Create a new instance of Item with the validated data
-        instance = Item.objects.create(**validated_data)
-        return instance
-
-class ItemCommentSerializer(serializers.ModelSerializer):
+class ProductCommentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ItemComment
-        fields = ['id', 'user', 'item', 'text']
-
-    def create(self, validated_data):
-        # Create a new instance of ItemComment with the validated data
-        instance = ItemComment.objects.create(**validated_data)
-        return instance
+        model = ProductComment
+        fields = '__all__'
