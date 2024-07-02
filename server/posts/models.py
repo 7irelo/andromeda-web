@@ -5,6 +5,9 @@ from django.dispatch import receiver
 from notifications.models import Notification
 
 class Post(models.Model):
+    """
+    Represents a post created by a user.
+    """
     creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Creator")
     text = models.TextField(max_length=50, verbose_name="Post Text")
     participants = models.ManyToManyField(User, related_name="post_participants", blank=True, verbose_name="Participants")
@@ -21,11 +24,20 @@ class Post(models.Model):
         return f"Post by {self.creator}: {self.text[:30]}"
 
 class Like(models.Model):
+    """
+    Represents a like on a post by a user.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+    def __str__(self):
+        return f"Like by {self.user.username} on post {self.post.id}"
+
 class Comment(models.Model):
+    """
+    Represents a comment on a post by a user.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User")
     post = models.ForeignKey(Post, on_delete=models.CASCADE, verbose_name="Post")
     text = models.TextField(verbose_name="Comment Text")
@@ -38,22 +50,28 @@ class Comment(models.Model):
         verbose_name_plural = "Comments"
 
     def __str__(self):
-        return f"Comment by {self.user} on {self.post}: {self.text[:50]}"
+        return f"Comment by {self.user.username} on post {self.post.id}: {self.text[:50]}"
 
 @receiver(post_save, sender=Like)
 def create_like_notification(sender, instance, created, **kwargs):
+    """
+    Create a notification when a post is liked.
+    """
     if created:
         Notification.objects.create(
-            user=instance.post.user,
+            user=instance.post.creator,
             post=instance.post,
             message=f'{instance.user.username} liked your post.'
         )
 
 @receiver(post_save, sender=Comment)
 def create_comment_notification(sender, instance, created, **kwargs):
+    """
+    Create a notification when a comment is made on a post.
+    """
     if created:
         Notification.objects.create(
-            user=instance.post.user,
+            user=instance.post.creator,
             post=instance.post,
             message=f'{instance.user.username} commented on your post.'
         )
