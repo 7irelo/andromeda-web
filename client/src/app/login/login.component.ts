@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 })
 export class LoginComponent {
   loginForm: FormGroup;
+  errorMessage: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -22,16 +23,24 @@ export class LoginComponent {
     });
   }
 
+  get f() {
+    return this.loginForm.controls;
+  }
+
   onSubmit(): void {
+    this.errorMessage = null; // Reset error message before new login attempt
     if (this.loginForm.valid) {
       this.authService.login(this.loginForm.value).subscribe(
         response => {
           this.router.navigate(['/']);
         },
         error => {
+          this.errorMessage = 'Invalid username or password';
           console.error('Login error', error);
         }
       );
+    } else {
+      this.errorMessage = 'Please fill in all required fields';
     }
   }
 }
