@@ -11,6 +11,7 @@ import { LogoutService } from '../logout.service';
 })
 export class HomeComponent implements OnInit {
   posts: any[] = [];
+  recommendedPosts: any[] = []; // Added recommendedPosts array
   message: string = '';
   showPostForm: boolean = false;
   postText: string = '';
@@ -33,6 +34,7 @@ export class HomeComponent implements OnInit {
       this.loadPosts(query);
     });
     this.loadPosts();
+    this.loadRecommendedPosts(); // Load recommended posts on component initialization
     this.logoutService.showLogoutPopup.subscribe(show => {
       this.showLogoutPopup = show;
     });
