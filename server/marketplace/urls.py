@@ -1,7 +1,11 @@
+# marketplace/urls.py
 from django.urls import path
-from .views import MarketplaceView, ItemView
+from .views import RecommendedProductsView, ProductsView, ProductView, ProductCommentView
 
 urlpatterns = [
-    path('', MarketplaceView.as_view(), name='marketplace'),  # Register MarketplaceView
-    path('item/<str:pk>/', ItemView.as_view(), name='item'),    # Register ItemView with dynamic item ID
+    path('recommended/', RecommendedProductsView.as_view(), name='recommended-products'),
+    path('', ProductsView.as_view(), name='products'),
+    path('<int:pk>/', ProductView.as_view(), name='product-detail'),
+    path('<int:product_pk>/comments/<int:pk>/', ProductCommentView.as_view(), name='product-comment-detail'),
+    path('<int:product_pk>/comments/', ProductCommentView.as_view(), name='product-comment-create'),
 ]
