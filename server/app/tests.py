@@ -3,32 +3,26 @@ This file demonstrates writing tests using the unittest module. These will pass
 when you run "manage.py test".
 """
 
-import django
 from django.test import TestCase
-
-# TODO: Configure your database in settings.py and sync before running tests.
 
 class ViewTest(TestCase):
     """Tests for the application views."""
 
-    if django.VERSION[:2] >= (1, 7):
-        # Django 1.7 requires an explicit setup() when running tests in PTVS
-        @classmethod
-        def setUpClass(cls):
-            super(ViewTest, cls).setUpClass()
-            django.setup()
+    def setUp(self):
+        """Set up any state specific to the execution of the test case."""
+        pass  # Add any setup code here if needed
 
-    def test_home(self):
-        """Tests the home page."""
+    def test_home_page_contains_expected_content(self):
+        """Tests the home page contains 'Home Page'."""
         response = self.client.get('/')
-        self.assertContains(response, 'Home Page', 1, 200)
+        self.assertContains(response, 'Home Page', status_code=200)
 
-    def test_contact(self):
-        """Tests the contact page."""
+    def test_contact_page_contains_expected_content(self):
+        """Tests the contact page contains 'Contact'."""
         response = self.client.get('/contact')
-        self.assertContains(response, 'Contact', 3, 200)
+        self.assertContains(response, 'Contact', count=3, status_code=200)
 
-    def test_about(self):
-        """Tests the about page."""
+    def test_about_page_contains_expected_content(self):
+        """Tests the about page contains 'About'."""
         response = self.client.get('/about')
-        self.assertContains(response, 'About', 3, 200)
+        self.assertContains(response, 'About', count=3, status_code=200)
