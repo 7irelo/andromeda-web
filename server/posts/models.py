@@ -9,7 +9,7 @@ class Post(models.Model):
     Represents a post created by a user.
     """
     creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Creator")
-    text = models.TextField(max_length=50, verbose_name="Post Text")
+    content = models.TextField(max_length=50, verbose_name="Post Content")
     participants = models.ManyToManyField(User, related_name="post_participants", blank=True, verbose_name="Participants")
     likes = models.ManyToManyField(User, related_name="post_likes", blank=True, verbose_name="Likes")
     updated = models.DateTimeField(auto_now=True, verbose_name="Last Updated")
@@ -21,7 +21,7 @@ class Post(models.Model):
         verbose_name_plural = "Posts"
 
     def __str__(self):
-        return f"Post by {self.creator}: {self.text[:30]}"
+        return f"Post by {self.creator}: {self.content[:30]}"
 
 class Like(models.Model):
     """
