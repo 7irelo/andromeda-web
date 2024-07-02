@@ -1,22 +1,21 @@
-// src/app/post.model.ts
-
 export class Post {
   id: number;
-  title: string;
+  creator: number;
   content: string;
-  creator: {
-    id: number;
-    username: string;
-  };
-  created_at: Date;
-  updated_at: Date;
+  tags: string[];
+  participants: number[];
+  likes: number[];
+  updated: string;
+  created: string;
 
   constructor(data: any) {
     this.id = data.id;
-    this.title = data.title;
-    this.content = data.content;
     this.creator = data.creator;
-    this.created_at = new Date(data.created_at);
-    this.updated_at = new Date(data.updated_at);
+    this.content = data.content;
+    this.tags = data.tags || [];
+    this.participants = data.participants || [];
+    this.likes = data.likes || [];
+    this.updated = data.updated;
+    this.created = data.created;
   }
 }
