@@ -7,6 +7,9 @@ import { AppComponent } from './app.component';
 import { RegisterComponent } from '.register/register.component';
 import { LoginComponent } from '.login/login.component';
 import { ProfileComponent } from './profile/profile.component';
+import { ProductListComponent } from './marketplace/marketplace/marketplace.component';
+import { ProductDetailComponent } from './marketplace/product/product.component';
+import { MarketplaceService } from './services/marketplace.service';
 import { NavComponent } from './nav/nav.component';
 import { FormsModule } from '@angular/forms';
 import { HomeComponent } from '.home/home.component';
@@ -25,6 +28,8 @@ import { PostService } from './post.service';
     HomeComponent
     ProfileComponent
     NavComponent
+    MarketplaceComponent,
+    ProductComponent
   ],
   imports: [
     BrowserModule, HttpClientModule,
@@ -33,7 +38,7 @@ import { PostService } from './post.service';
     ReactiveFormsModule,
     HttpClientModule
   ],
-  providers: [AuthService, AuthGuard, Emitters],
+  providers: [AuthService, AuthGuard, Emitters, MarketplaceService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
