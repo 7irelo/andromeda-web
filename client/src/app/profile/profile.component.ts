@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserService } from '../user.service';
-import { User } from './user.model';
+import { User } from '../user.model';
 import { Post } from '../post.model'; // Assuming you have a Post model defined
 
 @Component({
@@ -20,8 +20,21 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.username = params['username'];
+      this.loadUser();
       this.loadUserPosts();
     });
+  }
+
+  loadUser(): void {
+    this.userService.getUserProfile(this.username).subscribe(
+      data => {
+        this.user = data;
+      },
+      error => {
+        console.error('Error fetching user data', error);
+        this.errorMessage = 'Error fetching user data';
+      }
+    );
   }
 
   loadUserPosts(): void {
@@ -32,18 +45,6 @@ export class ProfileComponent implements OnInit {
       error => {
         console.error('Error fetching user posts', error);
         this.errorMessage = 'Error fetching user posts';
-      }
-    );
-  }
-  
-  loadUser(): void {
-    this.userService.getUser(this.username).subscribe(
-      data => {
-        this.user = data;
-      },
-      error => {
-        console.error('Error fetching user data', error);
-        this.errorMessage = 'Error fetching user data';
       }
     );
   }
