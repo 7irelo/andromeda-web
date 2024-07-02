@@ -13,7 +13,7 @@
 <div *ngIf="recommendedPosts.length; else noRecommendedPosts">
   <div *ngFor="let post of recommendedPosts" class="card">
     <div class="card-header">
-      <strong>Post by {{ post.host.username }}</strong>
+      <strong>Post by {{ post.creator.username }}</strong> <!-- Adjusted to 'creator' from 'host' assuming creator is the user who created the post -->
     </div>
     <div class="card-body">
       {{ post.text }}
@@ -28,7 +28,7 @@
 <div *ngIf="posts.length; else noPosts">
   <div *ngFor="let post of posts" class="card">
     <div class="card-header">
-      <strong>Post by {{ post.host.username }}</strong>
+      <strong>Post by {{ post.creator.username }}</strong> <!-- Adjusted to 'creator' from 'host' assuming creator is the user who created the post -->
     </div>
     <div class="card-body">
       {{ post.text }}
