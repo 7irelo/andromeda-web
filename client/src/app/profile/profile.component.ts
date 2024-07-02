@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserService } from '../user.service';
+import { User } from './user.model';
 import { Post } from '../post.model'; // Assuming you have a Post model defined
 
 @Component({
@@ -10,6 +11,7 @@ import { Post } from '../post.model'; // Assuming you have a Post model defined
 })
 export class ProfileComponent implements OnInit {
   username: string;
+  user: User;
   posts: Post[] = []; // Adjust according to your Post model
   errorMessage: string = '';
 
@@ -30,6 +32,18 @@ export class ProfileComponent implements OnInit {
       error => {
         console.error('Error fetching user posts', error);
         this.errorMessage = 'Error fetching user posts';
+      }
+    );
+  }
+  
+  loadUser(): void {
+    this.userService.getUser(this.username).subscribe(
+      data => {
+        this.user = data;
+      },
+      error => {
+        console.error('Error fetching user data', error);
+        this.errorMessage = 'Error fetching user data';
       }
     );
   }
