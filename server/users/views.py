@@ -1,13 +1,13 @@
-# users/views.py
-
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import PermissionDenied
 from .models import User, Friendship
 from .serializers import UserSerializer
+from posts.models import Post
+from posts.serializers import PostSerializer
 
 class UserView(APIView):
     permission_classes = [IsAuthenticated]
@@ -55,3 +55,12 @@ class FriendsView(APIView):
 
         friendship.delete()
         return Response({"detail": "Friend removed successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+class UserPostsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, username):
+        user = get_object_or_404(User, username=username)
+        posts = Post.objects.filter(creator=user)
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
