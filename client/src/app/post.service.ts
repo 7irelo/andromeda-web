@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +11,7 @@ export class PostService {
   constructor(private http: HttpClient) { }
 
   getRecommendedPosts(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/posts/recommended/`);
+    return this.http.get<any[]>(`${this.baseUrl}/posts/recommended/`);
   }
 
   getPosts(query: string = ''): Observable<any[]> {
