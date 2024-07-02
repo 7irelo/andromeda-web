@@ -1,56 +1,119 @@
-from django.contrib import messages
-from django.db.models import Q
-from rest_framework.exceptions import AuthenticationFailed
+from django.shortcuts import get_object_or_404
+from django.db.models import Q, Case, When, Value, IntegerField
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Item, ItemComment
-from .serializers import ItemSerializer
-import jwt, datetime
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from .models import Product, ProductComment
+from .serializers import ProductSerializer, ProductCommentSerializer
+from .recommendations import get_recommended_products
 
-class MarketplaceView(APIView):
+class RecommendedProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        # Get query parameter or set default to empty string
-        q = request.GET.get("q", "")
-        # Filter items based on query parameter
-        items = Item.objects.filter(Q(user__name__icontains=q) | Q(text__icontains=q))
-        # Get count of filtered items (not used in the response, so could be removed)
-        item_count = items.count()
-        # Filter comments based on query parameter (changed to ItemComment)
-        comments = ItemComment.objects.filter(Q(post__text__icontains=q))
-        # Serialize filtered items
-        serializer = ItemSerializer(items, many=True)
+        user = request.user
+        recommended_products = get_recommended_products(user)
+        serializer = ProductSerializer(recommended_products, many=True)
         return Response(serializer.data)
 
-class ItemView(APIView):
-    def get(self, request, pk):
-        try:
-            # Retrieve the item by primary key
-            item = Item.objects.get(id=pk)
-        except Item.DoesNotExist:
-            return Response({'error': 'Item not found'}, status=404)
+
+class ProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.GET.get("q", "")
         
-        # Retrieve related comments and participants
-        comments = item.itemcomment_set.all().order_by("created")
-        participants = item.participants.all()
-        # Serialize the item
-        serializer = ItemSerializer(item, many=False)
+        # Define relevance order conditions
+        relevance_order = Case(
+            When(creator__friends=request.user, then=Value(1)),
+            When(likes=request.user, then=Value(2)),
+            default=Value(3),
+            output_field=IntegerField(),
+        )
+        
+        # Query products ordered by relevance
+        products = Product.objects.filter(
+            Q(name__icontains=query) | Q(description__icontains=query) | Q(tags__name__icontains=query)
+        ).annotate(
+            relevance=relevance_order
+        ).order_by('relevance').select_related('creator').prefetch_related('participants', 'tags')
+
+        serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ProductSerializer(data=request.data)
+        if serializer.is_valid():
+            product = serializer.save(creator=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        product = get_object_or_404(Product.objects.select_related('creator').prefetch_related('participants', 'tags'), pk=pk)
+        comments = ProductComment.objects.filter(product=product).select_related('user').order_by("created")
+        product_serializer = ProductSerializer(product)
+        comments_serializer = ProductCommentSerializer(comments, many=True)
+        return Response({
+            "product": product_serializer.data,
+            "comments": comments_serializer.data
+        })
 
     def post(self, request, pk):
-        try:
-            # Retrieve the item by primary key
-            item = Item.objects.get(id=pk)
-        except Item.DoesNotExist:
-            return Response({'error': 'Item not found'}, status=404)
-        
-        # Create a new comment for the item
-        comment = ItemComment.objects.create(
-            user=request.user,
-            item=item,
-            text=request.data.get("text")  # Use request.data instead of request.POST
-        )
-        # Add the user to the participants of the item
-        item.participants.add(request.user)
-        # Serialize the updated item
-        serializer = ItemSerializer(item, many=False)
+        product = get_object_or_404(Product, pk=pk)
+        serializer = ProductCommentSerializer(data=request.data)
+        if serializer.is_valid():
+            comment = serializer.save(user=request.user, product=product)
+            product.participants.add(request.user)
+            return Response({
+                "product": ProductSerializer(product).data,
+                "comment": ProductCommentSerializer(comment).data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        serializer = ProductSerializer(product, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductCommentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, product_pk, pk):
+        comment = get_object_or_404(ProductComment.objects.select_related('user', 'product'), product_id=product_pk, pk=pk)
+        serializer = ProductCommentSerializer(comment)
         return Response(serializer.data)
+
+    def post(self, request, product_pk):
+        product = get_object_or_404(Product, pk=product_pk)
+        serializer = ProductCommentSerializer(data=request.data)
+        if serializer.is_valid():
+            comment = serializer.save(user=request.user, product=product)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, product_pk, pk):
+        comment = get_object_or_404(ProductComment, product_id=product_pk, pk=pk)
+        serializer = ProductCommentSerializer(comment, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, product_pk, pk):
+        comment = get_object_or_404(ProductComment, product_id=product_pk, pk=pk)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
