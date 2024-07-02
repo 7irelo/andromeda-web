@@ -1,0 +1,15 @@
+<h2>{{ username }}'s Posts</h2>
+<div *ngIf="posts.length; else noPosts">
+  <div *ngFor="let post of posts" class="card">
+    <div class="card-header">
+      <strong>Post by {{ post.creator.username }}</strong>
+    </div>
+    <div class="card-body">
+      {{ post.text }}
+    </div>
+  </div>
+</div>
+<ng-template #noPosts>
+  <p>No posts available.</p>
+</ng-template>
+<p *ngIf="errorMessage">{{ errorMessage }}</p>
