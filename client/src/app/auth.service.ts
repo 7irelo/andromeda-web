@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -45,6 +45,18 @@ export class AuthService {
   }
 
   /**
+   * Registers a new user.
+   * @param userData - The user's registration data.
+   * @returns An observable of the registration response.
+   */
+  register(userData: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/register`, userData, { withCredentials: true })
+      .pipe(
+        catchError(this.handleError('register', []))
+      );
+  }
+
+  /**
    * Checks if the user is authenticated.
    * @returns An observable of the authentication status.
    */
@@ -69,7 +81,7 @@ export class AuthService {
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
       console.error(`${operation} failed: ${error.message}`);
-      return of(result as T);
+      return throwError(result as T);
     };
   }
 }
