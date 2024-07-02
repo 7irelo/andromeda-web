@@ -1,15 +1,24 @@
-<h2>{{ username }}'s Posts</h2>
+<div *ngIf="user">
+  <h2>{{ user.username }}'s Profile</h2>
+  <p>Email: {{ user.email }}</p>
+  <!-- Add more user details as needed -->
+</div>
+
+<h3>Posts by {{ user.username }}</h3>
 <div *ngIf="posts.length; else noPosts">
   <div *ngFor="let post of posts" class="card">
     <div class="card-header">
-      <strong>Post by {{ post.creator.username }}</strong>
+      <strong>{{ post.title }}</strong>
     </div>
     <div class="card-body">
-      {{ post.text }}
+      {{ post.content }}
     </div>
   </div>
 </div>
 <ng-template #noPosts>
   <p>No posts available.</p>
 </ng-template>
-<p *ngIf="errorMessage">{{ errorMessage }}</p>
+
+<div *ngIf="errorMessage" class="error-message">
+  {{ errorMessage }}
+</div>
