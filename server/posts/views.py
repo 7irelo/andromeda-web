@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value, IntegerField
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -24,16 +24,29 @@ class PostsView(APIView):
 
     def get(self, request):
         query = request.GET.get("q", "")
+        
+        # Define relevance order conditions
+        relevance_order = Case(
+            When(creator__friends=user, then=Value(1)),
+            When(likes=user, then=Value(2)),
+            default=Value(3),
+            output_field=IntegerField(),
+        )
+        
+        # Query posts ordered by relevance
         posts = Post.objects.filter(
-            Q(host__username__icontains=query) | Q(text__icontains=query)
-        ).select_related('host').prefetch_related('participants')
+            Q(content__icontains=query) | Q(tags__name__icontains=query)
+        ).annotate(
+            relevance=relevance_order
+        ).order_by('relevance').select_related('creator').prefetch_related('participants', 'tags')
+
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
-            post = serializer.save(host=request.user)
+            post = serializer.save(creator=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -42,7 +55,7 @@ class PostView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        post = get_object_or_404(Post.objects.select_related('host').prefetch_related('participants'), pk=pk)
+        post = get_object_or_404(Post.objects.select_related('creator').prefetch_related('participants', 'tags'), pk=pk)
         comments = Comment.objects.filter(post=post).select_related('user').order_by("created")
         post_serializer = PostSerializer(post)
         comments_serializer = CommentSerializer(comments, many=True)
@@ -104,4 +117,4 @@ class CommentView(APIView):
     def delete(self, request, post_pk, pk):
         comment = get_object_or_404(Comment, post_id=post_pk, pk=pk)
         comment.delete()
-        return Response(status=status.HTTP_204_NO't_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
