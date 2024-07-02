@@ -1,8 +1,11 @@
 from django.db import models
-from app.models import User
+from users.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from notifications.models import Notification
 
 class Post(models.Model):
-    host = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Host")
+    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Creator")
     text = models.TextField(max_length=50, verbose_name="Post Text")
     participants = models.ManyToManyField(User, related_name="post_participants", blank=True, verbose_name="Participants")
     likes = models.ManyToManyField(User, related_name="post_likes", blank=True, verbose_name="Likes")
@@ -15,8 +18,13 @@ class Post(models.Model):
         verbose_name_plural = "Posts"
 
     def __str__(self):
-        return f"Post by {self.host}: {self.text[:30]}"
+        return f"Post by {self.creator}: {self.text[:30]}"
 
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User")
     post = models.ForeignKey(Post, on_delete=models.CASCADE, verbose_name="Post")
@@ -31,3 +39,21 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.user} on {self.post}: {self.text[:50]}"
+
+@receiver(post_save, sender=Like)
+def create_like_notification(sender, instance, created, **kwargs):
+    if created:
+        Notification.objects.create(
+            user=instance.post.user,
+            post=instance.post,
+            message=f'{instance.user.username} liked your post.'
+        )
+
+@receiver(post_save, sender=Comment)
+def create_comment_notification(sender, instance, created, **kwargs):
+    if created:
+        Notification.objects.create(
+            user=instance.post.user,
+            post=instance.post,
+            message=f'{instance.user.username} commented on your post.'
+        )
