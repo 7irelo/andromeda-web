@@ -39,7 +39,7 @@
 1. **Clone the repository**:
     ```bash
     git clone https://github.com/7irelo/andromeda-web.git
-    cd andromeda.web
+    cd andromeda-web
     ```
 
 2. **Create a virtual environment and activate it**:
