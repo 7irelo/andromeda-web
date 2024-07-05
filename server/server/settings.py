@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'app.apps.BaseConfig',
     'posts.apps.PostsConfig',
-    'messages.apps.MessagesConfig',
+    'chats.apps.ChatsConfig',
     'watch.apps.WatchConfig',
     'notifications.apps.NotificationsConfig',
     'marketplace.apps.MarketplaceConfig',
