@@ -2,8 +2,8 @@ from django.contrib import messages
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from app.models import User
-from app.serializers import UserSerializer
+from users.models import User
+from users.serializers import UserSerializer
 import jwt
 from django.conf import settings
 
