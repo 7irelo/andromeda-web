@@ -38,14 +38,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'app.apps.BaseConfig',
-    'posts.apps.BaseConfig',
-    'friends.apps.BaseConfig',
+    'posts.apps.PostsConfig',
     'messages.apps.BaseConfig',
-    'watch.apps.BaseConfig',
-    'notifications.apps.BaseConfig',
-    'marketplace.apps.BaseConfig',
-    'groups.apps.BaseConfig',
-    'pages.apps.BaseConfig',
+    'watch.apps.WatchConfig',
+    'notifications.apps.NotificationsConfig',
+    'marketplace.apps.MarketplaceConfig',
+    'groups.apps.GroupsConfig',
+    'pages.apps.PagesConfig',
 ]
 
 # Middleware framework
