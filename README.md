@@ -99,7 +99,7 @@
 
 ```
 andromeda/
-├── backend/
+├── server/
 │   ├── app/
 │   ├── friends/
 │   ├── marketplace/
@@ -109,7 +109,7 @@ andromeda/
 │   ├── server/
 │   ├── watch/
 │   └── manage.py
-└── frontend/
+└── client/
     ├── src/
     ├── angular.json
     └── package.json
