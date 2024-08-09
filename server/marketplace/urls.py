@@ -1,4 +1,3 @@
-# marketplace/urls.py
 from django.urls import path
 from .views import RecommendedProductsView, ProductsView, ProductView, ProductCommentView
 

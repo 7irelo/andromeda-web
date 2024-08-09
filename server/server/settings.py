@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'app.apps.BaseConfig',
     'users.apps.UsersConfig',
     'posts.apps.PostsConfig',
     'chats.apps.ChatsConfig',
@@ -46,6 +45,8 @@ INSTALLED_APPS = [
     'marketplace.apps.MarketplaceConfig',
     'groups.apps.GroupsConfig',
     'pages.apps.PagesConfig',
+    # Neo4j related apps
+    'neomodel',
 ]
 
 # Middleware framework
@@ -59,6 +60,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
 
 ROOT_URLCONF = 'server.urls'
 
@@ -83,17 +94,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'server.wsgi.application'
 
-# Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'andromeda',
-        'USER': 'root',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
-}
+# Neo4j Database Configuration
+NEOMODEL_NEO4J_BOLT_URL = os.getenv('NEO4J_BOLT_URL', 'bolt://neo4j:password@localhost:7687')
+
+# If you are using neomodel or a similar library, you won't need to specify a traditional `DATABASES` setting
+DATABASES = {}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -133,4 +138,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Custom user model
-AUTH_USER_MODEL = 'app.User'
+AUTH_USER_MODEL = 'users.User'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'

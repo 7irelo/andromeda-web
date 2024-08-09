@@ -5,19 +5,19 @@ from users.serializers import SimpleUserSerializer
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ['id', 'name']
+        fields = ['uid', 'name']
 
 class PostSerializer(serializers.ModelSerializer):
     creator = SimpleUserSerializer(read_only=True)
     participants = SimpleUserSerializer(read_only=True, many=True)
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
-    comments_count = serializers.IntegerField(source='comment_set.count', read_only=True)
+    comments_count = serializers.IntegerField(source='comments.count', read_only=True)
     tags = TagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'creator', 'content', 'participants', 'likes_count', 'comments_count', 'updated', 'created', 'tags']
-        read_only_fields = ['id', 'creator', 'updated', 'created', 'likes_count', 'comments_count', 'tags']
+        fields = ['uid', 'creator', 'content', 'participants', 'likes_count', 'comments_count', 'updated', 'created', 'tags']
+        read_only_fields = ['uid', 'creator', 'updated', 'created', 'likes_count', 'comments_count', 'tags']
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -32,8 +32,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'post', 'text', 'updated', 'created']
-        read_only_fields = ['id', 'user', 'updated', 'created']
+        fields = ['uid', 'user', 'post', 'text', 'updated', 'created']
+        read_only_fields = ['uid', 'user', 'updated', 'created']
 
     def create(self, validated_data):
         request = self.context.get('request')
