@@ -1,42 +1,26 @@
-from django.db import models
+from neomodel import StructuredNode, StringProperty, UniqueIdProperty, RelationshipTo, RelationshipFrom
 from django.contrib.auth.models import AbstractUser
+from neomodel import config
 
-class User(AbstractUser):
-    username = models.CharField(max_length=150, unique=True, primary_key=True)
-    email = models.EmailField(unique=True, null=True, blank=True)
-    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, default='avatars/profile.png')
-    bio = models.TextField(null=True, blank=True)
-    friends = models.ManyToManyField('self', through='Friendship', symmetrical=False, related_name='friend_set')
+# Neo4j connection (ensure this is set in your environment or settings)
+config.DATABASE_URL = 'bolt://neo4j:password@localhost:7687'
 
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = []
+class User(StructuredNode, AbstractUser):
+    uid = UniqueIdProperty(primary_key=True)
+    first_name = StringProperty()
+    last_name = StringProperty()
+    username = StringProperty(unique_index=True, required=True)
+    email = StringProperty(unique_index=True)
+    avatar = StringProperty(default='avatars/profile.png')
+    bio = StringProperty()
+    friends = RelationshipTo('User', 'FRIEND')
 
     def __str__(self):
         return self.username
 
     def get_full_name(self):
-        """
-        Return the full name of the user.
-        """
         full_name = f"{self.first_name} {self.last_name}".strip()
         return full_name if full_name else self.username
 
     def get_short_name(self):
-        """
-        Return the short name for the user.
-        """
         return self.first_name if self.first_name else self.username
-
-class Friendship(models.Model):
-    from_user = models.ForeignKey(User, related_name='from_friend', on_delete=models.CASCADE)
-    to_user = models.ForeignKey(User, related_name='to_friend', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('from_user', 'to_user')
-        indexes = [
-            models.Index(fields=['from_user', 'to_user']),
-        ]
-
-    def __str__(self):
-        return f"Friendship from {self.from_user.username} to {self.to_user.username}"

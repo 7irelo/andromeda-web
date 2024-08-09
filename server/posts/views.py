@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Case, When, Value, IntegerField
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -7,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
 from .recommendations import get_recommended_posts
-
 
 class RecommendedPostsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -18,28 +16,12 @@ class RecommendedPostsView(APIView):
         serializer = PostSerializer(recommended_posts, many=True)
         return Response(serializer.data)
 
-
 class PostsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         query = request.GET.get("q", "")
-        
-        # Define relevance order conditions
-        relevance_order = Case(
-            When(creator__friends=user, then=Value(1)),
-            When(likes=user, then=Value(2)),
-            default=Value(3),
-            output_field=IntegerField(),
-        )
-        
-        # Query posts ordered by relevance
-        posts = Post.objects.filter(
-            Q(content__icontains=query) | Q(tags__name__icontains=query)
-        ).annotate(
-            relevance=relevance_order
-        ).order_by('relevance').select_related('creator').prefetch_related('participants', 'tags')
-
+        posts = Post.nodes.filter(content__icontains=query).order_by('-updated', '-created')
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
 
@@ -50,13 +32,12 @@ class PostsView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class PostView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, pk):
-        post = get_object_or_404(Post.objects.select_related('creator').prefetch_related('participants', 'tags'), pk=pk)
-        comments = Comment.objects.filter(post=post).select_related('user').order_by("created")
+    def get(self, request, uid):
+        post = get_object_or_404(Post.nodes, uid=uid)
+        comments = Comment.nodes.filter(post=post).order_by("created")
         post_serializer = PostSerializer(post)
         comments_serializer = CommentSerializer(comments, many=True)
         return Response({
@@ -64,57 +45,56 @@ class PostView(APIView):
             "comments": comments_serializer.data
         })
 
-    def post(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
+    def post(self, request, uid):
+        post = get_object_or_404(Post, uid=uid)
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
             comment = serializer.save(user=request.user, post=post)
-            post.participants.add(request.user)
+            post.participants.connect(request.user)
             return Response({
                 "post": PostSerializer(post).data,
                 "comment": CommentSerializer(comment).data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
+    def put(self, request, uid):
+        post = get_object_or_404(Post, uid=uid)
         serializer = PostSerializer(post, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
-        post = get_object_or_404(Post, pk=pk)
+    def delete(self, request, uid):
+        post = get_object_or_404(Post, uid=uid)
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 class CommentView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, post_pk, pk):
-        comment = get_object_or_404(Comment.objects.select_related('user', 'post'), post_id=post_pk, pk=pk)
+    def get(self, request, post_uid, uid):
+        comment = get_object_or_404(Comment.nodes, post__uid=post_uid, uid=uid)
         serializer = CommentSerializer(comment)
         return Response(serializer.data)
 
-    def post(self, request, post_pk):
-        post = get_object_or_404(Post, pk=post_pk)
+    def post(self, request, post_uid):
+        post = get_object_or_404(Post.nodes, uid=post_uid)
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
             comment = serializer.save(user=request.user, post=post)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, post_pk, pk):
-        comment = get_object_or_404(Comment, post_id=post_pk, pk=pk)
+    def put(self, request, post_uid, uid):
+        comment = get_object_or_404(Comment.nodes, post__uid=post_uid, uid=uid)
         serializer = CommentSerializer(comment, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, post_pk, pk):
-        comment = get_object_or_404(Comment, post_id=post_pk, pk=pk)
+    def delete(self, request, post_uid, uid):
+        comment = get_object_or_404(Comment.nodes, post__uid=post_uid, uid=uid)
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
