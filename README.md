@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Andromeda** is a social media web application where users can share pictures and videos, and chat with their family and friends. This project is built using Django for the backend, Angular for the frontend, and MySQL for the database.
+**Andromeda** is a social media web application where users can share pictures and videos, and chat with their family and friends. This project is built using Django for the backend, Angular for the frontend, Neo4j for the graph database, and Redis for caching and session management.
 
 ## Features
 
@@ -20,7 +20,9 @@
 ### Technical Features
 - **Django**: Backend framework
 - **Angular**: Frontend framework
-- **MySQL**: Database management
+- **Neo4j**: Graph database management
+- **Redis**: In-memory data structure store for caching and sessions
+- **Docker**: Containerization of services
 - **RESTful API**: Communication between frontend and backend
 - **JWT Authentication**: Secure user authentication
 
@@ -29,8 +31,10 @@
 - **Python 3.8+**
 - **Node.js 12+ and npm**
 - **Angular CLI**
-- **MySQL 8+**
+- **Neo4j**
+- **Redis**
 - **Django 3.0+**
+- **Docker**
 
 ## Getting Started
 
@@ -53,9 +57,9 @@
     pip install -r requirements.txt
     ```
 
-4. **Setup MySQL database**:
-    - Create a new MySQL database named `andromeda`.
-    - Update `DATABASES` settings in `server/settings.py` with your MySQL credentials.
+4. **Setup Neo4j and Redis**:
+    - Make sure Neo4j and Redis are installed and running.
+    - Update the `DATABASES` and `CACHES` settings in `server/settings.py` with your Neo4j and Redis credentials.
 
 5. **Apply migrations**:
     ```bash
@@ -90,10 +94,16 @@
     ng serve
     ```
 
-### Running the Application
+### Running the Application with Docker
 
-- Open your browser and go to `http://localhost:4200` to see the Angular frontend.
-- The Django backend runs at `http://localhost:8000`.
+1. **Build and start services with Docker**:
+    ```bash
+    docker-compose up --build
+    ```
+
+2. **Access the application**:
+    - The Angular frontend will be available at `http://localhost:4200`.
+    - The Django backend will run at `http://localhost:8000`.
 
 ## Project Structure
 
@@ -139,7 +149,3 @@ This project is licensed under the [MIT License](LICENSE).
 ## Contact
 
 For any queries or support, please contact us at support@andromeda-socialmedia.com.
-
----
-
-Thank you for contributing to Andromeda! We hope this project helps you create a fantastic social media application.
