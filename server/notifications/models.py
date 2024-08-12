@@ -1,7 +1,4 @@
 from django.db import models
-from users.models import User
-from posts.models import Post
-from groups.models import Group  # Assuming you have a Group model in your groups app
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
@@ -13,9 +10,9 @@ class Notification(models.Model):
         ('software_update', 'Software Update'),
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='notifications')
+    post = models.ForeignKey('posts.Post', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    group = models.ForeignKey('groups.Group', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     message = models.CharField(max_length=255)
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     created_at = models.DateTimeField(auto_now_add=True)
