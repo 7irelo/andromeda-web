@@ -1,6 +1,7 @@
 from neomodel import StructuredNode, StringProperty, DateTimeProperty, UniqueIdProperty, RelationshipTo, RelationshipFrom, Relationship
 from users.models import User
 from django.dispatch import receiver
+from django.db.models.signals import post_save
 from notifications.models import Notification
 from datetime import datetime
 
@@ -26,7 +27,7 @@ class Like(StructuredNode):
     def __str__(self):
         return f"Like by {self.user.username} on post {self.post.uid}"
 
-    @receiver(post_save, sender=Like)
+    @receiver(post_save, sender='posts.Post')  # Corrected sender reference
     def create_like_notification(sender, instance, created, **kwargs):
         if created:
             Notification.objects.create(
@@ -46,7 +47,7 @@ class Comment(StructuredNode):
     def __str__(self):
         return f"Comment by {self.user.username} on post {self.post.uid}: {self.text[:50]}"
 
-    @receiver(post_save, sender=Comment)
+    @receiver(post_save, sender='posts.Post')  # Corrected sender reference
     def create_comment_notification(sender, instance, created, **kwargs):
         if created:
             Notification.objects.create(
