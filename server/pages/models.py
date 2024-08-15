@@ -1,11 +1,11 @@
-from neomodel import StructuredNode, StructuredRel, StringProperty, DateTimeProperty, UniqueIdProperty, RelationshipTo, RelationshipFrom
-from users.models import UserNode  # Assuming you have a UserNode model
-from posts.models import PostNode  # Assuming you have a PostNode model
+from neomodel import StructuredNode, StringProperty, DateTimeProperty, UniqueIdProperty, RelationshipTo, RelationshipFrom, StructuredRel
+from users.models import User
+from posts.models import Post
 
 class CreatedRel(StructuredRel):
     created = DateTimeProperty(default_now=True)
 
-class PageNode(StructuredNode):
+class Page(StructuredNode):
     uid = UniqueIdProperty()
     name = StringProperty(unique_index=True, required=True)
     description = StringProperty()
@@ -13,15 +13,15 @@ class PageNode(StructuredNode):
     updated = DateTimeProperty(default_now=True)
 
     # Relationships
-    creator = RelationshipTo(UserNode, 'CREATED_BY', model=CreatedRel)
-    followers = RelationshipFrom(UserNode, 'FOLLOWS')
-    likes = RelationshipFrom(UserNode, 'LIKES')
-    posts = RelationshipTo('PostNode', 'HAS_POST')
+    creator = RelationshipTo(User, 'CREATED_BY', model=CreatedRel)
+    followers = RelationshipFrom(User, 'FOLLOWS')
+    likes = RelationshipFrom(User, 'LIKES')
+    posts = RelationshipTo(Post, 'HAS_POST')
 
 class PagePostRel(StructuredRel):
     created = DateTimeProperty(default_now=True)
 
-class PagePostNode(StructuredNode):
+class PagePost(StructuredNode):
     uid = UniqueIdProperty()
-    page = RelationshipTo(PageNode, 'BELONGS_TO')
-    post = RelationshipTo(PostNode, 'INCLUDES', model=PagePostRel)
+    page = RelationshipTo(Page, 'BELONGS_TO')
+    post = RelationshipTo(Post, 'INCLUDES', model=PagePostRel)
