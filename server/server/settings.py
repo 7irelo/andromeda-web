@@ -95,7 +95,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'server.wsgi.application'
 
 # Neo4j Database Configuration
-NEOMODEL_NEO4J_BOLT_URL = os.getenv('NEO4J_BOLT_URL', 'bolt://neo4j:password@localhost:7687')
+NEOMODEL_NEO4J_BOLT_URL = 'bolt://neo4j:password@localhost:7687'
 
 # If you are using neomodel or a similar library, you won't need to specify a traditional `DATABASES` setting
 DATABASES = {}
@@ -140,5 +140,12 @@ CORS_ALLOW_CREDENTIALS = True
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
 
+# Custom authentication backends
+AUTHENTICATION_BACKENDS = [
+    'users.backends.Neo4jBackend',  # Custom Neo4j authentication backend
+    'django.contrib.auth.backends.ModelBackend',  # Default Django backend (for admin, etc.)
+]
+
+# Session settings to use cache
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'

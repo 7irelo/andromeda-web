@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import PageNode, PagePostNode
+from .models import Page, PagePost
 
 class PageSerializer(serializers.Serializer):
     uid = serializers.CharField(read_only=True)
@@ -21,7 +21,7 @@ class PageSerializer(serializers.Serializer):
         return len(obj.likes.all())
 
     def create(self, validated_data):
-        page = PageNode(**validated_data)
+        page = Page(**validated_data)
         page.save()
         return page
 

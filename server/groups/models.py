@@ -1,6 +1,4 @@
-from neomodel import (
-    StructuredNode, StringProperty, DateTimeProperty, UniqueIdProperty, RelationshipTo, RelationshipFrom, BooleanProperty
-)
+from neomodel import StructuredNode, StringProperty, DateTimeProperty, UniqueIdProperty, RelationshipTo, RelationshipFrom, BooleanProperty
 from users.models import User
 
 class Group(StructuredNode):

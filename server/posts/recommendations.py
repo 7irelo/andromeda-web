@@ -1,8 +1,9 @@
-from .models import Post, User
+from .models import Post
+from users.models import UserNode
 
-def get_recommended_posts(user: User):
+def get_recommended_posts(user: UserNode):
     liked_posts = Post.nodes.filter(likes=user)
-    similar_users = User.nodes.filter(post_likes__in=liked_posts).exclude(uid=user.uid).distinct()
+    similar_users = UserNode.nodes.filter(post_likes__in=liked_posts).exclude(uid=user.uid).distinct()
     recommended_posts = Post.nodes.filter(likes__in=similar_users).exclude(likes=user).distinct()
     user_liked_tags = Post.nodes.filter(likes=user).values_list('tags', flat=True)
     

@@ -9,7 +9,7 @@ class Chat(StructuredNode):
     participants = RelationshipTo(User, 'PARTICIPATED_IN')
 
     def __str__(self):
-        return self.text[:50]  # Display first 50 characters of text field
+        return self.text[:50]
 
 class Message(StructuredNode):
     uid = UniqueIdProperty(primary_key=True)
@@ -20,4 +20,4 @@ class Message(StructuredNode):
     chat = RelationshipFrom(Chat, 'HAS_MESSAGE')
 
     def __str__(self):
-        return self.text[:50]  # Display first 50 characters of message text
+        return self.text[:50]
