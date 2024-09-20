@@ -1,0 +1,57 @@
+<div class="chat-window">
+  <!-- Messages -->
+  <div class="messages-area">
+    <div
+      *ngFor="let msg of messages"
+      class="message-row"
+      [class.mine]="isMyMessage(msg)"
+    >
+      <img
+        *ngIf="!isMyMessage(msg)"
+        [src]="msg.sender?.avatar_url || 'assets/default-avatar.png'"
+        class="avatar sm"
+        [alt]="msg.sender?.username"
+      />
+      <div class="bubble-wrapper">
+        <div class="sender-name text-xs text-secondary" *ngIf="!isMyMessage(msg)">
+          {{ msg.sender?.full_name }}
+        </div>
+        <div class="bubble" [class.mine]="isMyMessage(msg)" [class.deleted]="msg.is_deleted">
+          {{ msg.is_deleted ? 'This message was deleted.' : msg.content }}
+        </div>
+        <div class="msg-time text-xs text-secondary">{{ timeLabel(msg.created_at) }}</div>
+      </div>
+    </div>
+
+    <!-- Typing indicator -->
+    <div class="message-row" *ngIf="typingUsers.length > 0">
+      <div class="typing-indicator">
+        <span>{{ typingUsers.join(', ') }} {{ typingUsers.length === 1 ? 'is' : 'are' }} typing</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+      </div>
+    </div>
+
+    <div #messagesEnd></div>
+  </div>
+
+  <!-- Input -->
+  <div class="message-input-area">
+    <button mat-icon-button>
+      <mat-icon>add_circle</mat-icon>
+    </button>
+    <input
+      class="msg-input"
+      type="text"
+      [(ngModel)]="messageText"
+      placeholder="Aa"
+      (keyup.enter)="sendMessage()"
+      (input)="onTyping()"
+    />
+    <button mat-icon-button>
+      <mat-icon>emoji_emotions</mat-icon>
+    </button>
+    <button mat-icon-button (click)="sendMessage()" [disabled]="!messageText.trim()">
+      <mat-icon color="primary">send</mat-icon>
+    </button>
+  </div>
+</div>

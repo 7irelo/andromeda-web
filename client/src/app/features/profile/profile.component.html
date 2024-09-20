@@ -1,0 +1,217 @@
+<div class="profile-page" *ngIf="!loading && profile">
+  <!-- Cover + Avatar -->
+  <div class="profile-hero">
+    <!-- Cover image — overflow:hidden lives here only for the image crop -->
+    <div class="profile-cover">
+      <img [src]="profile.cover_photo_url || 'assets/default-cover.png'" alt="Cover" class="cover-img" />
+      <button *ngIf="isSelf" class="cover-edit-btn" (click)="openCoverPicker()" [disabled]="uploadingCover">
+        <mat-spinner *ngIf="uploadingCover" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!uploadingCover">add_a_photo</mat-icon>
+      </button>
+      <input #coverInput type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
+    </div>
+    <!-- Avatar wrap is a sibling of the cover, NOT inside overflow:hidden -->
+    <div class="profile-avatar-wrap">
+      <img [src]="profile.avatar_url || 'assets/default-avatar.png'" class="avatar xxl" [alt]="profile.username" />
+      <button *ngIf="isSelf" class="avatar-edit-btn" (click)="openAvatarPicker()" [disabled]="uploadingAvatar">
+        <mat-spinner *ngIf="uploadingAvatar" diameter="18"></mat-spinner>
+        <mat-icon *ngIf="!uploadingAvatar">photo_camera</mat-icon>
+      </button>
+      <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarSelected($event)" />
+    </div>
+  </div>
+
+  <!-- Profile Info -->
+  <div class="profile-info">
+    <div class="profile-name-section">
+      <div>
+        <h1 class="profile-name">
+          {{ profile.full_name }}
+          <mat-icon class="verified" *ngIf="profile.is_verified">verified</mat-icon>
+        </h1>
+        <p class="text-secondary">&#64;{{ profile.username }}</p>
+        <p class="bio" *ngIf="profile.bio">{{ profile.bio }}</p>
+        <div class="profile-meta">
+          <span *ngIf="profile.location"><mat-icon>location_on</mat-icon>{{ profile.location }}</span>
+          <span *ngIf="profile.website"><mat-icon>link</mat-icon>{{ profile.website }}</span>
+        </div>
+      </div>
+      <div class="profile-actions" *ngIf="!isSelf">
+        <!-- Already friends -->
+        <ng-container *ngIf="profile.is_friend">
+          <span class="badge badge-success" style="padding:8px 16px;font-size:14px">
+            <mat-icon style="font-size:18px;width:18px;height:18px;margin-right:4px">people</mat-icon> Friends
+          </span>
+          <button mat-stroked-button (click)="startChat()">
+            <mat-icon>chat</mat-icon> Message
+          </button>
+          <button mat-stroked-button color="warn" (click)="unfriend()">
+            <mat-icon>person_remove</mat-icon> Unfriend
+          </button>
+        </ng-container>
+
+        <!-- Incoming request from this user -->
+        <ng-container *ngIf="!profile.is_friend && hasReceivedRequest">
+          <button mat-flat-button color="primary" (click)="acceptIncomingRequest()">
+            <mat-icon>check</mat-icon> Accept Request
+          </button>
+          <button mat-stroked-button (click)="startChat()">
+            <mat-icon>chat</mat-icon> Message
+          </button>
+        </ng-container>
+
+        <!-- Outgoing request sent -->
+        <ng-container *ngIf="!profile.is_friend && !hasReceivedRequest && hasPendingRequest">
+          <button mat-stroked-button disabled>
+            <mat-icon>schedule</mat-icon> Request Sent
+          </button>
+          <button mat-stroked-button (click)="startChat()">
+            <mat-icon>chat</mat-icon> Message
+          </button>
+        </ng-container>
+
+        <!-- No relationship -->
+        <ng-container *ngIf="!profile.is_friend && !hasReceivedRequest && !hasPendingRequest">
+          <button mat-flat-button color="primary" (click)="addFriend()">
+            <mat-icon>person_add</mat-icon> Add Friend
+          </button>
+          <button mat-stroked-button (click)="startChat()">
+            <mat-icon>chat</mat-icon> Message
+          </button>
+        </ng-container>
+      </div>
+      <div class="profile-actions" *ngIf="isSelf">
+        <button mat-flat-button color="primary" (click)="openEditDialog()">
+          <mat-icon>edit</mat-icon> Edit Profile
+        </button>
+        <button mat-stroked-button color="warn" (click)="openDeleteDialog()">
+          <mat-icon>delete_forever</mat-icon> Delete Account
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="profile-stats">
+      <div class="stat">
+        <div class="stat-value">{{ profile.posts_count | number }}</div>
+        <div class="stat-label">Posts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ profile.friends_count | number }}</div>
+        <div class="stat-label">Friends</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="profile-content">
+    <mat-tab-group>
+      <mat-tab label="Posts">
+        <div class="posts-col">
+          <app-post-card
+            *ngFor="let post of posts"
+            [post]="post"
+            (postDeleted)="onPostDeleted($event)"
+          ></app-post-card>
+          <div *ngIf="posts.length === 0" class="empty-posts">
+            <mat-icon>article</mat-icon>
+            <p>No posts yet</p>
+          </div>
+        </div>
+      </mat-tab>
+      <mat-tab label="About">
+        <div class="about-section">
+          <div class="about-item" *ngIf="profile.bio">
+            <mat-icon>info</mat-icon> {{ profile.bio }}
+          </div>
+          <div class="about-item" *ngIf="profile.location">
+            <mat-icon>location_on</mat-icon> Lives in {{ profile.location }}
+          </div>
+          <div class="about-item" *ngIf="profile.website">
+            <mat-icon>link</mat-icon> <a [href]="profile.website" target="_blank">{{ profile.website }}</a>
+          </div>
+          <div class="about-item">
+            <mat-icon>calendar_today</mat-icon> Joined {{ profile.created_at | date:'MMMM yyyy' }}
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>
+
+<div class="loading-center" *ngIf="loading">
+  <mat-spinner diameter="48"></mat-spinner>
+</div>
+
+<!-- ── Delete Account Dialog ─────────────────────────────────────── -->
+<div class="edit-overlay" *ngIf="isConfirmingDelete" (click)="cancelDelete()"></div>
+<div class="edit-dialog card" *ngIf="isConfirmingDelete">
+  <div class="edit-dialog-header">
+    <h2>Delete Account</h2>
+    <button mat-icon-button (click)="cancelDelete()"><mat-icon>close</mat-icon></button>
+  </div>
+  <div class="edit-dialog-body">
+    <p class="delete-warning">This will permanently delete your account and all your data. This cannot be undone.</p>
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Type your username to confirm</mat-label>
+      <input matInput [(ngModel)]="deleteInput" [placeholder]="currentUser?.username ?? ''" />
+    </mat-form-field>
+  </div>
+  <div class="edit-dialog-actions">
+    <button mat-stroked-button (click)="cancelDelete()" [disabled]="deleting">Cancel</button>
+    <button mat-flat-button color="warn"
+      [disabled]="deleteInput !== currentUser?.username || deleting"
+      (click)="confirmDeleteAccount()">
+      <mat-spinner *ngIf="deleting" diameter="18"></mat-spinner>
+      {{ deleting ? 'Deleting...' : 'Delete My Account' }}
+    </button>
+  </div>
+</div>
+
+<!-- ── Edit Profile Dialog ──────────────────────────────────────── -->
+<div class="edit-overlay" *ngIf="isEditing" (click)="cancelEdit()"></div>
+<div class="edit-dialog card" *ngIf="isEditing" [formGroup]="editForm">
+  <div class="edit-dialog-header">
+    <h2>Edit Profile</h2>
+    <button mat-icon-button (click)="cancelEdit()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="edit-dialog-body">
+    <div class="edit-row">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>First Name</mat-label>
+        <input matInput formControlName="first_name" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Last Name</mat-label>
+        <input matInput formControlName="last_name" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Bio</mat-label>
+      <textarea matInput formControlName="bio" rows="3" placeholder="Tell the world about yourself..."></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Location</mat-label>
+      <mat-icon matPrefix>location_on</mat-icon>
+      <input matInput formControlName="location" placeholder="City, Country" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Website</mat-label>
+      <mat-icon matPrefix>link</mat-icon>
+      <input matInput formControlName="website" placeholder="https://example.com" />
+    </mat-form-field>
+  </div>
+
+  <div class="edit-dialog-actions">
+    <button mat-stroked-button (click)="cancelEdit()" [disabled]="saving">Cancel</button>
+    <button mat-flat-button color="primary" (click)="saveProfile()" [disabled]="saving">
+      <mat-icon *ngIf="!saving">check</mat-icon>
+      <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
+      {{ saving ? 'Saving...' : 'Save Changes' }}
+    </button>
+  </div>
+</div>

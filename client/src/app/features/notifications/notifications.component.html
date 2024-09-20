@@ -1,0 +1,51 @@
+<div class="notifications-page">
+  <div class="page-header-gradient notif-header">
+    <div>
+      <h1>Notifications</h1>
+      <p style="opacity:.85;margin-top:4px;font-size:14px">Stay up to date with your activity</p>
+    </div>
+    <button mat-flat-button (click)="markAllRead()" *ngIf="notifications.length > 0" style="background:#fff;color:var(--primary);font-weight:600">
+      <mat-icon>done_all</mat-icon> Mark all read
+    </button>
+  </div>
+
+  <div class="loading-center" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div class="notif-list" *ngIf="!loading">
+    <div
+      *ngFor="let n of notifications"
+      class="notif-item"
+      [class.unread]="!n.is_read"
+      (click)="markRead(n)"
+    >
+      <div class="notif-avatar-wrap">
+        <img
+          [src]="n.sender?.avatar_url || 'assets/default-avatar.png'"
+          class="avatar md"
+          [alt]="n.sender?.username || 'System'"
+        />
+        <div class="notif-type-icon">
+          <mat-icon>{{ getIcon(n.notification_type, n.extra) }}</mat-icon>
+        </div>
+      </div>
+
+      <div class="notif-content">
+        <div class="notif-title">{{ n.title }}</div>
+        <div class="notif-body text-secondary text-sm" *ngIf="n.body">{{ n.body }}</div>
+        <div class="notif-time text-xs text-secondary">{{ timeAgo(n.created_at) }}</div>
+      </div>
+
+      <div class="unread-dot" *ngIf="!n.is_read"></div>
+    </div>
+
+    <div class="empty-state" *ngIf="notifications.length === 0">
+      <div class="empty-icon">
+        <mat-icon>notifications_none</mat-icon>
+      </div>
+      <h3>All caught up!</h3>
+      <p>You'll be notified when something happens</p>
+    </div>
+  </div>
+</div>
