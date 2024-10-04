@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import Product, ProductComment
 from .serializers import ProductSerializer, ProductCommentSerializer
+from .recommendations import get_recommended_products
 
 class RecommendedProductsView(APIView):
     permission_classes = [IsAuthenticated]

@@ -1,41 +1,59 @@
-from neomodel import StructuredNode, StringProperty, UniqueIdProperty, BooleanProperty, DateTimeProperty, RelationshipTo
-from django.contrib.auth.hashers import make_password, check_password
+from neomodel import StructuredNode, StringProperty, EmailProperty, BooleanProperty, DateTimeProperty
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils import timezone
+from django.db import models
 
-class User(StructuredNode):
-    uid = UniqueIdProperty(primary_key=True)
-    username = StringProperty(unique_index=True, required=True)
-    first_name = StringProperty()
-    last_name = StringProperty()
-    email = StringProperty(unique_index=True)
-    avatar = StringProperty(default='avatars/profile.png')
-    bio = StringProperty()
-    password = StringProperty(required=True)
-    is_staff = BooleanProperty(default=False)
+class User(StructuredNode, AbstractBaseUser, PermissionsMixin):
+    """
+    Custom Neo4j-based User model that also integrates with Django's authentication system.
+    """
+    username = StringProperty(unique=True, required=True)
+    email = EmailProperty(unique=True, required=True)
+    date_joined = DateTimeProperty(default=timezone.now)
+    last_login = DateTimeProperty(default=timezone.now)
     is_active = BooleanProperty(default=True)
+    is_staff = BooleanProperty(default=False)
     is_superuser = BooleanProperty(default=False)
-    last_login = DateTimeProperty()
-    date_joined = DateTimeProperty()
 
-    friends = RelationshipTo('User', 'FRIEND')
+    # Django User Manager
+    class CustomUserManager(BaseUserManager):
+        def create_user(self, username, email, password=None):
+            if not email:
+                raise ValueError('Users must have an email address')
+            if not username:
+                raise ValueError('Users must have a username')
+
+            user = User(username=username, email=email)
+            user.set_password(password)  # Assuming you have a set_password method
+            user.save()
+            return user
+
+        def create_superuser(self, username, email, password=None):
+            user = self.create_user(username, email, password)
+            user.is_superuser = True
+            user.is_staff = True
+            user.save()
+            return user
+
+    objects = CustomUserManager()
+
+    USERNAME_FIELD = 'username'
+    EMAIL_FIELD = 'email'
+    REQUIRED_FIELDS = ['email']
 
     def __str__(self):
         return self.username
 
-    def get_full_name(self):
-        full_name = f"{self.first_name} {self.last_name}".strip()
-        return full_name if full_name else self.username
-
-    def get_short_name(self):
-        return self.first_name if self.first_name else self.username
-
+    # Add a method to handle password hashing
     def set_password(self, raw_password):
-        self.password = make_password(raw_password)
+        self.password = self.hash_password(raw_password)  # Assuming you implement hash_password
 
     def check_password(self, raw_password):
+        return self.password == self.hash_password(raw_password)
+
+    def hash_password(self, raw_password):
+        # Define a password hashing logic or use Django's built-in hasher
+        from django.contrib.auth.hashers import make_password, check_password
+        if self.password is None:
+            return make_password(raw_password)
         return check_password(raw_password, self.password)
-
-    def has_perm(self, perm, obj=None):
-        return self.is_superuser
-
-    def has_module_perms(self, app_label):
-        return self.is_superuser
