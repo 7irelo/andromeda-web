@@ -1,13 +1,5 @@
 """
 Django settings for server project.
-
-Based on 'django-admin startproject' using Django 2.1.2.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/2.1/topics/settings/
-
-For the full list of settings and their values, see
-https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
@@ -40,13 +32,11 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'posts.apps.PostsConfig',
     'chats.apps.ChatsConfig',
-    'watch.apps.WatchConfig',
     'notifications.apps.NotificationsConfig',
     'marketplace.apps.MarketplaceConfig',
     'groups.apps.GroupsConfig',
     'pages.apps.PagesConfig',
-    # Neo4j related apps
-    'neomodel',
+    'neomodel',  # Neo4j integration
 ]
 
 # Middleware framework
@@ -60,16 +50,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
-}
 
 ROOT_URLCONF = 'server.urls'
 
@@ -95,9 +75,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'server.wsgi.application'
 
 # Neo4j Database Configuration
-NEOMODEL_NEO4J_BOLT_URL = 'bolt://neo4j:password@localhost:7687'
+NEOMODEL_NEO4J_BOLT_URL = 'bolt://neo4j:password@localhost:7687'  # Ensure Neo4j is running
 
-# If you are using neomodel or a similar library, you won't need to specify a traditional `DATABASES` setting
+# You won't need the `DATABASES` setting because Neo4j is not a traditional relational database
 DATABASES = {}
 
 # Password validation

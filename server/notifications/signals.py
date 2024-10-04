@@ -2,7 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Notification
 from posts.models import Post
-from messages.models import Message  # Assuming you have a Message model
+from chats.models import Message
 from users.models import User
 from datetime import datetime
 

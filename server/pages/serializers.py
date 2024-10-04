@@ -38,6 +38,6 @@ class PagePostSerializer(serializers.Serializer):
         return obj.post.single().uid if obj.post else None
 
     def create(self, validated_data):
-        page_post = PagePostNode(**validated_data)
+        page_post = PagePost(**validated_data)
         page_post.save()
         return page_post
