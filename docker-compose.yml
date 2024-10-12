@@ -1,0 +1,357 @@
+services:
+  # ============================================================
+  # Databases
+  # ============================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: andromeda_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-andromeda}
+      POSTGRES_USER: ${POSTGRES_USER:-andromeda}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-andromeda_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - andromeda_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-andromeda}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: andromeda_neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-andromeda_secret}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4J_dbms_security_procedures_allowlist: apoc.*
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/import
+      - neo4j_plugins:/plugins
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    networks:
+      - andromeda_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+
+  redis:
+    image: redis:7-alpine
+    container_name: andromeda_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret} --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - andromeda_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: andromeda_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-andromeda}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-andromeda_secret}
+      RABBITMQ_DEFAULT_VHOST: andromeda
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - andromeda_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  minio:
+    image: minio/minio
+    container_name: andromeda_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-andromeda}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-andromeda_secret}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - andromeda_network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  createbuckets:
+    image: minio/mc
+    container_name: andromeda_createbuckets
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-andromeda} $${MINIO_ROOT_PASSWORD:-andromeda_secret};
+      mc mb --ignore-existing myminio/andromeda-media;
+      mc anonymous set download myminio/andromeda-media;
+      exit 0;
+      "
+    networks:
+      - andromeda_network
+
+  # ============================================================
+  # Application Services
+  # ============================================================
+  django:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: andromeda_django
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py makemigrations --noinput &&
+             python manage.py migrate --fake-initial --noinput &&
+             python manage.py collectstatic --noinput &&
+             uvicorn andromeda.asgi:application --host 0.0.0.0 --port 8000 --workers 4 --ws websockets"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - NEO4J_BOLT_URL=bolt://neo4j:${NEO4J_PASSWORD:-andromeda_secret}@neo4j:7687
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-andromeda}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-andromeda_secret}
+      - MINIO_BUCKET=andromeda-media
+      - MINIO_EXTERNAL_URL=http://localhost:9000
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    ports:
+      - "8000:8000"
+    networks:
+      - andromeda_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  celery_worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: andromeda_celery_worker
+    restart: unless-stopped
+    command: celery -A andromeda worker --loglevel=info --concurrency=4 -Q notifications,messages,default
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - NEO4J_BOLT_URL=bolt://neo4j:${NEO4J_PASSWORD:-andromeda_secret}@neo4j:7687
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+    volumes:
+      - media_data:/app/media
+    networks:
+      - andromeda_network
+    depends_on:
+      - django
+    healthcheck:
+      test: ["CMD-SHELL", "grep -qa celery /proc/1/cmdline || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  celery_beat:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: andromeda_celery_beat
+    restart: unless-stopped
+    command: celery -A andromeda beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+    networks:
+      - andromeda_network
+    depends_on:
+      - django
+    healthcheck:
+      test: ["CMD-SHELL", "grep -qa celery /proc/1/cmdline || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  flower:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: andromeda_flower
+    restart: unless-stopped
+    command: celery -A andromeda flower --port=5555 --broker=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+    ports:
+      - "5555:5555"
+    networks:
+      - andromeda_network
+    depends_on:
+      - rabbitmq
+      - celery_worker
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5555/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ============================================================
+  # Frontend + Reverse Proxy
+  # ============================================================
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: andromeda_client
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    volumes:
+      - media_data:/app/media:ro
+    networks:
+      - andromeda_network
+    depends_on:
+      - django
+
+  # ============================================================
+  # Monitoring Exporters
+  # ============================================================
+  redis_exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: andromeda_redis_exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secret}
+    ports:
+      - "9121:9121"
+    networks:
+      - andromeda_network
+    depends_on:
+      - redis
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: andromeda_postgres_exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-andromeda}:${POSTGRES_PASSWORD:-andromeda_secret}@postgres:5432/${POSTGRES_DB:-andromeda}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks:
+      - andromeda_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ============================================================
+  # Prometheus & Grafana
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: andromeda_prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - andromeda_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: andromeda_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin_secret}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_DOMAIN: localhost
+      GF_SMTP_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - andromeda_network
+    depends_on:
+      - prometheus
+
+networks:
+  andromeda_network:
+    driver: bridge
+    name: andromeda_network
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
+  media_data:
+  static_data:
+  prometheus_data:
+  grafana_data:
