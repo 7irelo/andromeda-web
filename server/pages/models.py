@@ -1,27 +1,27 @@
-from neomodel import StructuredNode, StringProperty, DateTimeProperty, UniqueIdProperty, RelationshipTo, RelationshipFrom, StructuredRel
+from django.db import models
 from users.models import User
 from posts.models import Post
 
-class CreatedRel(StructuredRel):
-    created = DateTimeProperty(default_now=True)
-
-class Page(StructuredNode):
-    uid = UniqueIdProperty()
-    name = StringProperty(unique_index=True, required=True)
-    description = StringProperty()
-    created = DateTimeProperty(default_now=True)
-    updated = DateTimeProperty(default_now=True)
+class Page(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField()
+    created = models.DateTimeField(auto_now=True)
+    updated = models.DateTimeField(auto_now=True)
 
     # Relationships
-    creator = RelationshipTo(User, 'CREATED_BY', model=CreatedRel)
-    followers = RelationshipFrom(User, 'FOLLOWS')
-    likes = RelationshipFrom(User, 'LIKES')
-    posts = RelationshipTo(Post, 'HAS_POST')
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    followers = models.ManyToManyField(User, related_name='participated_posts')
+    likes = models.ManyToManyField(User, related_name='liked_pages')
+    posts = post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='posts')
 
-class PagePostRel(StructuredRel):
-    created = DateTimeProperty(default_now=True)
+class PagePost(models.Model):
+    content = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    creator = models.ForeignKey(Page, on_delete=models.CASCADE, related_name='page_posts')
+    participants = models.ManyToManyField(User, related_name='participated_posts')
+    likes = models.ManyToManyField(User, related_name='liked_posts')
 
-class PagePost(StructuredNode):
-    uid = UniqueIdProperty()
-    page = RelationshipTo(Page, 'BELONGS_TO')
-    post = RelationshipTo(Post, 'INCLUDES', model=PagePostRel)
+    def __str__(self):
+        return f"Post by {self.creator}: {self.content[:30]}"
+
