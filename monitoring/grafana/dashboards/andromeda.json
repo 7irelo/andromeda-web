@@ -1,0 +1,142 @@
+{
+  "title": "Andromeda – Application Overview",
+  "uid": "andromeda-overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Request Rate (req/s)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "sum(rate(django_http_requests_total_by_method_total[1m]))",
+          "legendFormat": "req/s"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "HTTP Error Rate (5xx)",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "sum(rate(django_http_responses_total_by_status_total{status=~\"5..\"}[1m]))",
+          "legendFormat": "errors/s"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Active WebSocket Connections",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "django_channels_websocket_handshake_requests_total",
+          "legendFormat": "connections"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "RabbitMQ Messages Ready",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "sum(rabbitmq_queue_messages_ready)",
+          "legendFormat": "queued"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "HTTP Request Rate by Endpoint",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by (view) (rate(django_http_requests_total_by_view_transport_method_total[1m]))",
+          "legendFormat": "{{view}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "HTTP Response Time p95 (ms)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(django_http_requests_latency_seconds_by_view_method_bucket[1m])) by (le, view)) * 1000",
+          "legendFormat": "p95 {{view}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Redis Memory Usage",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 12, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "redis_memory_used_bytes",
+          "legendFormat": "Used Memory"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Redis Hit Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 12, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "rate(redis_keyspace_hits_total[1m]) / (rate(redis_keyspace_hits_total[1m]) + rate(redis_keyspace_misses_total[1m]))",
+          "legendFormat": "Hit Rate"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "PostgreSQL Connections",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 12, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "pg_stat_activity_count",
+          "legendFormat": "Active Connections"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Celery Task Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 18, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "expr": "sum(rate(flower_tasks_total[1m])) by (task)",
+          "legendFormat": "{{task}}"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "RabbitMQ Queue Depth",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 18, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "expr": "rabbitmq_queue_messages",
+          "legendFormat": "{{queue}}"
+        }
+      ]
+    }
+  ]
+}
