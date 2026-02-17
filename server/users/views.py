@@ -1,79 +1,135 @@
-from rest_framework import status
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from django.core.exceptions import PermissionDenied
-from .models import User
-from .serializers import UserSerializer
-from posts.models import Post
-from posts.serializers import PostSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
-class UserView(APIView):
-    permission_classes = [IsAuthenticated]
+from .models import FriendRequest, Follow, Block
+from .serializers import (
+    UserSerializer, RegisterSerializer,
+    AndromedaTokenSerializer, FriendRequestSerializer,
+)
 
-    def get(self, request, username):
-        user = User.nodes.get_or_none(username=username)
-        if user is None:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
+User = get_user_model()
 
-    def put(self, request, username):
-        user = User.nodes.get_or_none(username=username)
-        if user is None or user != request.user:
-            raise PermissionDenied("You do not have permission to perform this action.")
 
-        serializer = UserSerializer(user, data=request.data, partial=True)
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': UserSerializer(user, context={'request': request}).data,
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        }, status=status.HTTP_201_CREATED)
 
-    def delete(self, request, username):
-        user = User.nodes.get_or_none(username=username)
-        if user is None or user != request.user:
-            raise PermissionDenied("You do not have permission to perform this action.")
-        
-        user.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
-class FriendsView(APIView):
-    permission_classes = [IsAuthenticated]
+class LoginView(TokenObtainPairView):
+    serializer_class = AndromedaTokenSerializer
+    permission_classes = [permissions.AllowAny]
 
-    def get(self, request, username):
-        user = User.nodes.get_or_none(username=username)
-        if user is None:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        friends = user.friends.all()
-        serializer = UserSerializer(friends, many=True)
-        return Response(serializer.data)
 
-    def post(self, request, username):
-        user = User.nodes.get_or_none(username=username)
-        if user is None:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        if user == request.user:
-            return Response({"detail": "You cannot add yourself as a friend."}, status=status.HTTP_400_BAD_REQUEST)
+class MeView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
 
-        request.user.friends.connect(user)
-        return Response({"detail": "Friend added successfully."}, status=status.HTTP_201_CREATED)
+    def get_object(self):
+        return self.request.user
 
-    def delete(self, request, username):
-        user = User.nodes.get_or_none(username=username)
-        if user is None:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        if not request.user.friends.is_connected(user):
-            return Response({"detail": "Friendship does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        request.user.friends.disconnect(user)
-        return Response({"detail": "Friend removed successfully."}, status=status.HTTP_204_NO_CONTENT)
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
 
-class UserPostsView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        qs = super().get_queryset()
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(
+                Q(username__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search)
+            )
+        return qs
 
-    def get(self, request, username):
-        user = User.nodes.get_or_none(username=username)
-        if user is None:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        posts = Post.objects.filter(creator=user)
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
+    def get_object(self):
+        # Allow lookup by username or pk
+        lookup = self.kwargs.get('pk')
+        if lookup and not lookup.isdigit():
+            return get_object_or_404(User, username=lookup)
+        return super().get_object()
+
+    @action(detail=False, methods=['get'])
+    def suggestions(self, request):
+        """Friend / follow suggestions via Neo4j graph."""
+        try:
+            from users.graph_models import UserNode
+            node = UserNode.nodes.get_or_none(user_id=request.user.id)
+            if node:
+                recs = node.get_friend_recommendations()
+                user_ids = [r['user_id'] for r in recs]
+                users = User.objects.filter(id__in=user_ids)
+                return Response(UserSerializer(users, many=True, context={'request': request}).data)
+        except Exception:
+            pass
+        # Fallback: users not yet followed
+        blocked = Block.objects.filter(blocker=request.user).values_list('blocked_id', flat=True)
+        following = Follow.objects.filter(follower=request.user).values_list('following_id', flat=True)
+        users = User.objects.exclude(
+            id__in=list(following) + list(blocked) + [request.user.id]
+        ).order_by('?')[:10]
+        return Response(UserSerializer(users, many=True, context={'request': request}).data)
+
+
+class FriendRequestViewSet(viewsets.ModelViewSet):
+    serializer_class = FriendRequestSerializer
+
+    def get_queryset(self):
+        return FriendRequest.objects.filter(
+            Q(sender=self.request.user) | Q(receiver=self.request.user)
+        ).select_related('sender', 'receiver')
+
+    def perform_create(self, serializer):
+        receiver_id = self.request.data.get('receiver_id')
+        receiver = get_object_or_404(User, id=receiver_id)
+        serializer.save(sender=self.request.user, receiver=receiver)
+
+    @action(detail=True, methods=['post'])
+    def accept(self, request, pk=None):
+        fr = get_object_or_404(FriendRequest, pk=pk, receiver=request.user, status='pending')
+        fr.status = FriendRequest.STATUS_ACCEPTED
+        fr.save()
+        # Create bidirectional follows
+        Follow.objects.get_or_create(follower=fr.sender, following=fr.receiver)
+        Follow.objects.get_or_create(follower=fr.receiver, following=fr.sender)
+        return Response({'status': 'accepted'})
+
+    @action(detail=True, methods=['post'])
+    def decline(self, request, pk=None):
+        fr = get_object_or_404(FriendRequest, pk=pk, receiver=request.user, status='pending')
+        fr.status = FriendRequest.STATUS_DECLINED
+        fr.save()
+        return Response({'status': 'declined'})
+
+
+class FollowView(generics.GenericAPIView):
+    def post(self, request, user_id):
+        target = get_object_or_404(User, id=user_id)
+        if target == request.user:
+            return Response({'error': 'Cannot follow yourself.'}, status=400)
+        _, created = Follow.objects.get_or_create(follower=request.user, following=target)
+        return Response({'following': True, 'created': created})
+
+    def delete(self, request, user_id):
+        target = get_object_or_404(User, id=user_id)
+        Follow.objects.filter(follower=request.user, following=target).delete()
+        return Response({'following': False})

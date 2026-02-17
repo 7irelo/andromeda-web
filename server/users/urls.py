@@ -1,8 +1,21 @@
-from django.urls import path
-from .views import UserView, FriendsView, UserPostsView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
+from .views import (
+    RegisterView, LoginView, MeView,
+    UserViewSet, FriendRequestViewSet, FollowView,
+)
+
+router = DefaultRouter()
+router.register('users', UserViewSet, basename='user')
+router.register('friend-requests', FriendRequestViewSet, basename='friend-request')
 
 urlpatterns = [
-    path('<str:username>/', UserView.as_view(), name='user-detail'),
-    path('<str:username>/friends/', FriendsView.as_view(), name='user-friends'),
-    path('<str:username>/posts/', UserPostsView.as_view(), name='user-posts'),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
+    path('token/blacklist/', TokenBlacklistView.as_view(), name='token-blacklist'),
+    path('me/', MeView.as_view(), name='me'),
+    path('users/<int:user_id>/follow/', FollowView.as_view(), name='follow'),
+    path('', include(router.urls)),
 ]
