@@ -1,39 +1,89 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils import timezone
 
-class UserManager(BaseUserManager):
-    def create_user(self, username, email, password=None):
-        if not email:
-            raise ValueError('Users must have an email address')
-        if not username:
-            raise ValueError('Users must have a username')
 
-        user = self.model(username=username, email=self.normalize_email(email))
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
+class User(AbstractUser):
+    """Extended user model for Andromeda."""
 
-    def create_superuser(self, username, email, password=None):
-        user = self.create_user(username, email, password)
-        user.is_superuser = True
-        user.is_staff = True
-        user.save(using=self._db)
-        return user
+    bio = models.TextField(blank=True, default='')
+    avatar = models.ImageField(upload_to='avatars/%Y/%m/', null=True, blank=True)
+    cover_photo = models.ImageField(upload_to='covers/%Y/%m/', null=True, blank=True)
+    location = models.CharField(max_length=120, blank=True)
+    website = models.URLField(blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
 
-class User(AbstractBaseUser, PermissionsMixin):
-    username = models.CharField(max_length=255, unique=True)
-    email = models.EmailField(unique=True)
-    date_joined = models.DateTimeField(default=timezone.now)
-    last_login = models.DateTimeField(default=timezone.now)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
+    # Denormalised counters (updated by signals)
+    followers_count = models.PositiveIntegerField(default=0)
+    following_count = models.PositiveIntegerField(default=0)
+    friends_count = models.PositiveIntegerField(default=0)
+    posts_count = models.PositiveIntegerField(default=0)
 
-    objects = UserManager()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
+    class Meta:
+        db_table = 'users'
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.username
+
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'.strip() or self.username
+
+    @property
+    def avatar_url(self):
+        if self.avatar:
+            return self.avatar.url
+        return '/static/default_avatar.png'
+
+
+class FriendRequest(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_ACCEPTED = 'accepted'
+    STATUS_DECLINED = 'declined'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_ACCEPTED, 'Accepted'),
+        (STATUS_DECLINED, 'Declined'),
+    ]
+
+    sender = models.ForeignKey(User, related_name='sent_requests', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name='received_requests', on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'friend_requests'
+        unique_together = ('sender', 'receiver')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.sender} → {self.receiver} ({self.status})'
+
+
+class Follow(models.Model):
+    """A follows B (directed)."""
+    follower = models.ForeignKey(User, related_name='following_set', on_delete=models.CASCADE)
+    following = models.ForeignKey(User, related_name='followers_set', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'follows'
+        unique_together = ('follower', 'following')
+
+    def __str__(self):
+        return f'{self.follower} follows {self.following}'
+
+
+class Block(models.Model):
+    blocker = models.ForeignKey(User, related_name='blocking_set', on_delete=models.CASCADE)
+    blocked = models.ForeignKey(User, related_name='blocked_by_set', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'blocks'
+        unique_together = ('blocker', 'blocked')
