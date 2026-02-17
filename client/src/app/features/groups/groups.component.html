@@ -1,0 +1,44 @@
+<div class="groups-page">
+  <div class="groups-header">
+    <h1>Groups</h1>
+    <button mat-flat-button color="primary" routerLink="/groups/create">
+      <mat-icon>add</mat-icon> Create Group
+    </button>
+  </div>
+
+  <mat-tab-group>
+    <mat-tab label="Discover">
+      <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+      <div class="groups-grid" *ngIf="!loading">
+        <div class="group-card card" *ngFor="let g of allGroups">
+          <div class="group-cover">
+            <img [src]="asGroup(g).cover_photo || 'assets/default-cover.png'" alt="" />
+          </div>
+          <div class="group-info">
+            <div class="font-semibold">{{ asGroup(g).name }}</div>
+            <div class="text-secondary text-sm">{{ asGroup(g).members_count | number }} members · {{ asGroup(g).privacy }}</div>
+            <div class="group-actions">
+              <button mat-stroked-button *ngIf="!asGroup(g).is_member" (click)="join(g)">Join Group</button>
+              <a mat-stroked-button *ngIf="asGroup(g).is_member" [routerLink]="'/groups/' + asGroup(g).id">View Group</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Your Groups">
+      <div class="groups-grid">
+        <div class="group-card card" *ngFor="let g of myGroups">
+          <div class="group-cover">
+            <img [src]="asGroup(g).cover_photo || 'assets/default-cover.png'" alt="" />
+          </div>
+          <div class="group-info">
+            <div class="font-semibold">{{ asGroup(g).name }}</div>
+            <div class="text-secondary text-sm">{{ asGroup(g).members_count | number }} members</div>
+            <a mat-stroked-button [routerLink]="'/groups/' + asGroup(g).id">View Group</a>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

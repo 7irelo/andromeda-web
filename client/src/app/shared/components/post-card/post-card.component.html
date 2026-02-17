@@ -1,0 +1,115 @@
+<article class="post-card">
+  <!-- Header -->
+  <div class="post-header">
+    <a [routerLink]="'/profile/' + post.author.username" class="author-link">
+      <img [src]="post.author.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="post.author.username" />
+    </a>
+    <div class="author-info">
+      <a [routerLink]="'/profile/' + post.author.username" class="author-name">
+        {{ post.author.full_name }}
+        <mat-icon class="verified" *ngIf="post.author.is_verified" title="Verified">verified</mat-icon>
+      </a>
+      <span class="post-time text-secondary text-xs">{{ timeAgo(post.created_at) }}</span>
+    </div>
+    <button mat-icon-button [matMenuTriggerFor]="postMenu" class="menu-btn">
+      <mat-icon>more_horiz</mat-icon>
+    </button>
+    <mat-menu #postMenu="matMenu">
+      <button mat-menu-item *ngIf="isOwner" (click)="deletePost()">
+        <mat-icon color="warn">delete</mat-icon> Delete
+      </button>
+      <button mat-menu-item>
+        <mat-icon>bookmark_add</mat-icon> Save Post
+      </button>
+      <button mat-menu-item>
+        <mat-icon>flag</mat-icon> Report
+      </button>
+    </mat-menu>
+  </div>
+
+  <!-- Content -->
+  <div class="post-content">
+    <p *ngIf="post.content">{{ post.content }}</p>
+    <img *ngIf="post.image" [src]="post.image" alt="Post image" class="post-image" />
+
+    <!-- Shared post -->
+    <div class="shared-post" *ngIf="post.shared_post_data">
+      <div class="post-header small">
+        <img [src]="post.shared_post_data.author.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="post.shared_post_data.author.username" />
+        <span class="author-name">{{ post.shared_post_data.author.full_name }}</span>
+      </div>
+      <p>{{ post.shared_post_data.content }}</p>
+    </div>
+  </div>
+
+  <!-- Counts -->
+  <div class="post-counts" *ngIf="post.likes_count > 0 || post.comments_count > 0">
+    <span *ngIf="post.likes_count > 0" class="text-secondary text-sm">
+      👍 {{ post.likes_count }}
+    </span>
+    <span *ngIf="post.comments_count > 0" class="text-secondary text-sm" (click)="toggleComments()" style="cursor:pointer">
+      {{ post.comments_count }} Comments
+    </span>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Actions -->
+  <div class="post-actions">
+    <!-- Like with reactions -->
+    <div class="reaction-wrapper" (mouseleave)="showReactions = false">
+      <button
+        class="action-btn"
+        [class.reacted]="!!post.my_reaction"
+        (click)="react(post.my_reaction || 'like')"
+        (mouseenter)="showReactions = true"
+      >
+        <span *ngIf="post.my_reaction">
+          {{ reactions.find(r => r.type === post.my_reaction)?.emoji }}
+        </span>
+        <mat-icon *ngIf="!post.my_reaction">thumb_up_off_alt</mat-icon>
+        <span>{{ post.my_reaction ? (reactions.find(r => r.type === post.my_reaction)?.label || 'Like') : 'Like' }}</span>
+      </button>
+      <div class="reactions-popup" *ngIf="showReactions">
+        <button *ngFor="let r of reactions" (click)="react(r.type)" class="reaction-btn" [title]="r.label">
+          {{ r.emoji }}
+        </button>
+      </div>
+    </div>
+
+    <button class="action-btn" (click)="toggleComments()">
+      <mat-icon>chat_bubble_outline</mat-icon>
+      <span>Comment</span>
+    </button>
+
+    <button class="action-btn" (click)="share()">
+      <mat-icon>share</mat-icon>
+      <span>Share</span>
+    </button>
+  </div>
+
+  <!-- Comments Section -->
+  <div class="comments-section" *ngIf="showComments">
+    <div class="divider"></div>
+    <div *ngFor="let comment of comments" class="comment">
+      <img [src]="comment.author.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="comment.author.username" />
+      <div class="comment-bubble">
+        <a [routerLink]="'/profile/' + comment.author.username" class="author-name">{{ comment.author.full_name }}</a>
+        <p>{{ comment.content }}</p>
+      </div>
+    </div>
+    <div class="comment-input">
+      <img [src]="'assets/default-avatar.png'" class="avatar sm" alt="You" />
+      <input
+        type="text"
+        [(ngModel)]="commentText"
+        placeholder="Write a comment..."
+        (keyup.enter)="submitComment()"
+        class="comment-field"
+      />
+      <button mat-icon-button (click)="submitComment()" [disabled]="!commentText.trim()">
+        <mat-icon>send</mat-icon>
+      </button>
+    </div>
+  </div>
+</article>

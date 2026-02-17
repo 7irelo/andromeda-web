@@ -1,0 +1,67 @@
+<div class="auth-page">
+  <div class="auth-left">
+    <div class="brand-hero">
+      <mat-icon class="hero-icon">hub</mat-icon>
+      <h1>Andromeda</h1>
+      <p>Join millions connecting across the universe.</p>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-card">
+      <h2 style="text-align:center;margin-bottom:16px;font-size:24px;">Create Account</h2>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <mat-form-field appearance="outline">
+            <mat-label>First Name</mat-label>
+            <input matInput formControlName="first_name" />
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Last Name</mat-label>
+            <input matInput formControlName="last_name" />
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" autocomplete="username" />
+          <mat-error>Min 3 characters</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Email Address</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="email" />
+          <mat-error>Valid email required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Password</mat-label>
+          <input matInput formControlName="password" [type]="hidePassword ? 'password' : 'text'" />
+          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error>Min 8 characters</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Confirm Password</mat-label>
+          <input matInput formControlName="password2" [type]="hidePassword ? 'password' : 'text'" />
+          <mat-error *ngIf="form.get('password2')?.errors?.['mismatch']">Passwords don't match</mat-error>
+        </mat-form-field>
+
+        <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+        <button mat-flat-button color="primary" class="submit-btn" type="submit" [disabled]="loading || form.invalid">
+          <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+          <span *ngIf="!loading">Create Account</span>
+        </button>
+
+        <p class="register-link">
+          Already have an account? <a routerLink="/login">Log In</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>

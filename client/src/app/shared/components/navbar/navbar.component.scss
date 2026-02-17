@@ -1,0 +1,115 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: var(--header-height);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+  box-shadow: var(--shadow);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+  flex-shrink: 0;
+
+  .brand-icon { font-size: 28px; }
+  .brand-name { display: none; @media (min-width: 768px) { display: block; } }
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: var(--bg);
+  border-radius: 20px;
+  padding: 0 12px;
+  height: 36px;
+  gap: 8px;
+  flex: 0 0 240px;
+
+  .search-icon { font-size: 18px; color: var(--text-secondary); }
+
+  .search-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    width: 180px;
+    color: var(--text-primary);
+
+    &::placeholder { color: var(--text-secondary); }
+  }
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+  gap: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 44px;
+  border-radius: var(--border-radius);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background .15s;
+
+  mat-icon { font-size: 24px; }
+
+  &:hover { background: var(--bg); color: var(--primary); }
+  &.active {
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    border-radius: 0;
+  }
+}
+
+.right-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: var(--border); }
+}
+
+.avatar-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
+
+  .avatar { border: 2px solid var(--primary); }
+}

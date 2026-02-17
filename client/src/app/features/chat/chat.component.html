@@ -1,0 +1,41 @@
+<div class="chat-layout">
+  <!-- Room List -->
+  <aside class="room-list">
+    <div class="room-list-header">
+      <h2>Chats</h2>
+      <button mat-icon-button title="New Message">
+        <mat-icon>edit_square</mat-icon>
+      </button>
+    </div>
+
+    <div class="room-item" *ngFor="let room of rooms" (click)="openRoom(room)" routerLinkActive="active" [routerLink]="['/chat', room.id]">
+      <img [src]="getRoomAvatar(room)" class="avatar md" [alt]="getRoomName(room)" />
+      <div class="room-info">
+        <div class="room-name">
+          {{ getRoomName(room) }}
+          <span class="unread-badge" *ngIf="room.unread_count > 0">{{ room.unread_count }}</span>
+        </div>
+        <div class="last-msg text-secondary text-xs">
+          {{ room.last_message?.content || 'No messages yet' }}
+          · {{ timeAgo(room.last_message?.created_at) }}
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && rooms.length === 0" class="empty-rooms">
+      <mat-icon>chat_bubble_outline</mat-icon>
+      <p>No conversations yet</p>
+    </div>
+  </aside>
+
+  <!-- Chat Window -->
+  <div class="chat-window-area">
+    <router-outlet></router-outlet>
+
+    <div class="chat-placeholder" *ngIf="rooms.length > 0">
+      <mat-icon>forum</mat-icon>
+      <h3>Select a conversation</h3>
+      <p>Choose from your existing conversations or start a new one.</p>
+    </div>
+  </div>
+</div>

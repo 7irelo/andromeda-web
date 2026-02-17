@@ -1,0 +1,53 @@
+.marketplace-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.marketplace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  h1 { font-size: 24px; font-weight: 700; }
+}
+
+.search-bar { margin-bottom: 8px; }
+
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.listing-card {
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: box-shadow .2s;
+  &:hover { box-shadow: var(--shadow-md); }
+}
+
+.listing-image {
+  height: 200px;
+  overflow: hidden;
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.listing-info { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.listing-price { font-size: 18px; font-weight: 700; }
+.listing-title { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.condition-new { color: var(--accent); font-weight: 600; }
+
+.loading-center { display: flex; justify-content: center; padding: 40px; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px;
+  color: var(--text-secondary);
+  gap: 12px;
+  mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: .4; }
+}

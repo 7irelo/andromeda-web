@@ -1,0 +1,59 @@
+<div class="friends-page">
+  <h1>Find Friends</h1>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Search people</mat-label>
+      <input matInput [(ngModel)]="searchQuery" (input)="search()" placeholder="Name, username..." />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <!-- Search Results -->
+  <div *ngIf="searchResults.length > 0">
+    <h2>Search Results</h2>
+    <div class="user-grid">
+      <div class="user-card-lg card" *ngFor="let user of searchResults">
+        <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar xl" [alt]="user.username" />
+        <div class="font-semibold">{{ user.full_name }}</div>
+        <div class="text-secondary text-sm">{{ user.friends_count }} mutual friends</div>
+        <button mat-flat-button color="primary" (click)="addFriend(user)">
+          <mat-icon>person_add</mat-icon> Add Friend
+        </button>
+        <a mat-button [routerLink]="'/profile/' + user.username">View Profile</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Requests -->
+  <div *ngIf="friendRequests.length > 0">
+    <h2>Friend Requests ({{ friendRequests.length }})</h2>
+    <div class="user-grid">
+      <div class="user-card-lg card" *ngFor="let req of friendRequests">
+        <img [src]="req.sender.avatar_url || 'assets/default-avatar.png'" class="avatar xl" [alt]="req.sender.username" />
+        <div class="font-semibold">{{ req.sender.full_name }}</div>
+        <div class="request-actions">
+          <button mat-flat-button color="primary" (click)="accept(req)">Confirm</button>
+          <button mat-stroked-button (click)="decline(req)">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suggestions -->
+  <div>
+    <h2>People You May Know</h2>
+    <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+    <div class="user-grid" *ngIf="!loading">
+      <div class="user-card-lg card" *ngFor="let user of suggestions">
+        <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar xl" [alt]="user.username" />
+        <div class="font-semibold">{{ user.full_name }}</div>
+        <div class="text-secondary text-sm">@{{ user.username }}</div>
+        <button mat-flat-button color="primary" (click)="addFriend(user)">
+          <mat-icon>person_add</mat-icon> Add Friend
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

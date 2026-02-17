@@ -1,0 +1,69 @@
+<div class="feed-layout">
+  <!-- Left Sidebar -->
+  <aside class="left-sidebar">
+    <div class="sidebar-card" *ngIf="currentUser">
+      <a [routerLink]="'/profile/' + currentUser.username" class="profile-preview">
+        <img [src]="currentUser.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="currentUser.username" />
+        <div>
+          <div class="font-semibold">{{ currentUser.full_name }}</div>
+          <div class="text-secondary text-sm">@{{ currentUser.username }}</div>
+        </div>
+      </a>
+      <div class="divider"></div>
+      <div class="stat-row">
+        <span class="text-secondary text-sm">Friends</span>
+        <span class="font-bold">{{ currentUser.friends_count }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="text-secondary text-sm">Followers</span>
+        <span class="font-bold">{{ currentUser.followers_count }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="text-secondary text-sm">Following</span>
+        <span class="font-bold">{{ currentUser.following_count }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Feed -->
+  <main class="feed-main">
+    <!-- Create Post -->
+    <app-create-post (postCreated)="onPostCreated($event)" [currentUser]="currentUser"></app-create-post>
+
+    <!-- Posts -->
+    <div *ngIf="loading && posts.length === 0" class="loading-center">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <app-post-card
+      *ngFor="let post of posts; trackBy: trackById"
+      [post]="post"
+      (postDeleted)="onPostDeleted($event)"
+    ></app-post-card>
+
+    <div *ngIf="loading && posts.length > 0" class="loading-center">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+
+    <div *ngIf="!hasMore && posts.length > 0" class="end-message">
+      You're all caught up! 🎉
+    </div>
+
+    <div *ngIf="!loading && posts.length === 0" class="empty-feed">
+      <mat-icon>article</mat-icon>
+      <p>Your feed is empty. Follow people to see their posts!</p>
+    </div>
+  </main>
+
+  <!-- Right Sidebar: Suggestions -->
+  <aside class="right-sidebar">
+    <div class="sidebar-card" *ngIf="suggestions.length > 0">
+      <h3 class="sidebar-title">People You May Know</h3>
+      <app-user-card
+        *ngFor="let user of suggestions"
+        [user]="user"
+        (actionDone)="loadSuggestions()"
+      ></app-user-card>
+    </div>
+  </aside>
+</div>

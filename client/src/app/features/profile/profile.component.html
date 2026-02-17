@@ -1,0 +1,103 @@
+<div class="profile-page" *ngIf="!loading && profile">
+  <!-- Cover + Avatar -->
+  <div class="profile-cover">
+    <img [src]="profile.cover_photo || 'assets/default-cover.png'" alt="Cover" class="cover-img" />
+    <div class="profile-avatar-wrap">
+      <img [src]="profile.avatar_url || 'assets/default-avatar.png'" class="avatar xxl" [alt]="profile.username" />
+    </div>
+  </div>
+
+  <!-- Profile Info -->
+  <div class="profile-info">
+    <div class="profile-name-section">
+      <div>
+        <h1 class="profile-name">
+          {{ profile.full_name }}
+          <mat-icon class="verified" *ngIf="profile.is_verified">verified</mat-icon>
+        </h1>
+        <p class="text-secondary">@{{ profile.username }}</p>
+        <p class="bio" *ngIf="profile.bio">{{ profile.bio }}</p>
+        <div class="profile-meta">
+          <span *ngIf="profile.location"><mat-icon>location_on</mat-icon>{{ profile.location }}</span>
+          <span *ngIf="profile.website"><mat-icon>link</mat-icon>{{ profile.website }}</span>
+        </div>
+      </div>
+      <div class="profile-actions" *ngIf="!isSelf">
+        <button mat-flat-button color="primary" (click)="addFriend()" *ngIf="!profile.is_friend">
+          <mat-icon>person_add</mat-icon> Add Friend
+        </button>
+        <button mat-stroked-button (click)="follow()">
+          <mat-icon>{{ profile.is_following ? 'person_remove' : 'person_add_alt' }}</mat-icon>
+          {{ profile.is_following ? 'Unfollow' : 'Follow' }}
+        </button>
+        <button mat-stroked-button>
+          <mat-icon>chat</mat-icon> Message
+        </button>
+      </div>
+      <div class="profile-actions" *ngIf="isSelf">
+        <button mat-stroked-button>
+          <mat-icon>edit</mat-icon> Edit Profile
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="profile-stats">
+      <div class="stat">
+        <div class="stat-value">{{ profile.posts_count | number }}</div>
+        <div class="stat-label">Posts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ profile.friends_count | number }}</div>
+        <div class="stat-label">Friends</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ profile.followers_count | number }}</div>
+        <div class="stat-label">Followers</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ profile.following_count | number }}</div>
+        <div class="stat-label">Following</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="profile-content">
+    <mat-tab-group>
+      <mat-tab label="Posts">
+        <div class="posts-col">
+          <app-post-card
+            *ngFor="let post of posts"
+            [post]="post"
+            (postDeleted)="onPostDeleted($event)"
+          ></app-post-card>
+          <div *ngIf="posts.length === 0" class="empty-posts">
+            <mat-icon>article</mat-icon>
+            <p>No posts yet</p>
+          </div>
+        </div>
+      </mat-tab>
+      <mat-tab label="About">
+        <div class="about-section">
+          <div class="about-item" *ngIf="profile.bio">
+            <mat-icon>info</mat-icon> {{ profile.bio }}
+          </div>
+          <div class="about-item" *ngIf="profile.location">
+            <mat-icon>location_on</mat-icon> Lives in {{ profile.location }}
+          </div>
+          <div class="about-item" *ngIf="profile.website">
+            <mat-icon>link</mat-icon> <a [href]="profile.website" target="_blank">{{ profile.website }}</a>
+          </div>
+          <div class="about-item">
+            <mat-icon>calendar_today</mat-icon> Joined {{ profile.created_at | date:'MMMM yyyy' }}
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>
+
+<div class="loading-center" *ngIf="loading">
+  <mat-spinner diameter="48"></mat-spinner>
+</div>
