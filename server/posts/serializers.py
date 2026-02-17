@@ -1,41 +1,63 @@
 from rest_framework import serializers
-from .models import Post, Comment, Tag
-from users.serializers import SimpleUserSerializer
+from .models import Post, Like, Comment, PostMedia, PostTag
+from users.serializers import UserSerializer
 
-class TagSerializer(serializers.ModelSerializer):
+
+class PostTagSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Tag
-        fields = ['uid', 'name']
+        model = PostTag
+        fields = ['name']
 
-class PostSerializer(serializers.ModelSerializer):
-    creator = SimpleUserSerializer(read_only=True)
-    participants = SimpleUserSerializer(read_only=True, many=True)
-    likes_count = serializers.IntegerField(source='likes.count', read_only=True)
-    comments_count = serializers.IntegerField(source='comments.count', read_only=True)
-    tags = TagSerializer(many=True, read_only=True)
 
+class PostMediaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Post
-        fields = ['uid', 'creator', 'content', 'participants', 'likes_count', 'comments_count', 'updated', 'created', 'tags']
-        read_only_fields = ['uid', 'creator', 'updated', 'created', 'likes_count', 'comments_count', 'tags']
+        model = PostMedia
+        fields = ['id', 'file', 'media_type', 'order']
 
-    def create(self, validated_data):
-        request = self.context.get('request')
-        user = request.user if request else None
-        tags_data = validated_data.pop('tags', [])
-        post = Post.objects.create(creator=user, **validated_data)
-        post.tags.set(tags_data)
-        return post
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = SimpleUserSerializer(read_only=True)
+    author = UserSerializer(read_only=True)
+    replies = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['uid', 'user', 'post', 'text', 'updated', 'created']
-        read_only_fields = ['uid', 'user', 'updated', 'created']
+        fields = ['id', 'post', 'author', 'content', 'parent', 'likes_count', 'replies', 'created_at']
+        read_only_fields = ['author', 'likes_count', 'created_at']
 
-    def create(self, validated_data):
+    def get_replies(self, obj):
+        if obj.parent is None:
+            return CommentSerializer(obj.replies.all()[:5], many=True, context=self.context).data
+        return []
+
+
+class PostSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    tags = PostTagSerializer(many=True, read_only=True)
+    media = PostMediaSerializer(many=True, read_only=True)
+    my_reaction = serializers.SerializerMethodField()
+    shared_post_data = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = [
+            'id', 'author', 'content', 'post_type', 'privacy',
+            'image', 'video', 'link_url', 'link_title', 'link_description', 'link_image',
+            'group', 'page',
+            'likes_count', 'comments_count', 'shares_count',
+            'shared_post', 'shared_post_data',
+            'is_edited', 'tags', 'media', 'my_reaction',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['author', 'likes_count', 'comments_count', 'shares_count', 'is_edited']
+
+    def get_my_reaction(self, obj):
         request = self.context.get('request')
-        user = request.user if request else None
-        return Comment.objects.create(user=user, **validated_data)
+        if request and request.user.is_authenticated:
+            like = Like.objects.filter(user=request.user, post=obj).first()
+            return like.reaction if like else None
+        return None
+
+    def get_shared_post_data(self, obj):
+        if obj.shared_post:
+            return PostSerializer(obj.shared_post, context=self.context).data
+        return None

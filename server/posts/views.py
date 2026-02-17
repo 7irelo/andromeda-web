@@ -1,100 +1,114 @@
-from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from .models import Post, Comment
+
+from users.models import Follow
+from .models import Post, Like, Comment
 from .serializers import PostSerializer, CommentSerializer
-from .recommendations import get_recommended_posts
 
-class RecommendedPostsView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        user = request.user
-        recommended_posts = get_recommended_posts(user)
-        serializer = PostSerializer(recommended_posts, many=True)
-        return Response(serializer.data)
+class PostViewSet(viewsets.ModelViewSet):
+    serializer_class = PostSerializer
 
-class PostsView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        user = self.request.user
+        qs = Post.objects.select_related('author', 'shared_post__author').prefetch_related(
+            'media', 'tags'
+        )
 
-    def get(self, request):
-        query = request.GET.get("q", "")
-        posts = Post.nodes.filter(content__icontains=query).order_by('-updated', '-created')
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
+        # Feed: posts from followed users + own posts
+        feed_filter = self.request.query_params.get('feed')
+        if feed_filter == 'true':
+            following_ids = Follow.objects.filter(follower=user).values_list('following_id', flat=True)
+            qs = qs.filter(
+                Q(author_id__in=following_ids) | Q(author=user),
+                privacy__in=['public', 'friends'],
+            )
 
-    def post(self, request):
-        serializer = PostSerializer(data=request.data)
-        if serializer.is_valid():
-            post = serializer.save(creator=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        author_id = self.request.query_params.get('author')
+        if author_id:
+            qs = qs.filter(author_id=author_id)
 
-class PostView(APIView):
-    permission_classes = [IsAuthenticated]
+        group_id = self.request.query_params.get('group')
+        if group_id:
+            qs = qs.filter(group_id=group_id)
 
-    def get(self, request, uid):
-        post = get_object_or_404(Post.nodes, uid=uid)
-        comments = Comment.nodes.filter(post=post).order_by("created")
-        post_serializer = PostSerializer(post)
-        comments_serializer = CommentSerializer(comments, many=True)
-        return Response({
-            "post": post_serializer.data,
-            "comments": comments_serializer.data
-        })
+        return qs.order_by('-created_at')
 
-    def post(self, request, uid):
-        post = get_object_or_404(Post, uid=uid)
-        serializer = CommentSerializer(data=request.data)
-        if serializer.is_valid():
-            comment = serializer.save(user=request.user, post=post)
-            post.participants.connect(request.user)
-            return Response({
-                "post": PostSerializer(post).data,
-                "comment": CommentSerializer(comment).data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
-    def put(self, request, uid):
-        post = get_object_or_404(Post, uid=uid)
-        serializer = PostSerializer(post, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_update(self, serializer):
+        serializer.save(is_edited=True)
 
-    def delete(self, request, uid):
-        post = get_object_or_404(Post, uid=uid)
-        post.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    @action(detail=True, methods=['post'])
+    def react(self, request, pk=None):
+        post = self.get_object()
+        reaction = request.data.get('reaction', 'like')
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        if not created:
+            if like.reaction == reaction:
+                # Toggle off
+                like.delete()
+                return Response({'reacted': False})
+            like.reaction = reaction
+            like.save()
+        else:
+            like.reaction = reaction
+            like.save()
+            # Trigger notification via Celery
+            try:
+                from notifications.tasks import send_like_notification
+                send_like_notification.apply_async(
+                    args=[request.user.id, post.author_id, post.id],
+                    queue='notifications',
+                )
+            except Exception:
+                pass
+        return Response({'reacted': True, 'reaction': like.reaction})
 
-class CommentView(APIView):
-    permission_classes = [IsAuthenticated]
+    @action(detail=True, methods=['post'])
+    def share(self, request, pk=None):
+        original = self.get_object()
+        shared = Post.objects.create(
+            author=request.user,
+            content=request.data.get('content', ''),
+            post_type=Post.TYPE_TEXT,
+            shared_post=original,
+        )
+        Post.objects.filter(pk=original.pk).update(shares_count=Post.objects.filter(shared_post=original).count())
+        return Response(PostSerializer(shared, context={'request': request}).data, status=201)
 
-    def get(self, request, post_uid, uid):
-        comment = get_object_or_404(Comment.nodes, post__uid=post_uid, uid=uid)
-        serializer = CommentSerializer(comment)
-        return Response(serializer.data)
+    @action(detail=True, methods=['get', 'post'])
+    def comments(self, request, pk=None):
+        post = self.get_object()
+        if request.method == 'GET':
+            comments = post.comments.filter(parent=None).select_related('author').prefetch_related('replies__author')
+            return Response(CommentSerializer(comments, many=True, context={'request': request}).data)
+        serializer = CommentSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        comment = serializer.save(author=request.user, post=post)
+        # Trigger notification
+        try:
+            from notifications.tasks import send_comment_notification
+            send_comment_notification.apply_async(
+                args=[request.user.id, post.author_id, post.id, comment.id],
+                queue='notifications',
+            )
+        except Exception:
+            pass
+        return Response(CommentSerializer(comment, context={'request': request}).data, status=201)
 
-    def post(self, request, post_uid):
-        post = get_object_or_404(Post.nodes, uid=post_uid)
-        serializer = CommentSerializer(data=request.data)
-        if serializer.is_valid():
-            comment = serializer.save(user=request.user, post=post)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, post_uid, uid):
-        comment = get_object_or_404(Comment.nodes, post__uid=post_uid, uid=uid)
-        serializer = CommentSerializer(comment, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
 
-    def delete(self, request, post_uid, uid):
-        comment = get_object_or_404(Comment.nodes, post__uid=post_uid, uid=uid)
-        comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def get_queryset(self):
+        return Comment.objects.filter(author=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save()
