@@ -1,0 +1,157 @@
+// ── Andromeda Global Styles ───────────────────────────────────────────────────
+
+// Variables
+:root {
+  --primary:       #1877f2;
+  --primary-dark:  #166fe5;
+  --accent:        #42b72a;
+  --bg:            #f0f2f5;
+  --surface:       #ffffff;
+  --border:        #dde1e7;
+  --text-primary:  #050505;
+  --text-secondary:#65676b;
+  --sidebar-width: 280px;
+  --header-height: 56px;
+  --border-radius: 8px;
+  --shadow:        0 1px 2px rgba(0,0,0,.1);
+  --shadow-md:     0 2px 8px rgba(0,0,0,.15);
+}
+
+// Reset
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+// Scrollbar
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+// Links
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+// Angular Material overrides
+.mat-mdc-card { border-radius: var(--border-radius) !important; }
+.mat-mdc-button { border-radius: 6px !important; }
+.mat-toolbar { height: var(--header-height) !important; }
+
+// Utility classes
+.text-secondary { color: var(--text-secondary); }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 12px; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+
+.p-3 { padding: 12px; }
+.p-4 { padding: 16px; }
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+.w-full { width: 100%; }
+
+// Avatar
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  &.sm { width: 32px; height: 32px; }
+  &.md { width: 40px; height: 40px; }
+  &.lg { width: 56px; height: 56px; }
+  &.xl { width: 80px; height: 80px; }
+  &.xxl { width: 160px; height: 160px; }
+}
+
+// Card
+.card {
+  background: var(--surface);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+// Button variants
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  &:hover { background: var(--primary-dark); }
+}
+
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { background: darken(#f0f2f5, 5%); }
+}
+
+// Feed layout
+.feed-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: calc(var(--header-height) + 20px) 16px 20px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: var(--sidebar-width) 1fr;
+    .right-sidebar { display: none; }
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    .left-sidebar { display: none; }
+  }
+}
+
+// Main content area
+.main-content {
+  padding-top: calc(var(--header-height) + 16px);
+}
+
+// Divider
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+// Skeleton loading
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.skeleton {
+  background: var(--border);
+  border-radius: 4px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}

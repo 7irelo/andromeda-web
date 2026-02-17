@@ -1,0 +1,90 @@
+.auth-page {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.auth-left {
+  flex: 1;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+
+  .brand-hero {
+    color: #fff;
+    text-align: center;
+
+    .hero-icon { font-size: 80px; width: 80px; height: 80px; }
+    h1 { font-size: 40px; font-weight: 700; margin: 16px 0 8px; }
+    p { font-size: 18px; opacity: .9; max-width: 300px; }
+  }
+
+  @media (max-width: 768px) { display: none; }
+}
+
+.auth-right {
+  flex: 0 0 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+
+  @media (max-width: 768px) { flex: 1; }
+}
+
+.auth-card {
+  background: var(--surface);
+  border-radius: var(--border-radius);
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  max-width: 380px;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.error-msg {
+  color: #d32f2f;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: #fde8e8;
+  border-radius: 4px;
+}
+
+.submit-btn {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+}
+
+.register-link {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  a { font-weight: 600; }
+}

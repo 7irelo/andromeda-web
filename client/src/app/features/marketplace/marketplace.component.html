@@ -1,0 +1,37 @@
+<div class="marketplace-page">
+  <div class="marketplace-header">
+    <h1>Marketplace</h1>
+    <button mat-flat-button color="primary" routerLink="/marketplace/create">
+      <mat-icon>add</mat-icon> Create Listing
+    </button>
+  </div>
+
+  <div class="search-bar">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Search Marketplace</mat-label>
+      <input matInput [(ngModel)]="searchQuery" (keyup.enter)="load()" placeholder="Search items..." />
+      <mat-icon matSuffix (click)="load()" style="cursor:pointer">search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+
+  <div class="listings-grid" *ngIf="!loading">
+    <a class="listing-card card" *ngFor="let l of listings" [routerLink]="'/marketplace/' + asListing(l).id">
+      <div class="listing-image">
+        <img [src]="primaryImage(l)" [alt]="asListing(l).title" />
+      </div>
+      <div class="listing-info">
+        <div class="listing-price">${{ asListing(l).price }}</div>
+        <div class="listing-title font-medium">{{ asListing(l).title }}</div>
+        <div class="listing-location text-secondary text-xs">{{ asListing(l).location || 'Location not specified' }}</div>
+        <div class="listing-condition text-xs" [class.condition-new]="asListing(l).condition === 'new'">{{ asListing(l).condition | titlecase }}</div>
+      </div>
+    </a>
+  </div>
+
+  <div *ngIf="!loading && listings.length === 0" class="empty-state">
+    <mat-icon>storefront</mat-icon>
+    <p>No listings found</p>
+  </div>
+</div>

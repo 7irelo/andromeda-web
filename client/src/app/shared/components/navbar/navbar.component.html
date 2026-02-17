@@ -1,0 +1,74 @@
+<header class="navbar">
+  <!-- Brand -->
+  <a class="brand" routerLink="/feed">
+    <mat-icon class="brand-icon">hub</mat-icon>
+    <span class="brand-name">Andromeda</span>
+  </a>
+
+  <!-- Search -->
+  <div class="search-box">
+    <mat-icon class="search-icon">search</mat-icon>
+    <input
+      type="text"
+      placeholder="Search Andromeda..."
+      [(ngModel)]="searchQuery"
+      (keyup.enter)="search()"
+      class="search-input"
+    />
+  </div>
+
+  <!-- Nav Icons -->
+  <nav class="nav-links">
+    <a
+      *ngFor="let item of navItems"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      class="nav-item"
+      [title]="item.label"
+    >
+      <mat-icon>{{ item.icon }}</mat-icon>
+    </a>
+  </nav>
+
+  <!-- Right Actions -->
+  <div class="right-actions">
+    <!-- Chat -->
+    <a routerLink="/chat" class="action-btn" title="Messenger">
+      <mat-icon>chat</mat-icon>
+    </a>
+
+    <!-- Notifications -->
+    <a routerLink="/notifications" class="action-btn" title="Notifications">
+      <mat-icon
+        [matBadge]="unreadNotifications || null"
+        matBadgeColor="warn"
+        matBadgeSize="small"
+      >notifications</mat-icon>
+    </a>
+
+    <!-- Profile Menu -->
+    <button class="avatar-btn" [matMenuTriggerFor]="profileMenu">
+      <img
+        [src]="currentUser?.avatar_url || 'assets/default-avatar.png'"
+        [alt]="currentUser?.username"
+        class="avatar sm"
+      />
+    </button>
+
+    <mat-menu #profileMenu="matMenu">
+      <a mat-menu-item [routerLink]="'/profile/' + currentUser?.username">
+        <mat-icon>person</mat-icon>
+        <span>My Profile</span>
+      </a>
+      <a mat-menu-item routerLink="/marketplace">
+        <mat-icon>storefront</mat-icon>
+        <span>My Listings</span>
+      </a>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Log Out</span>
+      </button>
+    </mat-menu>
+  </div>
+</header>
