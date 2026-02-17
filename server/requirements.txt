@@ -1,12 +1,50 @@
-asgiref==3.8.1
-Django==5.0.6
-django-cors-headers==4.4.0
+# ============================================================
+# Andromeda – Django Backend Requirements
+# ============================================================
+
+# Core Framework
+Django==4.2.10
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1
+
+# ASGI + WebSockets (Django Channels)
+channels==4.0.0
+channels-redis==4.2.0
+daphne==4.0.0
+uvicorn[standard]==0.27.0
+websockets==12.0
+
+# Database
+psycopg2-binary==2.9.9
+neomodel==5.3.0
+
+# Cache + Sessions
+redis==5.0.1
 django-redis==5.4.0
-django_neomodel==0.2.0
-djangorestframework==3.15.2
-neo4j==5.19.0
-neomodel==5.3.2
-pytz==2024.1
-redis==5.0.8
-sqlparse==0.5.0
-tzdata==2024.1
+
+# Task Queue (Celery + RabbitMQ)
+celery==5.3.6
+django-celery-beat==2.6.0
+django-celery-results==2.5.1
+kombu==5.3.4
+amqp==5.2.0
+
+# Monitoring
+django-prometheus==2.3.1
+prometheus-client==0.20.0
+
+# Authentication helpers
+Pillow==10.2.0
+
+# Utilities
+python-decouple==3.8
+django-filter==23.5
+django-storages==1.14.2
+
+# Development / Test
+pytest-django==4.8.0
+factory-boy==3.3.0
+
+# Production server
+gunicorn==21.2.0
