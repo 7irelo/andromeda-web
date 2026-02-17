@@ -1,0 +1,52 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: andromeda
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  # Django application metrics (via django-prometheus)
+  - job_name: django
+    static_configs:
+      - targets: ["django:8000"]
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # Celery / Flower metrics
+  - job_name: flower
+    static_configs:
+      - targets: ["flower:5555"]
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # RabbitMQ metrics (built-in prometheus plugin)
+  - job_name: rabbitmq
+    static_configs:
+      - targets: ["rabbitmq:15692"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Redis metrics (redis-exporter)
+  - job_name: redis
+    static_configs:
+      - targets: ["redis_exporter:9121"]
+    scrape_interval: 15s
+
+  # PostgreSQL metrics (postgres-exporter)
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres_exporter:9187"]
+    scrape_interval: 15s
+
+  # Prometheus self-monitoring
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
