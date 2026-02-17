@@ -1,42 +1,73 @@
-from neomodel import StructuredNode, StringProperty, DateTimeProperty, UniqueIdProperty, RelationshipTo, RelationshipFrom
-from users.models import User
+from django.conf import settings
+from django.db import models
 
-class Video(StructuredNode):
-    uid = UniqueIdProperty(primary_key=True)
-    content = StringProperty()
-    created = DateTimeProperty(default_now=True)
-    updated = DateTimeProperty(default_now=True)
-    creator = RelationshipFrom(User, 'CREATED')
-    participants = RelationshipTo(User, 'PARTICIPATED')
-    likes = RelationshipTo(User, 'LIKED')
-    tags = RelationshipTo('Tag', 'TAGGED')
 
-    def __str__(self):
-        return f"Video by {self.creator}: {self.content[:30]}"
+class Video(models.Model):
+    STATUS_PROCESSING = 'processing'
+    STATUS_READY = 'ready'
+    STATUS_FAILED = 'failed'
+    STATUS_CHOICES = [
+        (STATUS_PROCESSING, 'Processing'),
+        (STATUS_READY, 'Ready'),
+        (STATUS_FAILED, 'Failed'),
+    ]
 
-class Like(StructuredNode):
-    uid = UniqueIdProperty(primary_key=True)
-    user = RelationshipFrom(User, 'LIKED')
-    video = RelationshipFrom(Video, 'LIKED')
-    created_at = DateTimeProperty(default_now=True)
+    uploader = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name='videos', on_delete=models.CASCADE
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    video_file = models.FileField(upload_to='watch/videos/%Y/%m/')
+    thumbnail = models.ImageField(upload_to='watch/thumbnails/%Y/%m/', null=True, blank=True)
+    duration = models.PositiveIntegerField(default=0, help_text='Seconds')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STATUS_PROCESSING)
+    views_count = models.PositiveIntegerField(default=0)
+    likes_count = models.PositiveIntegerField(default=0)
+    comments_count = models.PositiveIntegerField(default=0)
+    is_public = models.BooleanField(default=True)
+    tags = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"Like by {self.user.username} on video {self.video.uid}"
-
-class Comment(StructuredNode):
-    uid = UniqueIdProperty(primary_key=True)
-    text = StringProperty()
-    created = DateTimeProperty(default_now=True)
-    updated = DateTimeProperty(default_now=True)
-    user = RelationshipFrom(User, 'COMMENTED')
-    video = RelationshipFrom(Video, 'COMMENTED')
-
-    def __str__(self):
-        return f"Comment by {self.user.username} on video {self.video.uid}: {self.text[:50]}"
-
-class Tag(StructuredNode):
-    uid = UniqueIdProperty(primary_key=True)
-    name = StringProperty(unique_index=True)
+    class Meta:
+        db_table = 'videos'
+        ordering = ['-created_at']
 
     def __str__(self):
-        return self.name
+        return self.title
+
+
+class VideoView(models.Model):
+    video = models.ForeignKey(Video, related_name='views', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    watch_time = models.PositiveIntegerField(default=0, help_text='Seconds watched')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'video_views'
+
+
+class VideoLike(models.Model):
+    video = models.ForeignKey(Video, related_name='likes', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'video_likes'
+        unique_together = ('video', 'user')
+
+
+class VideoComment(models.Model):
+    video = models.ForeignKey(Video, related_name='comments', on_delete=models.CASCADE)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    content = models.TextField()
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
+    likes_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'video_comments'
+        ordering = ['created_at']

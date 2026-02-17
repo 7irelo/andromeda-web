@@ -1,49 +1,49 @@
-from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
-from .models import Group, GroupMessage, GroupMembership
-from .serializers import GroupSerializer, GroupMessageSerializer
-from users.models import User
+from .models import Group, GroupMember
+from .serializers import GroupSerializer, GroupMemberSerializer
 
-class GroupView(APIView):
-    def get(self, request, pk):
-        group = get_object_or_404(Group.nodes, uid=pk)
-        serializer = GroupSerializer(group)
-        return Response(serializer.data)
 
-    def post(self, request):
-        serializer = GroupSerializer(data=request.data)
-        if serializer.is_valid():
-            group = serializer.save()
-            group.members.connect(request.user, {'is_admin': True})
-            return Response({'message': 'Group created successfully'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class GroupViewSet(viewsets.ModelViewSet):
+    serializer_class = GroupSerializer
+    queryset = Group.objects.all()
 
-    def put(self, request, pk):
-        group = get_object_or_404(Group.nodes, uid=pk)
-        serializer = GroupSerializer(group, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'Group updated successfully'})
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_queryset(self):
+        qs = super().get_queryset()
+        mine = self.request.query_params.get('mine')
+        if mine == 'true':
+            qs = qs.filter(memberships__user=self.request.user)
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(name__icontains=search)
+        return qs.select_related('created_by')
 
-    def delete(self, request, pk):
-        group = get_object_or_404(Group.nodes, uid=pk)
-        group.delete()
-        return Response({'message': 'Group deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+    def perform_create(self, serializer):
+        group = serializer.save(created_by=self.request.user)
+        GroupMember.objects.create(group=group, user=self.request.user, role=GroupMember.ROLE_ADMIN)
+        Group.objects.filter(pk=group.pk).update(members_count=1)
 
-class GroupMessageView(APIView):
-    def get(self, request, pk):
-        group = get_object_or_404(Group.nodes, uid=pk)
-        messages = group.has_message.all().order_by("created")
-        serializer = GroupMessageSerializer(messages, many=True)
-        return Response(serializer.data)
+    @action(detail=True, methods=['post'])
+    def join(self, request, pk=None):
+        group = self.get_object()
+        if group.memberships.filter(user=request.user).exists():
+            return Response({'detail': 'Already a member.'}, status=400)
+        if group.privacy == Group.PRIVACY_PUBLIC:
+            GroupMember.objects.create(group=group, user=request.user)
+            Group.objects.filter(pk=group.pk).update(members_count=group.memberships.count())
+            return Response({'status': 'joined'})
+        return Response({'status': 'request_pending'})
 
-    def post(self, request, pk):
-        group = get_object_or_404(Group.nodes, uid=pk)
-        serializer = GroupMessageSerializer(data=request.data)
-        if serializer.is_valid():
-            message = serializer.save(sender=request.user, group=group)
-            return Response({'message': 'Message sent successfully'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=True, methods=['post'])
+    def leave(self, request, pk=None):
+        group = self.get_object()
+        group.memberships.filter(user=request.user).delete()
+        Group.objects.filter(pk=group.pk).update(members_count=group.memberships.count())
+        return Response({'status': 'left'})
+
+    @action(detail=True, methods=['get'])
+    def members(self, request, pk=None):
+        group = self.get_object()
+        members = group.memberships.select_related('user').all()
+        return Response(GroupMemberSerializer(members, many=True, context={'request': request}).data)

@@ -1,10 +1,8 @@
-from django.urls import path
-from .views import RecommendedVideosView, VideosView, VideoView, VideoCommentView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import VideoViewSet
 
-urlpatterns = [
-    path('recommended/', RecommendedVideosView.as_view(), name='recommended-videos'),
-    path('', VideosView.as_view(), name='videos'),
-    path('<int:pk>/', VideoView.as_view(), name='video-detail'),
-    path('<int:video_pk>/comments/<int:pk>/', VideoCommentView.as_view(), name='video-comment-detail'),
-    path('<int:video_pk>/comments/', VideoCommentView.as_view(), name='video-comment-create'),
-]
+router = DefaultRouter()
+router.register('videos', VideoViewSet, basename='video')
+
+urlpatterns = [path('', include(router.urls))]

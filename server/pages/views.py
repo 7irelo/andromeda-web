@@ -1,72 +1,27 @@
-from rest_framework.views import APIView
+from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from .models import Page, PagePost
-from .serializers import PageSerializer, PagePostSerializer
-from users.models import User
+from .models import Page, PageFollow
+from .serializers import PageSerializer
 
-class PageListView(APIView):
-    def get(self, request):
-        pages = Page.nodes.order_by('-created')
-        serializer = PageSerializer(pages, many=True)
-        return Response(serializer.data)
 
-    def post(self, request):
-        serializer = PageSerializer(data=request.data)
-        if serializer.is_valid():
-            user = User.nodes.get(uid=request.user.uid)  # Get the user node
-            page = serializer.save()
-            page.creator.connect(user)
-            return Response(PageSerializer(page).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class PageViewSet(viewsets.ModelViewSet):
+    serializer_class = PageSerializer
+    queryset = Page.objects.all()
 
-class PageDetailView(APIView):
-    def get(self, request, uid):
-        page = get_object_or_404(Page, uid=uid)
-        posts = page.posts.order_by('-created')
-        page_serializer = PageSerializer(page)
-        posts_serializer = PagePostSerializer(posts, many=True)
-        return Response({
-            "page": page_serializer.data,
-            "posts": posts_serializer.data
-        })
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
-    def put(self, request, uid):
-        page = get_object_or_404(Page, uid=uid)
-        serializer = PageSerializer(page, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=True, methods=['post'])
+    def follow(self, request, pk=None):
+        page = self.get_object()
+        _, created = PageFollow.objects.get_or_create(page=page, user=request.user)
+        Page.objects.filter(pk=page.pk).update(followers_count=page.followers.count())
+        return Response({'following': True, 'created': created})
 
-    def delete(self, request, uid):
-        page = get_object_or_404(Page, uid=uid)
-        page.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-class PageFollowView(APIView):
-    def post(self, request, uid):
-        page = get_object_or_404(Page, uid=uid)
-        user = User.nodes.get(uid=request.user.uid)
-        page.followers.connect(user)
-        return Response({'message': 'Page followed successfully'}, status=status.HTTP_200_OK)
-
-    def delete(self, request, uid):
-        page = get_object_or_404(Page, uid=uid)
-        user = User.nodes.get(uid=request.user.uid)
-        page.followers.disconnect(user)
-        return Response({'message': 'Page unfollowed successfully'}, status=status.HTTP_204_NO_CONTENT)
-
-class PageLikeView(APIView):
-    def post(self, request, uid):
-        page = get_object_or_404(Page, uid=uid)
-        user = User.nodes.get(uid=request.user.uid)
-        page.likes.connect(user)
-        return Response({'message': 'Page liked successfully'}, status=status.HTTP_200_OK)
-
-    def delete(self, request, uid):
-        page = get_object_or_404(Page, uid=uid)
-        user = User.nodes.get(uid=request.user.uid)
-        page.likes.disconnect(user)
-        return Response({'message': 'Page unliked successfully'}, status=status.HTTP_204_NO_CONTENT)
+    @action(detail=True, methods=['post'])
+    def unfollow(self, request, pk=None):
+        page = self.get_object()
+        PageFollow.objects.filter(page=page, user=request.user).delete()
+        Page.objects.filter(pk=page.pk).update(followers_count=page.followers.count())
+        return Response({'following': False})
