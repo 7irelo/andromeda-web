@@ -1,9 +1,8 @@
-from django.urls import path
-from .views import PageListView, PageDetailView, PageFollowView, PageLikeView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import PageViewSet
 
-urlpatterns = [
-    path('', PageListView.as_view(), name='pages-list'),
-    path('<str:uid>/', PageDetailView.as_view(), name='page-detail'),
-    path('<str:uid>/follow/', PageFollowView.as_view(), name='page-follow'),
-    path('<str:uid>/like/', PageLikeView.as_view(), name='page-like'),
-]
+router = DefaultRouter()
+router.register('', PageViewSet, basename='page')
+
+urlpatterns = [path('', include(router.urls))]

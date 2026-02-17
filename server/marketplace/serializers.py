@@ -1,34 +1,50 @@
 from rest_framework import serializers
-from .models import Product, ProductComment
+from .models import Listing, ListingImage, Category, Review
+from users.serializers import UserSerializer
 
-class ProductSerializer(serializers.Serializer):
-    uid = serializers.CharField(read_only=True)
-    name = serializers.CharField(max_length=255)
-    description = serializers.CharField()
-    price = serializers.FloatField()
-    updated = serializers.DateTimeField()
-    created = serializers.DateTimeField()
 
-    def create(self, validated_data):
-        return Product(**validated_data).save()
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'icon', 'parent']
 
-    def update(self, instance, validated_data):
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-        instance.save()
-        return instance
 
-class ProductCommentSerializer(serializers.Serializer):
-    uid = serializers.CharField(read_only=True)
-    text = serializers.CharField()
-    updated = serializers.DateTimeField()
-    created = serializers.DateTimeField()
+class ListingImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListingImage
+        fields = ['id', 'image', 'is_primary', 'order']
 
-    def create(self, validated_data):
-        return ProductComment(**validated_data).save()
 
-    def update(self, instance, validated_data):
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-        instance.save()
-        return instance
+class ListingSerializer(serializers.ModelSerializer):
+    seller = UserSerializer(read_only=True)
+    images = ListingImageSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), source='category', write_only=True, required=False
+    )
+    is_liked = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Listing
+        fields = [
+            'id', 'seller', 'title', 'description', 'price', 'currency',
+            'condition', 'category', 'category_id', 'location', 'status',
+            'views_count', 'likes_count', 'images', 'is_liked',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['seller', 'views_count', 'likes_count']
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.liked_by.filter(user=request.user).exists()
+        return False
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    reviewer = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ['id', 'listing', 'reviewer', 'rating', 'comment', 'created_at']
+        read_only_fields = ['reviewer']

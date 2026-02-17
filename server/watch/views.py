@@ -1,99 +1,54 @@
-from django.shortcuts import get_object_or_404
+from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from .models import Video, VideoComment
+from .models import Video, VideoLike, VideoView, VideoComment
 from .serializers import VideoSerializer, VideoCommentSerializer
 
-class RecommendedVideosView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        user = request.user
-        recommended_videos = get_recommended_videos(user)  # You will implement this in recommendations.py
-        serializer = VideoSerializer(recommended_videos, many=True)
-        return Response(serializer.data)
+class VideoViewSet(viewsets.ModelViewSet):
+    serializer_class = VideoSerializer
 
-class VideosView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        qs = Video.objects.filter(status=Video.STATUS_READY, is_public=True).select_related('uploader')
+        uploader = self.request.query_params.get('uploader')
+        if uploader:
+            qs = qs.filter(uploader_id=uploader)
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(title__icontains=search)
+        return qs.order_by('-created_at')
 
-    def get(self, request):
-        query = request.GET.get("q", "")
-        videos = Video.nodes.filter(title__icontains=query)
-        serializer = VideoSerializer(videos, many=True)
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        serializer.save(uploader=self.request.user)
 
-    def post(self, request):
-        serializer = VideoSerializer(data=request.data)
-        if serializer.is_valid():
-            video = serializer.save(uploaded_by=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        Video.objects.filter(pk=instance.pk).update(views_count=instance.views_count + 1)
+        VideoView.objects.create(
+            video=instance,
+            user=request.user if request.user.is_authenticated else None,
+        )
+        return super().retrieve(request, *args, **kwargs)
 
-class VideoView(APIView):
-    permission_classes = [IsAuthenticated]
+    @action(detail=True, methods=['post'])
+    def like(self, request, pk=None):
+        video = self.get_object()
+        like, created = VideoLike.objects.get_or_create(user=request.user, video=video)
+        if not created:
+            like.delete()
+            Video.objects.filter(pk=video.pk).update(likes_count=video.likes.count())
+            return Response({'liked': False})
+        Video.objects.filter(pk=video.pk).update(likes_count=video.likes.count())
+        return Response({'liked': True})
 
-    def get(self, request, pk):
-        video = get_object_or_404(Video, uid=pk)
-        comments = VideoComment.nodes.filter(video=video)
-        video_serializer = VideoSerializer(video)
-        comments_serializer = VideoCommentSerializer(comments, many=True)
-        return Response({
-            "video": video_serializer.data,
-            "comments": comments_serializer.data
-        })
-
-    def post(self, request, pk):
-        video = get_object_or_404(Video, uid=pk)
-        serializer = VideoCommentSerializer(data=request.data)
-        if serializer.is_valid():
-            comment = serializer.save(user=request.user, video=video)
-            video.views.connect(request.user)
-            return Response({
-                "video": VideoSerializer(video).data,
-                "comment": VideoCommentSerializer(comment).data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, pk):
-        video = get_object_or_404(Video, uid=pk)
-        serializer = VideoSerializer(video, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        video = get_object_or_404(Video, uid=pk)
-        video.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-class VideoCommentView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, video_pk, pk):
-        comment = get_object_or_404(VideoComment, uid=pk)
-        serializer = VideoCommentSerializer(comment)
-        return Response(serializer.data)
-
-    def post(self, request, video_pk):
-        video = get_object_or_404(Video, uid=video_pk)
-        serializer = VideoCommentSerializer(data=request.data)
-        if serializer.is_valid():
-            comment = serializer.save(user=request.user, video=video)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, video_pk, pk):
-        comment = get_object_or_404(VideoComment, uid=pk)
-        serializer = VideoCommentSerializer(comment, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, video_pk, pk):
-        comment = get_object_or_404(VideoComment, uid=pk)
-        comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    @action(detail=True, methods=['get', 'post'])
+    def comments(self, request, pk=None):
+        video = self.get_object()
+        if request.method == 'GET':
+            comments = video.comments.filter(parent=None).select_related('author')
+            return Response(VideoCommentSerializer(comments, many=True, context={'request': request}).data)
+        serializer = VideoCommentSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(author=request.user, video=video)
+        Video.objects.filter(pk=video.pk).update(comments_count=video.comments.count())
+        return Response(serializer.data, status=201)

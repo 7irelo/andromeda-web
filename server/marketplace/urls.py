@@ -1,10 +1,9 @@
-from django.urls import path
-from .views import RecommendedProductsView, ProductsView, ProductView, ProductCommentView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import ListingViewSet, CategoryViewSet
 
-urlpatterns = [
-    path('recommended/', RecommendedProductsView.as_view(), name='recommended-products'),
-    path('', ProductsView.as_view(), name='products'),
-    path('<int:pk>/', ProductView.as_view(), name='product-detail'),
-    path('<int:product_pk>/comments/<int:pk>/', ProductCommentView.as_view(), name='product-comment-detail'),
-    path('<int:product_pk>/comments/', ProductCommentView.as_view(), name='product-comment-create'),
-]
+router = DefaultRouter()
+router.register('categories', CategoryViewSet, basename='category')
+router.register('listings', ListingViewSet, basename='listing')
+
+urlpatterns = [path('', include(router.urls))]
