@@ -63,7 +63,7 @@ jobs:
         run: python manage.py makemigrations --settings=andromeda.settings_test --no-input --verbosity 2
 
       - name: Run migrations (test DB)
-        run: python manage.py migrate --settings=andromeda.settings_test --verbosity 2
+        run: python manage.py migrate --fake-initial --settings=andromeda.settings_test --verbosity 2
 
       - name: Run pytest
         run: pytest --ds=andromeda.settings_test -q --tb=short --junitxml=../test-results/backend.xml

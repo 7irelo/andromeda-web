@@ -100,7 +100,7 @@ services:
     restart: unless-stopped
     command: >
       sh -c "python manage.py makemigrations --noinput &&
-             python manage.py migrate --noinput &&
+             python manage.py migrate --fake-initial --noinput &&
              python manage.py collectstatic --noinput &&
              uvicorn andromeda.asgi:application --host 0.0.0.0 --port 8000 --workers 4 --ws websockets"
     env_file:
