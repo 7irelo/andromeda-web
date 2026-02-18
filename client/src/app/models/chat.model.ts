@@ -3,7 +3,7 @@ import { User } from './user.model';
 export interface Message {
   id: number;
   room: number;
-  sender: User;
+  sender: User | null;
   content: string;
   message_type: 'text' | 'image' | 'video' | 'file';
   file: string | null;

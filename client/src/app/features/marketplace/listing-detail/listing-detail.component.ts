@@ -18,7 +18,7 @@ import { environment } from '../../../../environments/environment';
         </div>
       </div>
       <div class="listing-info">
-        <div class="price">${{ asListing(listing).price }}</div>
+        <div class="price">{{ asListing(listing).price | currency }}</div>
         <h1>{{ asListing(listing).title }}</h1>
         <p class="text-secondary">{{ asListing(listing).condition | titlecase }} · {{ asListing(listing).location }}</p>
         <p>{{ asListing(listing).description }}</p>
@@ -47,7 +47,7 @@ export class ListingDetailComponent implements OnInit {
     });
   }
 
-  asListing(l: unknown): { title: string; price: string; description: string; condition: string; location: string; images: { image: string; is_primary: boolean }[]; seller: { full_name: string } } {
+  asListing(l: unknown): { title: string; price: string; description: string; condition: string; location: string; images: { image: string; is_primary: boolean }[]; seller: { full_name: string } | null } {
     return l as ReturnType<typeof this.asListing>;
   }
 }

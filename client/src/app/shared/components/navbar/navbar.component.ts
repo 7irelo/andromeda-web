@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
@@ -18,7 +19,7 @@ import { User } from '../../../models/user.model';
   imports: [
     CommonModule, RouterLink, RouterLinkActive,
     MatIconModule, MatBadgeModule, MatMenuModule,
-    MatButtonModule, MatInputModule, FormsModule,
+    MatButtonModule, MatDividerModule, MatInputModule, FormsModule,
   ],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
