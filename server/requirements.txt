@@ -25,6 +25,7 @@ django-redis==5.4.0
 
 # Task Queue (Celery + RabbitMQ)
 celery==5.3.6
+flower==2.0.1
 django-celery-beat==2.6.0
 django-celery-results==2.5.1
 kombu==5.3.4
