@@ -15,7 +15,7 @@
           {{ profile.full_name }}
           <mat-icon class="verified" *ngIf="profile.is_verified">verified</mat-icon>
         </h1>
-        <p class="text-secondary">@{{ profile.username }}</p>
+        <p class="text-secondary">&#64;{{ profile.username }}</p>
         <p class="bio" *ngIf="profile.bio">{{ profile.bio }}</p>
         <div class="profile-meta">
           <span *ngIf="profile.location"><mat-icon>location_on</mat-icon>{{ profile.location }}</span>

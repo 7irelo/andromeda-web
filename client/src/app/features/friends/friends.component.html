@@ -49,7 +49,7 @@
       <div class="user-card-lg card" *ngFor="let user of suggestions">
         <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar xl" [alt]="user.username" />
         <div class="font-semibold">{{ user.full_name }}</div>
-        <div class="text-secondary text-sm">@{{ user.username }}</div>
+        <div class="text-secondary text-sm">&#64;{{ user.username }}</div>
         <button mat-flat-button color="primary" (click)="addFriend(user)">
           <mat-icon>person_add</mat-icon> Add Friend
         </button>

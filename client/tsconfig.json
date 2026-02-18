@@ -18,6 +18,8 @@
     "module": "ES2022",
     "useDefineForClassFields": false,
     "lib": ["ES2022", "dom"],
+
+    "baseUrl": ".",
     "paths": {
       "@app/*": ["src/app/*"],
       "@env/*": ["src/environments/*"]

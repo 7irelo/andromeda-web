@@ -65,10 +65,10 @@
         (mouseenter)="showReactions = true"
       >
         <span *ngIf="post.my_reaction">
-          {{ reactions.find(r => r.type === post.my_reaction)?.emoji }}
+          {{ reactionByType[post.my_reaction || '']?.emoji }}
         </span>
         <mat-icon *ngIf="!post.my_reaction">thumb_up_off_alt</mat-icon>
-        <span>{{ post.my_reaction ? (reactions.find(r => r.type === post.my_reaction)?.label || 'Like') : 'Like' }}</span>
+        <span>{{ reactionByType[post.my_reaction || '']?.label || 'Like' }}</span>
       </button>
       <div class="reactions-popup" *ngIf="showReactions">
         <button *ngFor="let r of reactions" (click)="react(r.type)" class="reaction-btn" [title]="r.label">
