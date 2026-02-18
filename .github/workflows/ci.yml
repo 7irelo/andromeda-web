@@ -59,11 +59,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Create migrations for custom apps
-        run: python manage.py makemigrations --settings=andromeda.settings_test
+      - name: Create migrations for apps without committed migrations
+        run: python manage.py makemigrations --settings=andromeda.settings_test --no-input --verbosity 2
 
       - name: Run migrations (test DB)
-        run: python manage.py migrate --settings=andromeda.settings_test
+        run: python manage.py migrate --settings=andromeda.settings_test --verbosity 2
 
       - name: Run pytest
         run: pytest --ds=andromeda.settings_test -q --tb=short --junitxml=../test-results/backend.xml
