@@ -24,7 +24,7 @@
           [alt]="n.sender?.username || 'System'"
         />
         <div class="notif-type-icon">
-          <mat-icon>{{ getIcon(n.notification_type) }}</mat-icon>
+          <mat-icon>{{ getIcon(n.notification_type, n.extra) }}</mat-icon>
         </div>
       </div>
 

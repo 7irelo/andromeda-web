@@ -6,6 +6,7 @@ import { Post, Comment } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
 import { ChatRoom, Message } from '../../models/chat.model';
 import { Notification } from '../../models/notification.model';
+import { Listing } from '../../models/listing.model';
 
 interface PaginatedResponse<T> {
   count: number;
@@ -142,6 +143,10 @@ export class ApiService {
     return this.http.get<PaginatedResponse<unknown>>(`${this.API}/groups/`, { params: httpParams });
   }
 
+  createGroup(data: { name: string; description?: string; privacy: string }): Observable<unknown> {
+    return this.http.post<unknown>(`${this.API}/groups/`, data);
+  }
+
   joinGroup(id: number): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(`${this.API}/groups/${id}/join/`, {});
   }
@@ -150,11 +155,28 @@ export class ApiService {
     return this.http.post<{ status: string }>(`${this.API}/groups/${id}/leave/`, {});
   }
 
+  // ── Profile ────────────────────────────────────────────────────────────────
+  updateProfile(data: FormData | Partial<User>): Observable<User> {
+    return this.http.patch<User>(`${this.API}/auth/me/`, data);
+  }
+
   // ── Marketplace ───────────────────────────────────────────────────────
-  getListings(params?: Record<string, string>): Observable<PaginatedResponse<unknown>> {
+  getListings(params?: Record<string, string>): Observable<PaginatedResponse<Listing>> {
     let httpParams = new HttpParams();
     if (params) Object.entries(params).forEach(([k, v]) => (httpParams = httpParams.set(k, v)));
-    return this.http.get<PaginatedResponse<unknown>>(`${this.API}/marketplace/listings/`, { params: httpParams });
+    return this.http.get<PaginatedResponse<Listing>>(`${this.API}/marketplace/listings/`, { params: httpParams });
+  }
+
+  getListing(id: number): Observable<Listing> {
+    return this.http.get<Listing>(`${this.API}/marketplace/listings/${id}/`);
+  }
+
+  createListing(data: { title: string; description: string; price: string; currency: string; condition: string; location?: string }): Observable<Listing> {
+    return this.http.post<Listing>(`${this.API}/marketplace/listings/`, data);
+  }
+
+  likeListing(id: number): Observable<{ liked: boolean }> {
+    return this.http.post<{ liked: boolean }>(`${this.API}/marketplace/listings/${id}/like/`, {});
   }
 
   // ── Watch ──────────────────────────────────────────────────────────────

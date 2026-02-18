@@ -52,7 +52,9 @@ export class NotificationsComponent implements OnInit {
     });
   }
 
-  getIcon(type: string): string {
+  getIcon(type: string, extra?: Record<string, unknown>): string {
+    // Product spotlight notifications carry a listing_id in extra
+    if (type === 'system' && extra?.['listing_id']) return 'storefront';
     const map: Record<string, string> = {
       like: 'thumb_up', comment: 'comment', friend_request: 'person_add',
       friend_accepted: 'people', follow: 'person_add_alt', message: 'chat',

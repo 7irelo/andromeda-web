@@ -1,7 +1,7 @@
 <div class="marketplace-page">
   <div class="marketplace-header">
     <h1>Marketplace</h1>
-    <button mat-flat-button color="primary" routerLink="/marketplace/create">
+    <button mat-flat-button color="primary" (click)="openCreateDialog()">
       <mat-icon>add</mat-icon> Create Listing
     </button>
   </div>
@@ -17,15 +17,20 @@
   <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
 
   <div class="listings-grid" *ngIf="!loading">
-    <a class="listing-card card" *ngFor="let l of listings" [routerLink]="'/marketplace/' + asListing(l).id">
+    <a class="listing-card card" *ngFor="let listing of listings" [routerLink]="'/marketplace/' + listing.id">
       <div class="listing-image">
-        <img [src]="primaryImage(l)" [alt]="asListing(l).title" />
+        <img [src]="primaryImage(listing)" [alt]="listing.title" />
+        <span class="condition-badge" [class]="'condition-' + listing.condition">
+          {{ listing.condition === 'like_new' ? 'Like New' : (listing.condition | titlecase) }}
+        </span>
       </div>
       <div class="listing-info">
-        <div class="listing-price">${{ asListing(l).price }}</div>
-        <div class="listing-title font-medium">{{ asListing(l).title }}</div>
-        <div class="listing-location text-secondary text-xs">{{ asListing(l).location || 'Location not specified' }}</div>
-        <div class="listing-condition text-xs" [class.condition-new]="asListing(l).condition === 'new'">{{ asListing(l).condition | titlecase }}</div>
+        <div class="listing-price">{{ listing.currency }} {{ listing.price }}</div>
+        <div class="listing-title font-medium">{{ listing.title }}</div>
+        <div class="listing-location text-secondary text-xs">
+          <mat-icon>location_on</mat-icon>
+          {{ listing.location || 'Location not specified' }}
+        </div>
       </div>
     </a>
   </div>
@@ -33,5 +38,59 @@
   <div *ngIf="!loading && listings.length === 0" class="empty-state">
     <mat-icon>storefront</mat-icon>
     <p>No listings found</p>
+  </div>
+</div>
+
+<!-- ── Create Listing Dialog ───────────────────────────────────── -->
+<div class="edit-overlay" *ngIf="isCreating" (click)="cancelCreate()"></div>
+<div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm">
+  <div class="edit-dialog-header">
+    <h2>Create Listing</h2>
+    <button mat-icon-button (click)="cancelCreate()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="edit-dialog-body">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" placeholder="What are you selling?" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="3" placeholder="Describe your item..."></textarea>
+    </mat-form-field>
+
+    <div class="edit-row">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Price</mat-label>
+        <input matInput type="number" formControlName="price" placeholder="0.00" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Currency</mat-label>
+        <input matInput formControlName="currency" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Condition</mat-label>
+      <mat-select formControlName="condition">
+        <mat-option *ngFor="let c of conditions" [value]="c.value">{{ c.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Location</mat-label>
+      <mat-icon matPrefix>location_on</mat-icon>
+      <input matInput formControlName="location" placeholder="City, Country" />
+    </mat-form-field>
+  </div>
+
+  <div class="edit-dialog-actions">
+    <button mat-stroked-button (click)="cancelCreate()" [disabled]="saving">Cancel</button>
+    <button mat-flat-button color="primary" (click)="saveCreate()" [disabled]="saving || createForm.invalid">
+      <mat-icon *ngIf="!saving">add</mat-icon>
+      <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
+      {{ saving ? 'Creating...' : 'Create Listing' }}
+    </button>
   </div>
 </div>
