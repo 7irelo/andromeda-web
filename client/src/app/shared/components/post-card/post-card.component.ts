@@ -1,13 +1,13 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Post, Comment, REACTIONS } from '../../../models/post.model';
+import { Comment, Post, Reaction, REACTIONS } from '../../../models/post.model';
 
 @Component({
   selector: 'app-post-card',
@@ -27,10 +27,12 @@ export class PostCardComponent implements OnInit {
   showReactions = false;
   currentUserId: number | null = null;
 
-  constructor(private apiService: ApiService, private authService: AuthService) {}
+  constructor(private apiService: ApiService, private authService: AuthService) { }
 
-  ngOnInit(): void {
-    this.currentUserId = this.authService.currentUser?.id ?? null;
+    reactionByType: Partial<Record<string, Reaction>> = {};
+
+  ngOnInit() {
+    this.reactionByType = Object.fromEntries(this.reactions.map(r => [r.type, r]));
   }
 
   get isOwner(): boolean {

@@ -6,6 +6,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
+interface Group {
+  id: number;
+  name: string;
+  cover_photo: string;
+  description: string;
+  members_count: number;
+  privacy: string;
+  is_member: boolean;
+}
+
 @Component({
   selector: 'app-group-detail',
   standalone: true,
@@ -31,34 +41,28 @@ import { environment } from '../../../../environments/environment';
 })
 export class GroupDetailComponent implements OnInit {
   @Input() id!: string;
-  group: unknown = null;
+  group: Group | null = null;
   loading = false;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loading = true;
-    this.http.get(`${environment.apiUrl}/groups/${this.id}/`).subscribe({
+    this.http.get<Group>(`${environment.apiUrl}/groups/${this.id}/`).subscribe({
       next: (g) => { this.group = g; this.loading = false; },
       error: () => (this.loading = false),
     });
   }
 
-  asGroup(g: unknown): { name: string; members_count: number; privacy: string; description: string; cover_photo: string; is_member: boolean } {
-    return g as typeof this.asGroup extends (g: unknown) => infer R ? R : never;
-  }
-
   join(): void {
-    const g = this.group as { id: number; is_member: boolean };
-    this.http.post(`${environment.apiUrl}/groups/${g.id}/join/`, {}).subscribe(() => {
-      (this.group as { is_member: boolean }).is_member = true;
+    this.http.post(`${environment.apiUrl}/groups/${this.group!.id}/join/`, {}).subscribe(() => {
+      this.group!.is_member = true;
     });
   }
 
   leave(): void {
-    const g = this.group as { id: number; is_member: boolean };
-    this.http.post(`${environment.apiUrl}/groups/${g.id}/leave/`, {}).subscribe(() => {
-      (this.group as { is_member: boolean }).is_member = false;
+    this.http.post(`${environment.apiUrl}/groups/${this.group!.id}/leave/`, {}).subscribe(() => {
+      this.group!.is_member = false;
     });
   }
 }
