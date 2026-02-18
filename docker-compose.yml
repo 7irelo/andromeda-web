@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ============================================================
   # Databases
@@ -147,6 +145,12 @@ services:
       - andromeda_network
     depends_on:
       - django
+    healthcheck:
+      test: ["CMD-SHELL", "grep -qa celery /proc/1/cmdline || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   celery_beat:
     build:
@@ -165,6 +169,12 @@ services:
       - andromeda_network
     depends_on:
       - django
+    healthcheck:
+      test: ["CMD-SHELL", "grep -qa celery /proc/1/cmdline || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   flower:
     build:
@@ -184,6 +194,12 @@ services:
     depends_on:
       - rabbitmq
       - celery_worker
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5555/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ============================================================
   # Frontend + Reverse Proxy

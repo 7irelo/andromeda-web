@@ -148,3 +148,71 @@ def cleanup_old_notifications():
     count, _ = Notification.objects.filter(is_read=True, created_at__lt=cutoff).delete()
     logger.info(f'Deleted {count} old notifications.')
     return count
+
+
+@shared_task(name='notifications.tasks.send_product_spotlight', queue='notifications')
+def send_product_spotlight():
+    """Pick a random active marketplace listing and notify all users about it."""
+    import random
+    from django.contrib.auth import get_user_model
+    from marketplace.models import Listing
+    from notifications.models import Notification
+
+    User = get_user_model()
+
+    try:
+        listings = list(
+            Listing.objects.filter(status=Listing.STATUS_ACTIVE)
+            .select_related('seller')
+            .prefetch_related('images')
+        )
+        if not listings:
+            logger.info('send_product_spotlight: no active listings found.')
+            return 0
+
+        listing = random.choice(listings)
+        title = f'🛍 Spotlight: {listing.title}'
+        body = (
+            f'{listing.title} is available for {listing.currency} {listing.price} '
+            f'({listing.get_condition_display()}) — check it out!'
+        )
+        primary_image = next(
+            (img.image.url for img in listing.images.all() if img.is_primary),
+            None,
+        )
+
+        user_ids = list(
+            User.objects.exclude(id=listing.seller_id)
+            .values_list('id', flat=True)
+        )
+
+        for user_id in user_ids:
+            notif = Notification.objects.create(
+                recipient_id=user_id,
+                sender=listing.seller,
+                notification_type=Notification.TYPE_SYSTEM,
+                title=title,
+                body=body,
+                extra={
+                    'listing_id': listing.id,
+                    'price': str(listing.price),
+                    'currency': listing.currency,
+                    'condition': listing.condition,
+                    'image': primary_image,
+                },
+            )
+            _push_to_websocket(user_id, {
+                'id': notif.id,
+                'type': 'system',
+                'title': notif.title,
+                'body': notif.body,
+                'listing_id': listing.id,
+                'created_at': notif.created_at.isoformat(),
+            })
+
+        logger.info(f'send_product_spotlight: sent listing #{listing.id} to {len(user_ids)} users.')
+        return len(user_ids)
+
+    except Exception as e:
+        logger.error(f'send_product_spotlight error: {e}')
+        return 0

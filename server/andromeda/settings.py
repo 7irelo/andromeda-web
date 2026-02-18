@@ -153,6 +153,20 @@ CELERY_TASK_QUEUES = {
 }
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 
+# ── Periodic tasks ────────────────────────────────────────────
+from celery.schedules import crontab  # noqa: E402
+
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-old-notifications': {
+        'task': 'notifications.tasks.cleanup_old_notifications',
+        'schedule': crontab(hour=3, minute=0),
+    },
+    'product-spotlight-hourly': {
+        'task': 'notifications.tasks.send_product_spotlight',
+        'schedule': crontab(minute=0),   # fires every hour
+    },
+}
+
 # ============================================================
 # REST Framework
 # ============================================================

@@ -1,7 +1,7 @@
 <div class="groups-page">
   <div class="groups-header">
     <h1>Groups</h1>
-    <button mat-flat-button color="primary" routerLink="/groups/create">
+    <button mat-flat-button color="primary" (click)="openCreateDialog()">
       <mat-icon>add</mat-icon> Create Group
     </button>
   </div>
@@ -41,4 +41,41 @@
       </div>
     </mat-tab>
   </mat-tab-group>
+</div>
+
+<!-- ── Create Group Dialog ─────────────────────────────────────── -->
+<div class="edit-overlay" *ngIf="isCreating" (click)="cancelCreate()"></div>
+<div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm">
+  <div class="edit-dialog-header">
+    <h2>Create Group</h2>
+    <button mat-icon-button (click)="cancelCreate()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="edit-dialog-body">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Group Name</mat-label>
+      <input matInput formControlName="name" placeholder="Name your group" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="3" placeholder="What is this group about?"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Privacy</mat-label>
+      <mat-select formControlName="privacy">
+        <mat-option *ngFor="let p of privacyOptions" [value]="p.value">{{ p.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="edit-dialog-actions">
+    <button mat-stroked-button (click)="cancelCreate()" [disabled]="saving">Cancel</button>
+    <button mat-flat-button color="primary" (click)="saveCreate()" [disabled]="saving || createForm.invalid">
+      <mat-icon *ngIf="!saving">group_add</mat-icon>
+      <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
+      {{ saving ? 'Creating...' : 'Create Group' }}
+    </button>
+  </div>
 </div>
