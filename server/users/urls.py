@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 from .views import (
     RegisterView, LoginView, MeView,
-    UserViewSet, FriendRequestViewSet, FollowView,
+    UserViewSet, FriendRequestViewSet,
 )
 
 router = DefaultRouter()
@@ -16,6 +16,5 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('token/blacklist/', TokenBlacklistView.as_view(), name='token-blacklist'),
     path('me/', MeView.as_view(), name='me'),
-    path('users/<int:user_id>/follow/', FollowView.as_view(), name='follow'),
     path('', include(router.urls)),
 ]

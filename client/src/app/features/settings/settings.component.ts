@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -19,7 +20,7 @@ import { User } from '../../models/user.model';
   imports: [
     CommonModule, ReactiveFormsModule,
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
+    MatSelectModule, MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
   ],
   template: `
     <div class="settings-page">
@@ -57,6 +58,78 @@ import { User } from '../../models/user.model';
           <button mat-flat-button color="primary" type="submit" [disabled]="savingProfile">
             <mat-spinner diameter="18" *ngIf="savingProfile"></mat-spinner>
             <span *ngIf="!savingProfile">Save Changes</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- Privacy Section -->
+      <section class="settings-section card">
+        <h2><mat-icon>shield</mat-icon> Privacy Settings</h2>
+        <form [formGroup]="privacyForm" (ngSubmit)="savePrivacy()" class="settings-form">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Profile Visibility</mat-label>
+            <mat-select formControlName="privacy_profile">
+              <mat-option value="everyone">Everyone</mat-option>
+              <mat-option value="friends">Friends</mat-option>
+              <mat-option value="private">Only Me</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Who Can Message Me</mat-label>
+            <mat-select formControlName="privacy_messages">
+              <mat-option value="everyone">Everyone</mat-option>
+              <mat-option value="friends">Friends</mat-option>
+              <mat-option value="nobody">Nobody</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Who Can Send Friend Requests</mat-label>
+            <mat-select formControlName="privacy_friend_requests">
+              <mat-option value="everyone">Everyone</mat-option>
+              <mat-option value="friends_of_friends">Friends of Friends</mat-option>
+              <mat-option value="nobody">Nobody</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Friends List Visibility</mat-label>
+            <mat-select formControlName="privacy_friends_list">
+              <mat-option value="everyone">Everyone</mat-option>
+              <mat-option value="friends">Friends</mat-option>
+              <mat-option value="private">Only Me</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Default Post Privacy</mat-label>
+            <mat-select formControlName="default_post_privacy">
+              <mat-option value="public">Public</mat-option>
+              <mat-option value="friends">Friends</mat-option>
+              <mat-option value="private">Only Me</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="setting-item">
+            <div>
+              <div class="font-semibold">Show Online Status</div>
+              <div class="text-secondary text-sm">Let others see when you're active</div>
+            </div>
+            <mat-slide-toggle formControlName="show_online_status"></mat-slide-toggle>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="font-semibold">Appear in Search Results</div>
+              <div class="text-secondary text-sm">Allow others to find you via search</div>
+            </div>
+            <mat-slide-toggle formControlName="searchable"></mat-slide-toggle>
+          </div>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="savingPrivacy">
+            <mat-spinner diameter="18" *ngIf="savingPrivacy"></mat-spinner>
+            <span *ngIf="!savingPrivacy">Save Privacy Settings</span>
           </button>
         </form>
       </section>
@@ -132,6 +205,7 @@ export class SettingsComponent implements OnInit {
   currentUser: User | null = null;
   isDark = false;
   savingProfile = false;
+  savingPrivacy = false;
 
   profileForm = this.fb.group({
     first_name: [''],
@@ -139,6 +213,16 @@ export class SettingsComponent implements OnInit {
     bio: [''],
     location: [''],
     website: [''],
+  });
+
+  privacyForm = this.fb.group({
+    privacy_profile: ['everyone'],
+    privacy_messages: ['everyone'],
+    privacy_friend_requests: ['everyone'],
+    privacy_friends_list: ['everyone'],
+    default_post_privacy: ['public'],
+    show_online_status: [true],
+    searchable: [true],
   });
 
   passwordForm = this.fb.group({
@@ -166,6 +250,15 @@ export class SettingsComponent implements OnInit {
           location: u.location,
           website: u.website,
         });
+        this.privacyForm.patchValue({
+          privacy_profile: u.privacy_profile || 'everyone',
+          privacy_messages: u.privacy_messages || 'everyone',
+          privacy_friend_requests: u.privacy_friend_requests || 'everyone',
+          privacy_friends_list: u.privacy_friends_list || 'everyone',
+          default_post_privacy: u.default_post_privacy || 'public',
+          show_online_status: u.show_online_status ?? true,
+          searchable: u.searchable ?? true,
+        });
       }
     });
   }
@@ -182,6 +275,22 @@ export class SettingsComponent implements OnInit {
       error: () => {
         this.savingProfile = false;
         this.snackBar.open('Failed to update profile', 'Dismiss', { duration: 3000 });
+      },
+    });
+  }
+
+  savePrivacy(): void {
+    if (this.savingPrivacy) return;
+    this.savingPrivacy = true;
+    this.apiService.updateProfile(this.privacyForm.value as Partial<User>).subscribe({
+      next: () => {
+        this.savingPrivacy = false;
+        this.authService.fetchMe().subscribe();
+        this.snackBar.open('Privacy settings saved!', 'Dismiss', { duration: 3000 });
+      },
+      error: () => {
+        this.savingPrivacy = false;
+        this.snackBar.open('Failed to update privacy settings', 'Dismiss', { duration: 3000 });
       },
     });
   }

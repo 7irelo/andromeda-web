@@ -41,11 +41,11 @@
     </div>
   </div>
 
-  <!-- Pending Requests -->
-  <div *ngIf="friendRequests.length > 0">
-    <h2>Friend Requests ({{ friendRequests.length }})</h2>
+  <!-- Received Requests -->
+  <div *ngIf="receivedRequests.length > 0">
+    <h2>Friend Requests ({{ receivedRequests.length }})</h2>
     <div class="user-grid">
-      <div class="user-card-lg card" *ngFor="let req of friendRequests">
+      <div class="user-card-lg card" *ngFor="let req of receivedRequests">
         <div class="user-card-cover">
           <img *ngIf="req.sender.cover_photo_url" [src]="req.sender.cover_photo_url" alt="" class="cover-img" />
         </div>
@@ -57,6 +57,26 @@
             <button mat-flat-button color="primary" (click)="accept(req)" class="w-full">Confirm</button>
             <button mat-stroked-button (click)="decline(req)" class="w-full">Delete</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sent Requests -->
+  <div *ngIf="sentRequests.length > 0">
+    <h2>Sent Requests ({{ sentRequests.length }})</h2>
+    <div class="user-grid">
+      <div class="user-card-lg card" *ngFor="let req of sentRequests">
+        <div class="user-card-cover">
+          <img *ngIf="req.receiver.cover_photo_url" [src]="req.receiver.cover_photo_url" alt="" class="cover-img" />
+        </div>
+        <div class="user-card-body">
+          <img [src]="req.receiver.avatar_url || 'assets/default-avatar.png'" class="avatar lg user-float-avatar" [alt]="req.receiver.username" />
+          <div class="font-semibold">{{ req.receiver.full_name }}</div>
+          <div class="text-secondary text-sm">&#64;{{ req.receiver.username }}</div>
+          <button mat-stroked-button (click)="cancelRequest(req)" class="w-full">
+            <mat-icon>close</mat-icon> Cancel Request
+          </button>
         </div>
       </div>
     </div>

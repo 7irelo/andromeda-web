@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Listing, ListingLike, Category, Review
-from .serializers import ListingSerializer, CategorySerializer, ReviewSerializer
+from .models import Listing, ListingImage, ListingLike, Category, Review
+from .serializers import ListingSerializer, ListingImageSerializer, CategorySerializer, ReviewSerializer
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -34,7 +34,10 @@ class ListingViewSet(viewsets.ModelViewSet):
         return qs.prefetch_related('images')
 
     def perform_create(self, serializer):
-        serializer.save(seller=self.request.user)
+        listing = serializer.save(seller=self.request.user)
+        images = self.request.FILES.getlist('images')
+        for i, img in enumerate(images):
+            ListingImage.objects.create(listing=listing, image=img, is_primary=(i == 0), order=i)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -51,6 +54,26 @@ class ListingViewSet(viewsets.ModelViewSet):
             return Response({'liked': False})
         Listing.objects.filter(pk=listing.pk).update(likes_count=listing.liked_by.count())
         return Response({'liked': True})
+
+    @action(detail=True, methods=['post'])
+    def upload_images(self, request, pk=None):
+        listing = self.get_object()
+        if listing.seller != request.user:
+            return Response({'detail': 'Not allowed.'}, status=status.HTTP_403_FORBIDDEN)
+        images = request.FILES.getlist('images')
+        if not images:
+            return Response({'detail': 'No images provided.'}, status=status.HTTP_400_BAD_REQUEST)
+        current_count = listing.images.count()
+        created = []
+        for i, img in enumerate(images):
+            obj = ListingImage.objects.create(
+                listing=listing, image=img, order=current_count + i
+            )
+            created.append(obj)
+        return Response(
+            ListingImageSerializer(created, many=True).data,
+            status=status.HTTP_201_CREATED
+        )
 
     @action(detail=True, methods=['get', 'post'])
     def reviews(self, request, pk=None):

@@ -19,7 +19,9 @@ class VideoViewSet(viewsets.ModelViewSet):
         return qs.order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(uploader=self.request.user)
+        instance = serializer.save(uploader=self.request.user)
+        instance.status = Video.STATUS_READY
+        instance.save(update_fields=['status'])
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

@@ -18,10 +18,42 @@ class User(AbstractUser):
     is_verified = models.BooleanField(default=False)
 
     # Denormalised counters (updated by signals)
-    followers_count = models.PositiveIntegerField(default=0)
-    following_count = models.PositiveIntegerField(default=0)
     friends_count = models.PositiveIntegerField(default=0)
     posts_count = models.PositiveIntegerField(default=0)
+
+    # Privacy settings
+    PRIVACY_EVERYONE = 'everyone'
+    PRIVACY_FRIENDS = 'friends'
+    PRIVACY_PRIVATE = 'private'
+
+    PROFILE_PRIVACY_CHOICES = [
+        ('everyone', 'Everyone'),
+        ('friends', 'Friends'),
+        ('private', 'Only Me'),
+    ]
+    MESSAGE_PRIVACY_CHOICES = [
+        ('everyone', 'Everyone'),
+        ('friends', 'Friends'),
+        ('nobody', 'Nobody'),
+    ]
+    FRIEND_REQUEST_PRIVACY_CHOICES = [
+        ('everyone', 'Everyone'),
+        ('friends_of_friends', 'Friends of Friends'),
+        ('nobody', 'Nobody'),
+    ]
+    POST_PRIVACY_CHOICES = [
+        ('public', 'Public'),
+        ('friends', 'Friends'),
+        ('private', 'Only Me'),
+    ]
+
+    privacy_profile = models.CharField(max_length=20, choices=PROFILE_PRIVACY_CHOICES, default='everyone')
+    privacy_messages = models.CharField(max_length=20, choices=MESSAGE_PRIVACY_CHOICES, default='everyone')
+    privacy_friend_requests = models.CharField(max_length=20, choices=FRIEND_REQUEST_PRIVACY_CHOICES, default='everyone')
+    privacy_friends_list = models.CharField(max_length=20, choices=PROFILE_PRIVACY_CHOICES, default='everyone')
+    default_post_privacy = models.CharField(max_length=20, choices=POST_PRIVACY_CHOICES, default='public')
+    show_online_status = models.BooleanField(default=True)
+    searchable = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -73,20 +105,6 @@ class FriendRequest(models.Model):
 
     def __str__(self):
         return f'{self.sender} → {self.receiver} ({self.status})'
-
-
-class Follow(models.Model):
-    """A follows B (directed)."""
-    follower = models.ForeignKey(User, related_name='following_set', on_delete=models.CASCADE)
-    following = models.ForeignKey(User, related_name='followers_set', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'follows'
-        unique_together = ('follower', 'following')
-
-    def __str__(self):
-        return f'{self.follower} follows {self.following}'
 
 
 class Block(models.Model):

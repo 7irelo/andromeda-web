@@ -12,14 +12,21 @@ export interface User {
   website: string;
   birth_date: string | null;
   is_verified: boolean;
-  followers_count: number;
-  following_count: number;
   friends_count: number;
   posts_count: number;
   created_at: string;
   is_friend?: boolean;
-  is_following?: boolean;
   friend_request_sent?: boolean;
+  friend_request_received?: boolean;
+
+  // Privacy settings
+  privacy_profile?: string;
+  privacy_messages?: string;
+  privacy_friend_requests?: string;
+  privacy_friends_list?: string;
+  default_post_privacy?: string;
+  show_online_status?: boolean;
+  searchable?: boolean;
 }
 
 export interface FriendRequest {

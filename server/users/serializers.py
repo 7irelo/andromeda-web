@@ -2,15 +2,15 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import User, FriendRequest, Follow
+from .models import User, FriendRequest
 
 
 class UserSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
     cover_photo_url = serializers.SerializerMethodField()
     is_friend = serializers.SerializerMethodField()
-    is_following = serializers.SerializerMethodField()
     friend_request_sent = serializers.SerializerMethodField()
+    friend_request_received = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -18,12 +18,15 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'full_name', 'bio', 'avatar_url', 'avatar', 'cover_photo_url', 'cover_photo',
             'location', 'website', 'birth_date', 'is_verified',
-            'followers_count', 'following_count', 'friends_count', 'posts_count',
-            'created_at', 'is_friend', 'is_following', 'friend_request_sent',
+            'friends_count', 'posts_count',
+            'created_at', 'is_friend', 'friend_request_sent', 'friend_request_received',
+            # Privacy fields
+            'privacy_profile', 'privacy_messages', 'privacy_friend_requests',
+            'privacy_friends_list', 'default_post_privacy',
+            'show_online_status', 'searchable',
         ]
         read_only_fields = [
-            'id', 'followers_count', 'following_count', 'friends_count',
-            'posts_count', 'created_at', 'is_verified',
+            'id', 'friends_count', 'posts_count', 'created_at', 'is_verified',
         ]
         extra_kwargs = {
             'avatar': {'write_only': True},
@@ -53,18 +56,22 @@ class UserSerializer(serializers.ModelSerializer):
             ).exists()
         return False
 
-    def get_is_following(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return Follow.objects.filter(follower=request.user, following=obj).exists()
-        return False
-
     def get_friend_request_sent(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated and request.user != obj:
             return FriendRequest.objects.filter(
                 sender=request.user,
                 receiver=obj,
+                status=FriendRequest.STATUS_PENDING,
+            ).exists()
+        return False
+
+    def get_friend_request_received(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated and request.user != obj:
+            return FriendRequest.objects.filter(
+                sender=obj,
+                receiver=request.user,
                 status=FriendRequest.STATUS_PENDING,
             ).exists()
         return False
@@ -117,13 +124,3 @@ class FriendRequestSerializer(serializers.ModelSerializer):
         model = FriendRequest
         fields = ['id', 'sender', 'receiver', 'status', 'created_at']
         read_only_fields = ['sender', 'status', 'created_at']
-
-
-class FollowSerializer(serializers.ModelSerializer):
-    follower = UserSerializer(read_only=True)
-    following = UserSerializer(read_only=True)
-
-    class Meta:
-        model = Follow
-        fields = ['id', 'follower', 'following', 'created_at']
-        read_only_fields = ['follower', 'following', 'created_at']

@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import FriendRequest, Follow, Block
+from .models import FriendRequest, Block
 from .serializers import (
     UserSerializer, RegisterSerializer,
     AndromedaTokenSerializer, FriendRequestSerializer,
@@ -85,7 +85,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def suggestions(self, request):
-        """Friend / follow suggestions via Neo4j graph."""
+        """Friend suggestions via Neo4j graph or fallback."""
         try:
             from users.graph_models import UserNode
             node = UserNode.nodes.get_or_none(user_id=request.user.id)
@@ -96,10 +96,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 return Response(UserSerializer(users, many=True, context={'request': request}).data)
         except Exception:
             pass
-        # Fallback: users not yet followed / friended
+        # Fallback: users not yet involved in friend requests
         blocked = Block.objects.filter(blocker=request.user).values_list('blocked_id', flat=True)
-        following = Follow.objects.filter(follower=request.user).values_list('following_id', flat=True)
-        # Exclude anyone already involved in a friend request with the current user
         involved = FriendRequest.objects.filter(
             Q(sender=request.user) | Q(receiver=request.user)
         )
@@ -107,7 +105,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             list(involved.values_list('sender_id', flat=True)) +
             list(involved.values_list('receiver_id', flat=True))
         )
-        exclude_ids = set(list(following) + list(blocked) + involved_ids + [request.user.id])
+        exclude_ids = set(list(blocked) + involved_ids + [request.user.id])
         users = User.objects.exclude(id__in=exclude_ids).order_by('?')[:10]
         return Response(UserSerializer(users, many=True, context={'request': request}).data)
 
@@ -129,19 +127,19 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
             fr = serializer.save(sender=self.request.user, receiver=receiver)
         except IntegrityError:
             raise ValidationError({'detail': 'Friend request already sent.'})
-        from notifications.tasks import send_friend_request_notification
-        send_friend_request_notification.delay(
-            self.request.user.id, receiver.id, fr.id
-        )
+        try:
+            from notifications.tasks import send_friend_request_notification
+            send_friend_request_notification.delay(
+                self.request.user.id, receiver.id, fr.id
+            )
+        except Exception:
+            pass
 
     @action(detail=True, methods=['post'])
     def accept(self, request, pk=None):
         fr = get_object_or_404(FriendRequest, pk=pk, receiver=request.user, status='pending')
         fr.status = FriendRequest.STATUS_ACCEPTED
         fr.save()
-        # Create bidirectional follows
-        Follow.objects.get_or_create(follower=fr.sender, following=fr.receiver)
-        Follow.objects.get_or_create(follower=fr.receiver, following=fr.sender)
         return Response({'status': 'accepted'})
 
     @action(detail=True, methods=['post'])
@@ -151,19 +149,24 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
         fr.save()
         return Response({'status': 'declined'})
 
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        fr = get_object_or_404(FriendRequest, pk=pk, sender=request.user, status='pending')
+        fr.delete()
+        return Response({'status': 'cancelled'})
 
-class FollowView(generics.GenericAPIView):
-    def post(self, request, user_id):
-        target = get_object_or_404(User, id=user_id)
-        if target == request.user:
-            return Response({'error': 'Cannot follow yourself.'}, status=400)
-        _, created = Follow.objects.get_or_create(follower=request.user, following=target)
-        if created:
-            from notifications.tasks import send_follow_notification
-            send_follow_notification.delay(request.user.id, target.id)
-        return Response({'following': True, 'created': created})
+    @action(detail=False, methods=['get'])
+    def received(self, request):
+        qs = FriendRequest.objects.filter(
+            receiver=request.user, status=FriendRequest.STATUS_PENDING
+        ).select_related('sender', 'receiver')
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
 
-    def delete(self, request, user_id):
-        target = get_object_or_404(User, id=user_id)
-        Follow.objects.filter(follower=request.user, following=target).delete()
-        return Response({'following': False})
+    @action(detail=False, methods=['get'])
+    def sent(self, request):
+        qs = FriendRequest.objects.filter(
+            sender=request.user, status=FriendRequest.STATUS_PENDING
+        ).select_related('sender', 'receiver')
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)

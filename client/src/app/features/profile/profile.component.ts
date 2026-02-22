@@ -9,12 +9,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../models/user.model';
 import { Post } from '../../models/post.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
+import { ImageCropperComponent, ImageCropperResult } from '../../shared/components/image-cropper/image-cropper.component';
 
 @Component({
   selector: 'app-profile',
@@ -23,7 +25,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
     CommonModule, ReactiveFormsModule, FormsModule,
     MatButtonModule, MatIconModule, MatTabsModule,
     MatProgressSpinnerModule, MatFormFieldModule, MatInputModule,
-    MatSnackBarModule, PostCardComponent,
+    MatSnackBarModule, MatDialogModule, PostCardComponent,
   ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
@@ -64,6 +66,7 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
     private router: Router,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
@@ -167,55 +170,60 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
   onAvatarSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    const fd = new FormData();
-    fd.append('avatar', file);
-    this.uploadingAvatar = true;
-    this.apiService.updateProfile(fd).subscribe({
-      next: (updated) => {
-        this.profile = { ...this.profile!, ...updated };
-        this.authService.fetchMe().subscribe();
-        this.uploadingAvatar = false;
-      },
-      error: () => {
-        this.uploadingAvatar = false;
-        this.snackBar.open('Failed to upload photo', 'Dismiss', { duration: 3000 });
-      },
+    const ref = this.dialog.open(ImageCropperComponent, {
+      data: { file, aspectRatio: 1, title: 'Crop Avatar' },
+      width: '500px',
+    });
+    ref.afterClosed().subscribe((result: ImageCropperResult | undefined) => {
+      if (!result) return;
+      const fd = new FormData();
+      fd.append('avatar', result.blob, 'avatar.jpg');
+      this.uploadingAvatar = true;
+      this.apiService.updateProfile(fd).subscribe({
+        next: (updated) => {
+          this.profile = { ...this.profile!, ...updated };
+          this.authService.fetchMe().subscribe();
+          this.uploadingAvatar = false;
+        },
+        error: () => {
+          this.uploadingAvatar = false;
+          this.snackBar.open('Failed to upload photo', 'Dismiss', { duration: 3000 });
+        },
+      });
     });
   }
 
   onCoverSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    const fd = new FormData();
-    fd.append('cover_photo', file);
-    this.uploadingCover = true;
-    this.apiService.updateProfile(fd).subscribe({
-      next: (updated) => {
-        this.profile = { ...this.profile!, ...updated };
-        this.uploadingCover = false;
-      },
-      error: () => {
-        this.uploadingCover = false;
-        this.snackBar.open('Failed to upload banner', 'Dismiss', { duration: 3000 });
-      },
+    const ref = this.dialog.open(ImageCropperComponent, {
+      data: { file, aspectRatio: 16 / 9, title: 'Crop Cover Photo' },
+      width: '600px',
     });
-  }
-
-  follow(): void {
-    if (!this.profile) return;
-    if (this.profile.is_following) {
-      this.apiService.unfollowUser(this.profile.id).subscribe(() => {
-        if (this.profile) { this.profile.is_following = false; this.profile.followers_count--; }
+    ref.afterClosed().subscribe((result: ImageCropperResult | undefined) => {
+      if (!result) return;
+      const fd = new FormData();
+      fd.append('cover_photo', result.blob, 'cover.jpg');
+      this.uploadingCover = true;
+      this.apiService.updateProfile(fd).subscribe({
+        next: (updated) => {
+          this.profile = { ...this.profile!, ...updated };
+          this.uploadingCover = false;
+        },
+        error: () => {
+          this.uploadingCover = false;
+          this.snackBar.open('Failed to upload banner', 'Dismiss', { duration: 3000 });
+        },
       });
-    } else {
-      this.apiService.followUser(this.profile.id).subscribe(() => {
-        if (this.profile) { this.profile.is_following = true; this.profile.followers_count++; }
-      });
-    }
+    });
   }
 
   get hasPendingRequest(): boolean {
     return this.friendRequestSent || !!this.profile?.friend_request_sent;
+  }
+
+  get hasReceivedRequest(): boolean {
+    return !!this.profile?.friend_request_received;
   }
 
   addFriend(): void {
@@ -224,6 +232,33 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
       next: () => { this.friendRequestSent = true; },
       error: () => { this.snackBar.open('Could not send friend request', 'Dismiss', { duration: 3000 }); },
     });
+  }
+
+  acceptIncomingRequest(): void {
+    if (!this.profile) return;
+    // Find the request ID by fetching received requests
+    this.apiService.getReceivedFriendRequests().subscribe({
+      next: (reqs) => {
+        const req = reqs.find(r => r.sender.id === this.profile!.id);
+        if (req) {
+          this.apiService.acceptFriendRequest(req.id).subscribe({
+            next: () => {
+              if (this.profile) {
+                this.profile.is_friend = true;
+                this.profile.friend_request_received = false;
+              }
+              this.snackBar.open('Friend request accepted!', 'Dismiss', { duration: 3000 });
+            },
+            error: () => this.snackBar.open('Failed to accept request', 'Dismiss', { duration: 3000 }),
+          });
+        }
+      },
+    });
+  }
+
+  unfriend(): void {
+    // For now, just show a message - full unfriend requires backend endpoint
+    this.snackBar.open('Unfriend feature coming soon', 'Dismiss', { duration: 3000 });
   }
 
   startChat(): void {
