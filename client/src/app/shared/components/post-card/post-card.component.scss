@@ -4,6 +4,8 @@
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
   overflow: hidden;
+  transition: box-shadow .2s;
+  &:hover { box-shadow: var(--shadow-md); }
 }
 
 .post-header {
@@ -49,7 +51,17 @@
   max-height: 500px;
   object-fit: cover;
   margin-top: 8px;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: filter .2s;
+  &:hover { filter: brightness(.95); }
+}
+
+.edited-badge {
+  margin-left: 4px;
+  font-style: italic;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .shared-post {
@@ -112,6 +124,16 @@
   z-index: 10;
 }
 
+@keyframes reaction-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.reactions-popup {
+  animation: reaction-pop .2s ease;
+}
+
 .reaction-btn {
   font-size: 24px;
   border: none;
@@ -167,3 +189,28 @@
 }
 
 .menu-btn { margin-left: auto; }
+
+// Lightbox
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: fade-in .2s ease;
+
+  img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

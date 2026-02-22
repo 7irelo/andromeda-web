@@ -70,21 +70,70 @@
 
     &::placeholder { color: var(--text-muted); }
   }
+
+  @media (max-width: 600px) {
+    flex: 0 0 42px;
+    padding: 0 10px;
+    .search-input { display: none; }
+    &:focus-within {
+      flex: 1;
+      .search-input { display: block; }
+    }
+  }
 }
 
+// ── Hamburger ──────────────────────────────────────────────────
+.hamburger-btn {
+  display: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  padding: 4px;
+  border-radius: 8px;
+  transition: background .15s;
+
+  &:hover { background: var(--bg); }
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// ── Nav links ──────────────────────────────────────────────────
 .nav-links {
   display: flex;
   align-items: center;
   flex: 1;
   justify-content: center;
   gap: 2px;
+
+  @media (max-width: 768px) {
+    display: none;
+    &.mobile-open {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      padding: 8px;
+      gap: 4px;
+      z-index: 99;
+    }
+  }
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 96px;
+  width: 80px;
   height: 44px;
   border-radius: var(--border-radius-sm);
   color: var(--text-secondary);
@@ -93,6 +142,8 @@
   position: relative;
 
   mat-icon { font-size: 24px; }
+
+  .nav-label { display: none; }
 
   &:hover {
     background: var(--primary-light);
@@ -113,6 +164,20 @@
       height: 3px;
       background: var(--gradient-primary);
       border-radius: 2px 2px 0 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0 16px;
+    gap: 12px;
+
+    .nav-label { display: inline; font-weight: 500; font-size: 15px; }
+
+    &.active::after { display: none; }
+    &.active {
+      background: var(--primary-light);
     }
   }
 }

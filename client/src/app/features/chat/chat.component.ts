@@ -22,6 +22,12 @@ export class ChatComponent implements OnInit {
   currentUser: User | null = null;
   loading = false;
 
+  // New-message search panel
+  showNewChat = false;
+  newChatQuery = '';
+  newChatResults: User[] = [];
+  newChatSearching = false;
+
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
@@ -73,5 +79,39 @@ export class ChatComponent implements OnInit {
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
     return new Date(dateStr).toLocaleDateString();
+  }
+
+  // ── New message panel ─────────────────────────────────────────────
+  openNewChat(): void {
+    this.showNewChat = true;
+    this.newChatQuery = '';
+    this.newChatResults = [];
+  }
+
+  closeNewChat(): void {
+    this.showNewChat = false;
+  }
+
+  searchNewChatUsers(): void {
+    const q = this.newChatQuery.trim();
+    if (!q) { this.newChatResults = []; return; }
+    this.newChatSearching = true;
+    this.apiService.searchUsers(q).subscribe({
+      next: (res) => {
+        this.newChatResults = res.results.filter((u) => u.id !== this.currentUser?.id);
+        this.newChatSearching = false;
+      },
+      error: () => (this.newChatSearching = false),
+    });
+  }
+
+  startDM(user: User): void {
+    this.closeNewChat();
+    this.apiService.createChatRoom({ member_ids: [user.id], room_type: 'direct' }).subscribe({
+      next: (room) => {
+        this.loadRooms();
+        this.router.navigate(['/chat', room.id]);
+      },
+    });
   }
 }

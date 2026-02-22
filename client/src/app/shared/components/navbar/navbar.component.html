@@ -17,28 +17,36 @@
     />
   </div>
 
+  <!-- Mobile Hamburger -->
+  <button class="hamburger-btn" (click)="toggleMobileMenu()">
+    <mat-icon>{{ mobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
+  </button>
+
   <!-- Nav Icons -->
-  <nav class="nav-links">
+  <nav class="nav-links" [class.mobile-open]="mobileMenuOpen">
     <a
       *ngFor="let item of navItems"
       [routerLink]="item.route"
       routerLinkActive="active"
       class="nav-item"
-      [title]="item.label"
+      [matTooltip]="item.label"
+      matTooltipPosition="below"
+      (click)="mobileMenuOpen = false"
     >
       <mat-icon>{{ item.icon }}</mat-icon>
+      <span class="nav-label">{{ item.label }}</span>
     </a>
   </nav>
 
   <!-- Right Actions -->
   <div class="right-actions">
     <!-- Chat -->
-    <a routerLink="/chat" class="action-btn" title="Messenger">
+    <a routerLink="/chat" class="action-btn" matTooltip="Messenger" matTooltipPosition="below">
       <mat-icon>chat</mat-icon>
     </a>
 
     <!-- Notifications -->
-    <a routerLink="/notifications" class="action-btn" title="Notifications">
+    <a routerLink="/notifications" class="action-btn" matTooltip="Notifications" matTooltipPosition="below">
       <mat-icon
         [matBadge]="unreadNotifications || null"
         matBadgeColor="warn"
@@ -59,6 +67,10 @@
       <a mat-menu-item [routerLink]="'/profile/' + currentUser?.username">
         <mat-icon>person</mat-icon>
         <span>My Profile</span>
+      </a>
+      <a mat-menu-item routerLink="/settings">
+        <mat-icon>settings</mat-icon>
+        <span>Settings</span>
       </a>
       <a mat-menu-item routerLink="/marketplace">
         <mat-icon>storefront</mat-icon>

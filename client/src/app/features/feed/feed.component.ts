@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +17,7 @@ import { UserCardComponent } from '../../shared/components/user-card/user-card.c
   selector: 'app-feed',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, MatProgressSpinnerModule, MatButtonModule,
+    CommonModule, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
     MatIconModule, PostCardComponent, CreatePostComponent, UserCardComponent,
   ],
   templateUrl: './feed.component.html',
@@ -78,8 +78,13 @@ export class FeedComponent implements OnInit {
     this.posts = this.posts.filter((p) => p.id !== postId);
   }
 
-  onScroll(): void {
-    this.loadFeed();
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    const scrolled = window.scrollY + window.innerHeight;
+    const height = document.documentElement.scrollHeight;
+    if (scrolled >= height - 400 && !this.loading && this.hasMore) {
+      this.loadFeed();
+    }
   }
 
   trackById(_index: number, post: Post): number {

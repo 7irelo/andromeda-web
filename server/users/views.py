@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -39,11 +41,24 @@ class LoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
 
 
-class MeView(generics.RetrieveUpdateAPIView):
+class MeView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
 
     def get_object(self):
         return self.request.user
+
+    def destroy(self, request, *args, **kwargs):
+        user = self.get_object()
+        refresh_token = request.data.get('refresh')
+        if refresh_token:
+            try:
+                from rest_framework_simplejwt.tokens import RefreshToken as RT
+                token = RT(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -81,12 +96,19 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 return Response(UserSerializer(users, many=True, context={'request': request}).data)
         except Exception:
             pass
-        # Fallback: users not yet followed
+        # Fallback: users not yet followed / friended
         blocked = Block.objects.filter(blocker=request.user).values_list('blocked_id', flat=True)
         following = Follow.objects.filter(follower=request.user).values_list('following_id', flat=True)
-        users = User.objects.exclude(
-            id__in=list(following) + list(blocked) + [request.user.id]
-        ).order_by('?')[:10]
+        # Exclude anyone already involved in a friend request with the current user
+        involved = FriendRequest.objects.filter(
+            Q(sender=request.user) | Q(receiver=request.user)
+        )
+        involved_ids = (
+            list(involved.values_list('sender_id', flat=True)) +
+            list(involved.values_list('receiver_id', flat=True))
+        )
+        exclude_ids = set(list(following) + list(blocked) + involved_ids + [request.user.id])
+        users = User.objects.exclude(id__in=exclude_ids).order_by('?')[:10]
         return Response(UserSerializer(users, many=True, context={'request': request}).data)
 
 
@@ -101,7 +123,16 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         receiver_id = self.request.data.get('receiver_id')
         receiver = get_object_or_404(User, id=receiver_id)
-        serializer.save(sender=self.request.user, receiver=receiver)
+        if receiver == self.request.user:
+            raise ValidationError({'detail': 'You cannot send a friend request to yourself.'})
+        try:
+            fr = serializer.save(sender=self.request.user, receiver=receiver)
+        except IntegrityError:
+            raise ValidationError({'detail': 'Friend request already sent.'})
+        from notifications.tasks import send_friend_request_notification
+        send_friend_request_notification.delay(
+            self.request.user.id, receiver.id, fr.id
+        )
 
     @action(detail=True, methods=['post'])
     def accept(self, request, pk=None):
@@ -127,6 +158,9 @@ class FollowView(generics.GenericAPIView):
         if target == request.user:
             return Response({'error': 'Cannot follow yourself.'}, status=400)
         _, created = Follow.objects.get_or_create(follower=request.user, following=target)
+        if created:
+            from notifications.tasks import send_follow_notification
+            send_follow_notification.delay(request.user.id, target.id)
         return Response({'following': True, 'created': created})
 
     def delete(self, request, user_id):

@@ -1,8 +1,11 @@
 <div class="notifications-page">
-  <div class="page-header">
-    <h1>Notifications</h1>
-    <button mat-button color="primary" (click)="markAllRead()" *ngIf="notifications.length > 0">
-      Mark all as read
+  <div class="page-header-gradient notif-header">
+    <div>
+      <h1>Notifications</h1>
+      <p style="opacity:.85;margin-top:4px;font-size:14px">Stay up to date with your activity</p>
+    </div>
+    <button mat-flat-button (click)="markAllRead()" *ngIf="notifications.length > 0" style="background:#fff;color:var(--primary);font-weight:600">
+      <mat-icon>done_all</mat-icon> Mark all read
     </button>
   </div>
 
@@ -38,8 +41,11 @@
     </div>
 
     <div class="empty-state" *ngIf="notifications.length === 0">
-      <mat-icon>notifications_none</mat-icon>
-      <p>No notifications yet</p>
+      <div class="empty-icon">
+        <mat-icon>notifications_none</mat-icon>
+      </div>
+      <h3>All caught up!</h3>
+      <p>You'll be notified when something happens</p>
     </div>
   </div>
 </div>

@@ -38,6 +38,52 @@
   --gradient-warm:    linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
 }
 
+// ── Dark Mode ─────────────────────────────────────────────────────────────────
+[data-theme="dark"] {
+  --bg:              #0f172a;      // slate-900
+  --surface:         #1e293b;      // slate-800
+  --surface-2:       #1a2332;
+  --border:          #334155;      // slate-700
+  --border-light:    #1e293b;
+
+  --text-primary:    #f1f5f9;      // slate-100
+  --text-secondary:  #94a3b8;      // slate-400
+  --text-muted:      #64748b;      // slate-500
+
+  --primary-light:   rgba(79, 70, 229, .15);
+
+  --shadow-sm:       0 1px 3px rgba(0,0,0,.2), 0 1px 2px rgba(0,0,0,.15);
+  --shadow:          0 4px 6px -1px rgba(0,0,0,.25), 0 2px 4px -2px rgba(0,0,0,.2);
+  --shadow-md:       0 10px 15px -3px rgba(0,0,0,.3), 0 4px 6px -4px rgba(0,0,0,.25);
+  --shadow-lg:       0 20px 25px -5px rgba(0,0,0,.35), 0 8px 10px -6px rgba(0,0,0,.3);
+  --shadow-glow:     0 0 0 3px rgba(79,70,229,.3);
+
+  // Material overrides for dark mode
+  .mat-mdc-card { background: var(--surface) !important; }
+  .mat-mdc-snack-bar-container { --mdc-snackbar-container-color: #334155; }
+
+  // Fix form field colors
+  .mat-mdc-form-field {
+    --mdc-outlined-text-field-outline-color: var(--border);
+    --mdc-outlined-text-field-hover-outline-color: var(--text-secondary);
+    --mdc-outlined-text-field-label-text-color: var(--text-secondary);
+    --mdc-outlined-text-field-input-text-color: var(--text-primary);
+  }
+
+  // Fix menu colors
+  .mat-mdc-menu-panel {
+    background: var(--surface) !important;
+  }
+  .mat-mdc-menu-item {
+    color: var(--text-primary) !important;
+  }
+
+  // Fix tab colors
+  .mat-mdc-tab:not(.mdc-tab--active) .mdc-tab__text-label {
+    color: var(--text-secondary) !important;
+  }
+}
+
 // Reset
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -49,6 +95,7 @@ html, body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color .3s, color .3s;
 }
 
 // Scrollbar
@@ -181,22 +228,41 @@ a:hover { color: var(--primary-dark); text-decoration: underline; }
   margin: 8px 0;
 }
 
-// ── Skeleton loading ────────────────────────────────────────────────────────
+// ── Animations ──────────────────────────────────────────────────────────────
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: .45; }
 }
 
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fade-in .3s ease;
+}
+
+.fade-in-up {
+  animation: fade-in-up .4s ease;
+}
+
+// ── Skeleton loading ────────────────────────────────────────────────────────
 .skeleton {
   background: linear-gradient(90deg, var(--border) 25%, var(--surface-2) 50%, var(--border) 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
   border-radius: 6px;
-}
-
-@keyframes skeleton-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }
 
 // ── Page header ────────────────────────────────────────────────────────────
@@ -221,4 +287,41 @@ a:hover { color: var(--primary-dark); text-decoration: underline; }
   &.badge-success { background: #dcfce7; color: #16a34a; }
   &.badge-warning { background: #fef3c7; color: #d97706; }
   &.badge-danger  { background: #fee2e2; color: #dc2626; }
+}
+
+// ── Empty states ──────────────────────────────────────────────────────────
+.empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 24px;
+  color: var(--text-secondary);
+  text-align: center;
+  gap: 16px;
+  animation: fade-in-up .4s ease;
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      color: var(--primary);
+    }
+  }
+
+  h3 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+  p { font-size: 14px; max-width: 300px; }
+}
+
+// ── Page transitions ──────────────────────────────────────────────────────
+router-outlet + * {
+  animation: fade-in .25s ease;
 }

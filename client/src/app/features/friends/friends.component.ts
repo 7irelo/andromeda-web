@@ -8,6 +8,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { User, FriendRequest } from '../../models/user.model';
 
 @Component({
@@ -26,12 +27,18 @@ export class FriendsComponent implements OnInit {
   searchResults: User[] = [];
   searchQuery = '';
   loading = false;
+  currentUserId: number | null = null;
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private authService: AuthService) {}
 
   ngOnInit(): void {
+    this.currentUserId = this.authService.currentUser?.id ?? null;
     this.loadSuggestions();
     this.loadRequests();
+  }
+
+  isCurrentUser(user: User): boolean {
+    return user.id === this.currentUserId;
   }
 
   loadSuggestions(): void {
@@ -53,7 +60,7 @@ export class FriendsComponent implements OnInit {
   search(): void {
     if (!this.searchQuery.trim()) { this.searchResults = []; return; }
     this.apiService.searchUsers(this.searchQuery).subscribe({
-      next: (res) => (this.searchResults = res.results),
+      next: (res) => (this.searchResults = res.results.filter((u) => u.id !== this.currentUserId)),
     });
   }
 
@@ -70,8 +77,11 @@ export class FriendsComponent implements OnInit {
   }
 
   addFriend(user: User): void {
-    this.apiService.sendFriendRequest(user.id).subscribe(() => {
-      this.suggestions = this.suggestions.filter((s) => s.id !== user.id);
+    this.apiService.sendFriendRequest(user.id).subscribe({
+      next: () => {
+        this.suggestions = this.suggestions.filter((s) => s.id !== user.id);
+        this.searchResults = this.searchResults.filter((s) => s.id !== user.id);
+      },
     });
   }
 }

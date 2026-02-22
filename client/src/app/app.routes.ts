@@ -94,6 +94,18 @@ export const routes: Routes = [
       import('./features/watch/video-player/video-player.component').then((m) => m.VideoPlayerComponent),
   },
   {
+    path: 'pages',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/pages/pages.component').then((m) => m.PagesComponent),
+  },
+  {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+  },
+  {
     path: '**',
     redirectTo: 'feed',
   },

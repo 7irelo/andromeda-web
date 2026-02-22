@@ -9,7 +9,9 @@
         {{ post.author.full_name }}
         <mat-icon class="verified" *ngIf="post.author.is_verified" title="Verified">verified</mat-icon>
       </a>
-      <span class="post-time text-secondary text-xs">{{ timeAgo(post.created_at) }}</span>
+      <span class="post-time text-secondary text-xs">
+        {{ timeAgo(post.created_at) }}<span *ngIf="post.is_edited" class="edited-badge">· edited</span>
+      </span>
     </div>
     <button mat-icon-button [matMenuTriggerFor]="postMenu" class="menu-btn">
       <mat-icon>more_horiz</mat-icon>
@@ -30,7 +32,7 @@
   <!-- Content -->
   <div class="post-content">
     <p *ngIf="post.content">{{ post.content }}</p>
-    <img *ngIf="post.image" [src]="post.image" alt="Post image" class="post-image" />
+    <img *ngIf="post.image" [src]="post.image" alt="Post image" class="post-image" (click)="expandedImage = post.image" />
 
     <!-- Shared post -->
     <div class="shared-post" *ngIf="post.shared_post_data">
@@ -48,7 +50,10 @@
       👍 {{ post.likes_count }}
     </span>
     <span *ngIf="post.comments_count > 0" class="text-secondary text-sm" (click)="toggleComments()" style="cursor:pointer">
-      {{ post.comments_count }} Comments
+      {{ post.comments_count }} {{ post.comments_count === 1 ? 'Comment' : 'Comments' }}
+    </span>
+    <span *ngIf="post.shares_count > 0" class="text-secondary text-sm">
+      {{ post.shares_count }} {{ post.shares_count === 1 ? 'Share' : 'Shares' }}
     </span>
   </div>
 
@@ -99,7 +104,7 @@
       </div>
     </div>
     <div class="comment-input">
-      <img [src]="'assets/default-avatar.png'" class="avatar sm" alt="You" />
+      <img [src]="currentUserAvatarUrl" class="avatar sm" alt="You" />
       <input
         type="text"
         [(ngModel)]="commentText"
@@ -113,3 +118,8 @@
     </div>
   </div>
 </article>
+
+<!-- Image Lightbox -->
+<div class="lightbox" *ngIf="expandedImage" (click)="expandedImage = null">
+  <img [src]="expandedImage" alt="Enlarged post image" />
+</div>

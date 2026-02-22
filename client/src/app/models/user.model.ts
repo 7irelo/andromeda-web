@@ -7,7 +7,7 @@ export interface User {
   full_name: string;
   bio: string;
   avatar_url: string | null;
-  cover_photo: string | null;
+  cover_photo_url: string | null;
   location: string;
   website: string;
   birth_date: string | null;
@@ -19,6 +19,7 @@ export interface User {
   created_at: string;
   is_friend?: boolean;
   is_following?: boolean;
+  friend_request_sent?: boolean;
 }
 
 export interface FriendRequest {
