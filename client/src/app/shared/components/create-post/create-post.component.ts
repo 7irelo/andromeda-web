@@ -4,14 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ApiService } from '../../../core/services/api.service';
 import { Post } from '../../../models/post.model';
 import { User } from '../../../models/user.model';
+import { ImageCropperComponent, ImageCropperResult } from '../image-cropper/image-cropper.component';
 
 @Component({
   selector: 'app-create-post',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDialogModule],
   template: `
     <div class="create-post card">
       <div class="create-top">
@@ -119,19 +121,34 @@ export class CreatePostComponent {
     return `What's on your mind, ${this.currentUser?.first_name || 'you'}?`;
   }
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private dialog: MatDialog) {}
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.selectedFile = input.files?.[0] ?? null;
-    if (this.selectedFile) {
+    const file = input.files?.[0] ?? null;
+    if (!file) return;
+    // For image files, open the cropper; for video just attach directly
+    if (file.type.startsWith('image/')) {
+      const ref = this.dialog.open(ImageCropperComponent, {
+        data: { file, aspectRatio: 0, title: 'Crop Image' },
+        width: '550px',
+      });
+      ref.afterClosed().subscribe((result: ImageCropperResult | undefined) => {
+        if (result) {
+          this.selectedFile = new File([result.blob], file.name, { type: 'image/jpeg' });
+          this.imagePreview = result.dataUrl;
+          this.expanded = true;
+        }
+      });
+    } else {
+      this.selectedFile = file;
       const reader = new FileReader();
       reader.onload = (e) => { this.imagePreview = e.target?.result as string; };
-      reader.readAsDataURL(this.selectedFile);
+      reader.readAsDataURL(file);
       this.expanded = true;
-    } else {
-      this.imagePreview = null;
     }
+    // Reset input so the same file can be re-selected
+    input.value = '';
   }
 
   removeImage(): void {

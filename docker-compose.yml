@@ -87,6 +87,43 @@ services:
       retries: 5
       start_period: 30s
 
+  minio:
+    image: minio/minio
+    container_name: andromeda_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-andromeda}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-andromeda_secret}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - andromeda_network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  createbuckets:
+    image: minio/mc
+    container_name: andromeda_createbuckets
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-andromeda} $${MINIO_ROOT_PASSWORD:-andromeda_secret};
+      mc mb --ignore-existing myminio/andromeda-media;
+      mc anonymous set download myminio/andromeda-media;
+      exit 0;
+      "
+    networks:
+      - andromeda_network
+
   # ============================================================
   # Application Services
   # ============================================================
@@ -108,6 +145,11 @@ services:
       - NEO4J_BOLT_URL=bolt://neo4j:${NEO4J_PASSWORD:-andromeda_secret}@neo4j:7687
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
       - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-andromeda}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-andromeda_secret}
+      - MINIO_BUCKET=andromeda-media
+      - MINIO_EXTERNAL_URL=http://localhost:9000
     volumes:
       - media_data:/app/media
       - static_data:/app/staticfiles
@@ -123,6 +165,8 @@ services:
       rabbitmq:
         condition: service_healthy
       neo4j:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   celery_worker:
@@ -306,6 +350,7 @@ volumes:
   neo4j_plugins:
   redis_data:
   rabbitmq_data:
+  minio_data:
   media_data:
   static_data:
   prometheus_data:

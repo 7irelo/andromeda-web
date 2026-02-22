@@ -3,7 +3,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from users.models import Follow
+from users.models import FriendRequest
 from .models import Post, Like, Comment
 from .serializers import PostSerializer, CommentSerializer
 
@@ -17,12 +17,17 @@ class PostViewSet(viewsets.ModelViewSet):
             'media', 'tags'
         )
 
-        # Feed: posts from followed users + own posts
+        # Feed: posts from friends + own posts
         feed_filter = self.request.query_params.get('feed')
         if feed_filter == 'true':
-            following_ids = Follow.objects.filter(follower=user).values_list('following_id', flat=True)
+            accepted = FriendRequest.objects.filter(
+                status=FriendRequest.STATUS_ACCEPTED
+            ).filter(Q(sender=user) | Q(receiver=user))
+            friend_ids = set()
+            for fr in accepted:
+                friend_ids.add(fr.sender_id if fr.receiver_id == user.id else fr.receiver_id)
             qs = qs.filter(
-                Q(author_id__in=following_ids) | Q(author=user),
+                Q(author_id__in=friend_ids) | Q(author=user),
                 privacy__in=['public', 'friends'],
             )
 

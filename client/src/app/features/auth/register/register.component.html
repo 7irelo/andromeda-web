@@ -30,65 +30,170 @@
   </div>
 
   <div class="auth-right">
-    <div class="auth-card">
-      <div class="auth-card-header">
-        <mat-icon class="card-logo">hub</mat-icon>
-        <h2>Create Account</h2>
-        <p class="text-secondary">Start your journey on Andromeda</p>
+    <div class="auth-card register-card">
+      <!-- Step indicator -->
+      <div class="step-indicator">
+        <div class="step-dot" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
+          <span *ngIf="currentStep <= 1">1</span>
+          <mat-icon *ngIf="currentStep > 1">check</mat-icon>
+        </div>
+        <div class="step-line" [class.active]="currentStep >= 2"></div>
+        <div class="step-dot" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
+          <span *ngIf="currentStep <= 2">2</span>
+          <mat-icon *ngIf="currentStep > 2">check</mat-icon>
+        </div>
+        <div class="step-line" [class.active]="currentStep >= 3"></div>
+        <div class="step-dot" [class.active]="currentStep >= 3">3</div>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <mat-form-field appearance="outline">
-            <mat-label>First Name</mat-label>
-            <input matInput formControlName="first_name" />
-            <mat-error>Required</mat-error>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Last Name</mat-label>
-            <input matInput formControlName="last_name" />
-            <mat-error>Required</mat-error>
-          </mat-form-field>
+      <!-- ═══ Step 1: Account Info ═══ -->
+      <div *ngIf="currentStep === 1" class="step-content fade-in-up">
+        <div class="auth-card-header">
+          <mat-icon class="card-logo">hub</mat-icon>
+          <h2>Create Account</h2>
+          <p class="text-secondary">Start your journey on Andromeda</p>
         </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Username</mat-label>
-          <input matInput formControlName="username" autocomplete="username" />
-          <mat-error>Min 3 characters</mat-error>
-        </mat-form-field>
+        <form [formGroup]="accountForm" (ngSubmit)="submitStep1()">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <mat-form-field appearance="outline">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="first_name" />
+              <mat-error>Required</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="last_name" />
+              <mat-error>Required</mat-error>
+            </mat-form-field>
+          </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Email Address</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="email" />
-          <mat-error>Valid email required</mat-error>
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="username" autocomplete="username" />
+            <mat-error>Min 3 characters</mat-error>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Password</mat-label>
-          <input matInput formControlName="password" [type]="hidePassword ? 'password' : 'text'" />
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
-            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Email Address</mat-label>
+            <input matInput type="email" formControlName="email" autocomplete="email" />
+            <mat-error>Valid email required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Password</mat-label>
+            <input matInput formControlName="password" [type]="hidePassword ? 'password' : 'text'" />
+            <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+              <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-error>Min 8 characters</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Confirm Password</mat-label>
+            <input matInput formControlName="password2" [type]="hidePassword ? 'password' : 'text'" />
+            <mat-error *ngIf="accountForm.get('password2')?.errors?.['mismatch']">Passwords don't match</mat-error>
+          </mat-form-field>
+
+          <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+          <button mat-flat-button color="primary" class="submit-btn" type="submit"
+                  [disabled]="loading || accountForm.invalid">
+            <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+            <span *ngIf="!loading">Create Account</span>
           </button>
-          <mat-error>Min 8 characters</mat-error>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Confirm Password</mat-label>
-          <input matInput formControlName="password2" [type]="hidePassword ? 'password' : 'text'" />
-          <mat-error *ngIf="form.get('password2')?.errors?.['mismatch']">Passwords don't match</mat-error>
-        </mat-form-field>
+          <p class="register-link">
+            Already have an account? <a routerLink="/login">Log In</a>
+          </p>
+        </form>
+      </div>
 
-        <div class="error-msg" *ngIf="error">{{ error }}</div>
+      <!-- ═══ Step 2: Profile Setup ═══ -->
+      <div *ngIf="currentStep === 2" class="step-content fade-in-up">
+        <div class="auth-card-header">
+          <mat-icon class="card-logo">account_circle</mat-icon>
+          <h2>Set Up Your Profile</h2>
+          <p class="text-secondary">Add a photo and tell people about yourself</p>
+        </div>
 
-        <button mat-flat-button color="primary" class="submit-btn" type="submit" [disabled]="loading || form.invalid">
-          <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
-          <span *ngIf="!loading">Create Account</span>
+        <div class="profile-setup">
+          <!-- Cover Photo -->
+          <div class="setup-cover" (click)="openCoverPicker()">
+            <img *ngIf="coverPreview" [src]="coverPreview" alt="Cover" class="cover-preview" />
+            <div class="setup-cover-placeholder" *ngIf="!coverPreview">
+              <mat-icon>add_a_photo</mat-icon>
+              <span>Add Cover Photo</span>
+            </div>
+            <input #coverInput type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
+          </div>
+
+          <!-- Avatar -->
+          <div class="setup-avatar" (click)="openAvatarPicker()">
+            <img *ngIf="avatarPreview" [src]="avatarPreview" alt="Avatar" class="avatar-preview" />
+            <div class="setup-avatar-placeholder" *ngIf="!avatarPreview">
+              <mat-icon>photo_camera</mat-icon>
+            </div>
+            <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarSelected($event)" />
+          </div>
+
+          <form [formGroup]="profileForm" class="setup-form">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Bio</mat-label>
+              <textarea matInput formControlName="bio" rows="2" placeholder="Tell the world about yourself..."></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Birthday</mat-label>
+              <input matInput type="date" formControlName="birth_date" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Location</mat-label>
+              <input matInput formControlName="location" placeholder="City, Country" />
+            </mat-form-field>
+          </form>
+        </div>
+
+        <div class="step-actions">
+          <button mat-stroked-button (click)="skipStep2()">Skip</button>
+          <button mat-flat-button color="primary" (click)="submitStep2()" [disabled]="loading">
+            <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+            <span *ngIf="!loading">Continue</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ Step 3: Find Friends ═══ -->
+      <div *ngIf="currentStep === 3" class="step-content fade-in-up">
+        <div class="auth-card-header">
+          <mat-icon class="card-logo">people</mat-icon>
+          <h2>Find Friends</h2>
+          <p class="text-secondary">Connect with people you may know</p>
+        </div>
+
+        <div class="suggestions-list">
+          <div *ngIf="suggestions.length === 0" class="text-secondary" style="text-align:center;padding:24px">
+            No suggestions yet. You can find people later!
+          </div>
+          <div class="suggestion-item" *ngFor="let user of suggestions">
+            <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="user.username" />
+            <div class="suggestion-info">
+              <div class="font-semibold">{{ user.full_name }}</div>
+              <div class="text-secondary text-sm">&#64;{{ user.username }}</div>
+            </div>
+            <button mat-flat-button color="primary" (click)="sendRequest(user)"
+                    [disabled]="user.friend_request_sent" class="add-btn">
+              <mat-icon>{{ user.friend_request_sent ? 'check' : 'person_add' }}</mat-icon>
+              {{ user.friend_request_sent ? 'Sent' : 'Add' }}
+            </button>
+          </div>
+        </div>
+
+        <button mat-flat-button color="primary" class="submit-btn" (click)="finish()">
+          Get Started
         </button>
-
-        <p class="register-link">
-          Already have an account? <a routerLink="/login">Log In</a>
-        </p>
-      </form>
+      </div>
     </div>
   </div>
 </div>

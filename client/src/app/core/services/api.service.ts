@@ -78,16 +78,16 @@ export class ApiService {
     return this.http.get<User[]>(`${this.API}/auth/users/suggestions/`);
   }
 
-  followUser(userId: number): Observable<{ following: boolean }> {
-    return this.http.post<{ following: boolean }>(`${this.API}/auth/users/${userId}/follow/`, {});
-  }
-
-  unfollowUser(userId: number): Observable<{ following: boolean }> {
-    return this.http.delete<{ following: boolean }>(`${this.API}/auth/users/${userId}/follow/`);
-  }
-
   getFriendRequests(): Observable<PaginatedResponse<FriendRequest>> {
     return this.http.get<PaginatedResponse<FriendRequest>>(`${this.API}/auth/friend-requests/`);
+  }
+
+  getReceivedFriendRequests(): Observable<FriendRequest[]> {
+    return this.http.get<FriendRequest[]>(`${this.API}/auth/friend-requests/received/`);
+  }
+
+  getSentFriendRequests(): Observable<FriendRequest[]> {
+    return this.http.get<FriendRequest[]>(`${this.API}/auth/friend-requests/sent/`);
   }
 
   sendFriendRequest(receiverId: number): Observable<FriendRequest> {
@@ -100,6 +100,10 @@ export class ApiService {
 
   declineFriendRequest(id: number): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(`${this.API}/auth/friend-requests/${id}/decline/`, {});
+  }
+
+  cancelFriendRequest(id: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/auth/friend-requests/${id}/cancel/`, {});
   }
 
   // ── Chats ────────────────────────────────────────────────────────────
@@ -186,8 +190,12 @@ export class ApiService {
     return this.http.get<Listing>(`${this.API}/marketplace/listings/${id}/`);
   }
 
-  createListing(data: { title: string; description: string; price: string; currency: string; condition: string; location?: string }): Observable<Listing> {
+  createListing(data: FormData | Record<string, unknown>): Observable<Listing> {
     return this.http.post<Listing>(`${this.API}/marketplace/listings/`, data);
+  }
+
+  uploadListingImages(listingId: number, formData: FormData): Observable<unknown> {
+    return this.http.post(`${this.API}/marketplace/listings/${listingId}/upload_images/`, formData);
   }
 
   likeListing(id: number): Observable<{ liked: boolean }> {
@@ -207,6 +215,10 @@ export class ApiService {
 
   getVideo(id: number): Observable<Video> {
     return this.http.get<Video>(`${this.API}/watch/videos/${id}/`);
+  }
+
+  uploadVideo(formData: FormData): Observable<Video> {
+    return this.http.post<Video>(`${this.API}/watch/videos/`, formData);
   }
 
   likeVideo(id: number): Observable<{ liked: boolean }> {

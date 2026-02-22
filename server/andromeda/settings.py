@@ -232,6 +232,21 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# ── MinIO / S3 Object Storage ──────────────────────────────────
+_MINIO_ENDPOINT = os.environ.get('MINIO_ENDPOINT', '')
+if _MINIO_ENDPOINT:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_S3_ENDPOINT_URL = _MINIO_ENDPOINT
+    AWS_ACCESS_KEY_ID = os.environ.get('MINIO_ACCESS_KEY', 'andromeda')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('MINIO_SECRET_KEY', 'andromeda_secret')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('MINIO_BUCKET', 'andromeda-media')
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get(
+        'MINIO_EXTERNAL_URL', 'http://localhost:9000'
+    ).replace('http://', '').replace('https://', '') + '/' + AWS_STORAGE_BUCKET_NAME
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = 'public-read'
+
 # ============================================================
 # Email
 # ============================================================

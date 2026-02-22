@@ -37,17 +37,48 @@
         </div>
       </div>
       <div class="profile-actions" *ngIf="!isSelf">
-        <button mat-flat-button color="primary" (click)="addFriend()" *ngIf="!profile.is_friend" [disabled]="hasPendingRequest">
-          <mat-icon>{{ hasPendingRequest ? 'check' : 'person_add' }}</mat-icon>
-          {{ hasPendingRequest ? 'Request Sent' : 'Add Friend' }}
-        </button>
-        <button mat-stroked-button (click)="follow()">
-          <mat-icon>{{ profile.is_following ? 'person_remove' : 'person_add_alt' }}</mat-icon>
-          {{ profile.is_following ? 'Unfollow' : 'Follow' }}
-        </button>
-        <button mat-stroked-button (click)="startChat()">
-          <mat-icon>chat</mat-icon> Message
-        </button>
+        <!-- Already friends -->
+        <ng-container *ngIf="profile.is_friend">
+          <span class="badge badge-success" style="padding:8px 16px;font-size:14px">
+            <mat-icon style="font-size:18px;width:18px;height:18px;margin-right:4px">people</mat-icon> Friends
+          </span>
+          <button mat-stroked-button (click)="startChat()">
+            <mat-icon>chat</mat-icon> Message
+          </button>
+          <button mat-stroked-button color="warn" (click)="unfriend()">
+            <mat-icon>person_remove</mat-icon> Unfriend
+          </button>
+        </ng-container>
+
+        <!-- Incoming request from this user -->
+        <ng-container *ngIf="!profile.is_friend && hasReceivedRequest">
+          <button mat-flat-button color="primary" (click)="acceptIncomingRequest()">
+            <mat-icon>check</mat-icon> Accept Request
+          </button>
+          <button mat-stroked-button (click)="startChat()">
+            <mat-icon>chat</mat-icon> Message
+          </button>
+        </ng-container>
+
+        <!-- Outgoing request sent -->
+        <ng-container *ngIf="!profile.is_friend && !hasReceivedRequest && hasPendingRequest">
+          <button mat-stroked-button disabled>
+            <mat-icon>schedule</mat-icon> Request Sent
+          </button>
+          <button mat-stroked-button (click)="startChat()">
+            <mat-icon>chat</mat-icon> Message
+          </button>
+        </ng-container>
+
+        <!-- No relationship -->
+        <ng-container *ngIf="!profile.is_friend && !hasReceivedRequest && !hasPendingRequest">
+          <button mat-flat-button color="primary" (click)="addFriend()">
+            <mat-icon>person_add</mat-icon> Add Friend
+          </button>
+          <button mat-stroked-button (click)="startChat()">
+            <mat-icon>chat</mat-icon> Message
+          </button>
+        </ng-container>
       </div>
       <div class="profile-actions" *ngIf="isSelf">
         <button mat-flat-button color="primary" (click)="openEditDialog()">
@@ -68,14 +99,6 @@
       <div class="stat">
         <div class="stat-value">{{ profile.friends_count | number }}</div>
         <div class="stat-label">Friends</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value">{{ profile.followers_count | number }}</div>
-        <div class="stat-label">Followers</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value">{{ profile.following_count | number }}</div>
-        <div class="stat-label">Following</div>
       </div>
     </div>
   </div>
