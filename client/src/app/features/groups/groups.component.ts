@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
+import { Group } from '../../models/group.model';
 
 @Component({
   selector: 'app-groups',
@@ -24,8 +25,8 @@ import { ApiService } from '../../core/services/api.service';
   styleUrls: ['./groups.component.scss'],
 })
 export class GroupsComponent implements OnInit {
-  allGroups: unknown[] = [];
-  myGroups: unknown[] = [];
+  allGroups: Group[] = [];
+  myGroups: Group[] = [];
   loading = false;
 
   isCreating = false;
@@ -52,8 +53,8 @@ export class GroupsComponent implements OnInit {
   loadAll(): void {
     this.loading = true;
     this.apiService.getGroups().subscribe({
-      next: (res: unknown) => {
-        this.allGroups = (res as { results: unknown[] }).results;
+      next: (res) => {
+        this.allGroups = res.results;
         this.loading = false;
       },
       error: () => (this.loading = false),
@@ -62,19 +63,14 @@ export class GroupsComponent implements OnInit {
 
   loadMine(): void {
     this.apiService.getGroups({ mine: 'true' }).subscribe({
-      next: (res: unknown) => {
-        this.myGroups = (res as { results: unknown[] }).results;
+      next: (res) => {
+        this.myGroups = res.results;
       },
     });
   }
 
-  join(group: unknown): void {
-    const g = group as { id: number };
-    this.apiService.joinGroup(g.id).subscribe(() => this.loadAll());
-  }
-
-  asGroup(g: unknown): { id: number; name: string; cover_photo: string | null; members_count: number; privacy: string; is_member: boolean } {
-    return g as { id: number; name: string; cover_photo: string | null; members_count: number; privacy: string; is_member: boolean };
+  join(group: Group): void {
+    this.apiService.joinGroup(group.id).subscribe(() => this.loadAll());
   }
 
   openCreateDialog(): void {

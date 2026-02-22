@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -19,7 +20,11 @@ export class NotificationsComponent implements OnInit {
   notifications: Notification[] = [];
   loading = false;
 
-  constructor(private apiService: ApiService, private wsService: WebSocketService) {}
+  constructor(
+    private apiService: ApiService,
+    private wsService: WebSocketService,
+    private router: Router,
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -43,6 +48,19 @@ export class NotificationsComponent implements OnInit {
   markRead(n: Notification): void {
     if (!n.is_read) {
       this.apiService.markNotificationRead(n.id).subscribe(() => (n.is_read = true));
+    }
+    const link = this.getNavLink(n);
+    if (link) this.router.navigate([link]);
+  }
+
+  getNavLink(n: Notification): string | null {
+    switch (n.notification_type) {
+      case 'friend_request': return '/friends';
+      case 'friend_accepted':
+      case 'follow':
+        return n.sender ? `/profile/${n.sender.username}` : null;
+      case 'message': return '/chat';
+      default: return null;
     }
   }
 

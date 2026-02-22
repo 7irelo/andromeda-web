@@ -96,3 +96,49 @@
   text-align: center;
   mat-icon { font-size: 40px; width: 40px; height: 40px; }
 }
+
+// ── New-chat panel ─────────────────────────────────────────────
+.new-chat-panel {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.new-chat-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+
+  .search-icon { color: var(--text-secondary); font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+}
+
+.new-chat-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--text-primary);
+  &::placeholder { color: var(--text-secondary); }
+}
+
+.new-chat-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background .1s;
+  &:hover { background: var(--bg); }
+}
+
+.new-chat-result-info { flex: 1; min-width: 0; }
+
+.new-chat-spinner, .new-chat-empty {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+}

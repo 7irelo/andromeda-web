@@ -4,15 +4,15 @@
   <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
 
   <div class="video-grid" *ngIf="!loading">
-    <a class="video-card" *ngFor="let v of videos" [routerLink]="'/watch/' + asVideo(v).id">
+    <a class="video-card" *ngFor="let v of videos" [routerLink]="'/watch/' + v.id">
       <div class="thumbnail-wrap">
-        <img [src]="asVideo(v).thumbnail || 'assets/default-thumb.png'" [alt]="asVideo(v).title" class="thumbnail" />
-        <span class="duration">{{ formatDuration(asVideo(v).duration) }}</span>
+        <img [src]="v.thumbnail || 'assets/default-thumb.png'" [alt]="v.title" class="thumbnail" />
+        <span class="duration">{{ formatDuration(v.duration) }}</span>
       </div>
       <div class="video-info">
-        <div class="video-title font-medium">{{ asVideo(v).title }}</div>
+        <div class="video-title font-medium">{{ v.title }}</div>
         <div class="text-secondary text-xs">
-          {{ asVideo(v).uploader.full_name }} · {{ asVideo(v).views_count | number }} views
+          {{ v.uploader.full_name }} · {{ v.views_count | number }} views
         </div>
       </div>
     </a>

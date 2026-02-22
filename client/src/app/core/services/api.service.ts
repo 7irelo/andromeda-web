@@ -6,9 +6,12 @@ import { Post, Comment } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
 import { ChatRoom, Message } from '../../models/chat.model';
 import { Notification } from '../../models/notification.model';
-import { Listing } from '../../models/listing.model';
+import { Listing, ListingCategory } from '../../models/listing.model';
+import { Group, GroupMember } from '../../models/group.model';
+import { Video, VideoComment } from '../../models/video.model';
+import { Page } from '../../models/page.model';
 
-interface PaginatedResponse<T> {
+export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
   previous: string | null;
@@ -137,14 +140,18 @@ export class ApiService {
   }
 
   // ── Groups ───────────────────────────────────────────────────────────
-  getGroups(params?: Record<string, string>): Observable<PaginatedResponse<unknown>> {
+  getGroups(params?: Record<string, string>): Observable<PaginatedResponse<Group>> {
     let httpParams = new HttpParams();
     if (params) Object.entries(params).forEach(([k, v]) => (httpParams = httpParams.set(k, v)));
-    return this.http.get<PaginatedResponse<unknown>>(`${this.API}/groups/`, { params: httpParams });
+    return this.http.get<PaginatedResponse<Group>>(`${this.API}/groups/`, { params: httpParams });
   }
 
-  createGroup(data: { name: string; description?: string; privacy: string }): Observable<unknown> {
-    return this.http.post<unknown>(`${this.API}/groups/`, data);
+  getGroup(id: number): Observable<Group> {
+    return this.http.get<Group>(`${this.API}/groups/${id}/`);
+  }
+
+  createGroup(data: { name: string; description?: string; privacy: string }): Observable<Group> {
+    return this.http.post<Group>(`${this.API}/groups/`, data);
   }
 
   joinGroup(id: number): Observable<{ status: string }> {
@@ -155,9 +162,17 @@ export class ApiService {
     return this.http.post<{ status: string }>(`${this.API}/groups/${id}/leave/`, {});
   }
 
+  getGroupMembers(id: number): Observable<GroupMember[]> {
+    return this.http.get<GroupMember[]>(`${this.API}/groups/${id}/members/`);
+  }
+
   // ── Profile ────────────────────────────────────────────────────────────────
   updateProfile(data: FormData | Partial<User>): Observable<User> {
     return this.http.patch<User>(`${this.API}/auth/me/`, data);
+  }
+
+  deleteAccount(refresh: string): Observable<void> {
+    return this.http.delete<void>(`${this.API}/auth/me/`, { body: { refresh } });
   }
 
   // ── Marketplace ───────────────────────────────────────────────────────
@@ -179,10 +194,49 @@ export class ApiService {
     return this.http.post<{ liked: boolean }>(`${this.API}/marketplace/listings/${id}/like/`, {});
   }
 
+  getCategories(): Observable<ListingCategory[]> {
+    return this.http.get<ListingCategory[]>(`${this.API}/marketplace/categories/`);
+  }
+
   // ── Watch ──────────────────────────────────────────────────────────────
-  getVideos(params?: Record<string, string>): Observable<PaginatedResponse<unknown>> {
+  getVideos(params?: Record<string, string>): Observable<PaginatedResponse<Video>> {
     let httpParams = new HttpParams();
     if (params) Object.entries(params).forEach(([k, v]) => (httpParams = httpParams.set(k, v)));
-    return this.http.get<PaginatedResponse<unknown>>(`${this.API}/watch/videos/`, { params: httpParams });
+    return this.http.get<PaginatedResponse<Video>>(`${this.API}/watch/videos/`, { params: httpParams });
+  }
+
+  getVideo(id: number): Observable<Video> {
+    return this.http.get<Video>(`${this.API}/watch/videos/${id}/`);
+  }
+
+  likeVideo(id: number): Observable<{ liked: boolean }> {
+    return this.http.post<{ liked: boolean }>(`${this.API}/watch/videos/${id}/like/`, {});
+  }
+
+  getVideoComments(id: number): Observable<VideoComment[]> {
+    return this.http.get<VideoComment[]>(`${this.API}/watch/videos/${id}/comments/`);
+  }
+
+  createVideoComment(id: number, data: { content: string }): Observable<VideoComment> {
+    return this.http.post<VideoComment>(`${this.API}/watch/videos/${id}/comments/`, data);
+  }
+
+  // ── Pages ──────────────────────────────────────────────────────────────
+  getPages(params?: Record<string, string>): Observable<PaginatedResponse<Page>> {
+    let httpParams = new HttpParams();
+    if (params) Object.entries(params).forEach(([k, v]) => (httpParams = httpParams.set(k, v)));
+    return this.http.get<PaginatedResponse<Page>>(`${this.API}/pages/`, { params: httpParams });
+  }
+
+  createPage(data: { name: string; description?: string; category?: string }): Observable<Page> {
+    return this.http.post<Page>(`${this.API}/pages/`, data);
+  }
+
+  followPage(id: number): Observable<{ following: boolean }> {
+    return this.http.post<{ following: boolean }>(`${this.API}/pages/${id}/follow/`, {});
+  }
+
+  unfollowPage(id: number): Observable<{ following: boolean }> {
+    return this.http.post<{ following: boolean }>(`${this.API}/pages/${id}/unfollow/`, {});
   }
 }

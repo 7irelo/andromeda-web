@@ -1,9 +1,23 @@
 <div class="profile-page" *ngIf="!loading && profile">
   <!-- Cover + Avatar -->
-  <div class="profile-cover">
-    <img [src]="profile.cover_photo || 'assets/default-cover.png'" alt="Cover" class="cover-img" />
+  <div class="profile-hero">
+    <!-- Cover image — overflow:hidden lives here only for the image crop -->
+    <div class="profile-cover">
+      <img [src]="profile.cover_photo_url || 'assets/default-cover.png'" alt="Cover" class="cover-img" />
+      <button *ngIf="isSelf" class="cover-edit-btn" (click)="openCoverPicker()" [disabled]="uploadingCover">
+        <mat-spinner *ngIf="uploadingCover" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!uploadingCover">add_a_photo</mat-icon>
+      </button>
+      <input #coverInput type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
+    </div>
+    <!-- Avatar wrap is a sibling of the cover, NOT inside overflow:hidden -->
     <div class="profile-avatar-wrap">
       <img [src]="profile.avatar_url || 'assets/default-avatar.png'" class="avatar xxl" [alt]="profile.username" />
+      <button *ngIf="isSelf" class="avatar-edit-btn" (click)="openAvatarPicker()" [disabled]="uploadingAvatar">
+        <mat-spinner *ngIf="uploadingAvatar" diameter="18"></mat-spinner>
+        <mat-icon *ngIf="!uploadingAvatar">photo_camera</mat-icon>
+      </button>
+      <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarSelected($event)" />
     </div>
   </div>
 
@@ -23,20 +37,24 @@
         </div>
       </div>
       <div class="profile-actions" *ngIf="!isSelf">
-        <button mat-flat-button color="primary" (click)="addFriend()" *ngIf="!profile.is_friend">
-          <mat-icon>person_add</mat-icon> Add Friend
+        <button mat-flat-button color="primary" (click)="addFriend()" *ngIf="!profile.is_friend" [disabled]="hasPendingRequest">
+          <mat-icon>{{ hasPendingRequest ? 'check' : 'person_add' }}</mat-icon>
+          {{ hasPendingRequest ? 'Request Sent' : 'Add Friend' }}
         </button>
         <button mat-stroked-button (click)="follow()">
           <mat-icon>{{ profile.is_following ? 'person_remove' : 'person_add_alt' }}</mat-icon>
           {{ profile.is_following ? 'Unfollow' : 'Follow' }}
         </button>
-        <button mat-stroked-button>
+        <button mat-stroked-button (click)="startChat()">
           <mat-icon>chat</mat-icon> Message
         </button>
       </div>
       <div class="profile-actions" *ngIf="isSelf">
         <button mat-flat-button color="primary" (click)="openEditDialog()">
           <mat-icon>edit</mat-icon> Edit Profile
+        </button>
+        <button mat-stroked-button color="warn" (click)="openDeleteDialog()">
+          <mat-icon>delete_forever</mat-icon> Delete Account
         </button>
       </div>
     </div>
@@ -100,6 +118,31 @@
 
 <div class="loading-center" *ngIf="loading">
   <mat-spinner diameter="48"></mat-spinner>
+</div>
+
+<!-- ── Delete Account Dialog ─────────────────────────────────────── -->
+<div class="edit-overlay" *ngIf="isConfirmingDelete" (click)="cancelDelete()"></div>
+<div class="edit-dialog card" *ngIf="isConfirmingDelete">
+  <div class="edit-dialog-header">
+    <h2>Delete Account</h2>
+    <button mat-icon-button (click)="cancelDelete()"><mat-icon>close</mat-icon></button>
+  </div>
+  <div class="edit-dialog-body">
+    <p class="delete-warning">This will permanently delete your account and all your data. This cannot be undone.</p>
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Type your username to confirm</mat-label>
+      <input matInput [(ngModel)]="deleteInput" [placeholder]="currentUser?.username ?? ''" />
+    </mat-form-field>
+  </div>
+  <div class="edit-dialog-actions">
+    <button mat-stroked-button (click)="cancelDelete()" [disabled]="deleting">Cancel</button>
+    <button mat-flat-button color="warn"
+      [disabled]="deleteInput !== currentUser?.username || deleting"
+      (click)="confirmDeleteAccount()">
+      <mat-spinner *ngIf="deleting" diameter="18"></mat-spinner>
+      {{ deleting ? 'Deleting...' : 'Delete My Account' }}
+    </button>
+  </div>
 </div>
 
 <!-- ── Edit Profile Dialog ──────────────────────────────────────── -->

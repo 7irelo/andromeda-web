@@ -61,6 +61,17 @@ def remove_follow_from_neo4j(sender, instance, **kwargs):
         pass
 
 
+@receiver(post_delete, sender=User)
+def remove_user_from_neo4j(sender, instance, **kwargs):
+    try:
+        from users.graph_models import UserNode
+        node = UserNode.nodes.get_or_none(user_id=instance.id)
+        if node:
+            node.delete()
+    except Exception:
+        pass
+
+
 @receiver(post_save, sender=FriendRequest)
 def handle_friend_request_accepted(sender, instance, **kwargs):
     if instance.status != FriendRequest.STATUS_ACCEPTED:

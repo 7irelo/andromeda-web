@@ -3,11 +3,16 @@
   margin: 0 auto;
 }
 
+// Wrapper provides positioning context; NO overflow:hidden so avatar isn't clipped
+.profile-hero {
+  position: relative;
+}
+
 .profile-cover {
   position: relative;
   height: 280px;
   border-radius: var(--border-radius-lg);
-  overflow: hidden;
+  overflow: hidden;   // only clips the cover image, avatar is now a sibling
   background: var(--gradient-primary);
   box-shadow: var(--shadow-md);
 }
@@ -18,18 +23,60 @@
   object-fit: cover;
 }
 
+// Avatar overlaps the bottom of the cover and peeks into profile-info
 .profile-avatar-wrap {
   position: absolute;
   bottom: -56px;
   left: 32px;
+  z-index: 10;
 
   .avatar {
     border: 4px solid var(--surface);
     box-shadow: var(--shadow-md);
-    transition: transform .2s;
-
-    &:hover { transform: scale(1.03); }
+    display: block;
   }
+
+  .avatar-edit-btn {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    border: 2px solid var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .2s;
+    mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  }
+
+  &:hover .avatar-edit-btn { opacity: 1; }
+}
+
+.cover-edit-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, .55);
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+  transition: background .15s;
+  &:hover { background: rgba(0, 0, 0, .72); }
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
 }
 
 .profile-info {
@@ -249,4 +296,15 @@
   padding: 14px 20px;
   border-top: 1px solid var(--border);
   background: var(--surface-2);
+}
+
+.delete-warning {
+  color: var(--danger);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 12px 14px;
+  background: rgba(239, 68, 68, .08);
+  border: 1px solid rgba(239, 68, 68, .2);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 12px;
 }

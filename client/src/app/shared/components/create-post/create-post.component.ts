@@ -27,6 +27,13 @@ import { User } from '../../../models/user.model';
         </div>
       </div>
 
+      <div class="image-preview-wrap" *ngIf="imagePreview">
+        <img [src]="imagePreview" class="preview-img" alt="Preview" />
+        <button class="remove-preview" (click)="removeImage()" type="button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
       <div class="create-actions" *ngIf="expanded">
         <div class="media-btns">
           <button mat-button class="media-btn" (click)="imageInput.click()">
@@ -40,7 +47,7 @@ import { User } from '../../../models/user.model';
           mat-flat-button color="primary"
           class="post-btn"
           (click)="submit()"
-          [disabled]="!content.trim() || loading"
+          [disabled]="(!content.trim() && !selectedFile) || loading"
         >
           <mat-spinner diameter="16" *ngIf="loading"></mat-spinner>
           <span *ngIf="!loading">Post</span>
@@ -69,6 +76,29 @@ import { User } from '../../../models/user.model';
       &::placeholder { color: var(--text-secondary); }
     }
     .textarea-wrapper.expanded .post-textarea { border-radius: 8px; min-height: 80px; }
+    .image-preview-wrap {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .preview-img { width: 100%; max-height: 240px; object-fit: cover; display: block; }
+    .remove-preview {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,.6);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    }
     .create-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; }
     .media-btns { display: flex; gap: 4px; }
     .media-btn { border-radius: 8px; }
@@ -83,6 +113,7 @@ export class CreatePostComponent {
   expanded = false;
   loading = false;
   selectedFile: File | null = null;
+  imagePreview: string | null = null;
 
   get placeholder(): string {
     return `What's on your mind, ${this.currentUser?.first_name || 'you'}?`;
@@ -93,22 +124,36 @@ export class CreatePostComponent {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.selectedFile = input.files?.[0] ?? null;
+    if (this.selectedFile) {
+      const reader = new FileReader();
+      reader.onload = (e) => { this.imagePreview = e.target?.result as string; };
+      reader.readAsDataURL(this.selectedFile);
+      this.expanded = true;
+    } else {
+      this.imagePreview = null;
+    }
+  }
+
+  removeImage(): void {
+    this.selectedFile = null;
+    this.imagePreview = null;
   }
 
   submit(): void {
     if (!this.content.trim() && !this.selectedFile) return;
     this.loading = true;
 
-    const data: Record<string, unknown> = {
-      content: this.content,
-      post_type: this.selectedFile ? 'image' : 'text',
-    };
+    const data = new FormData();
+    data.append('content', this.content);
+    data.append('post_type', this.selectedFile ? 'image' : 'text');
+    if (this.selectedFile) data.append('image', this.selectedFile);
 
     this.apiService.createPost(data).subscribe({
       next: (post) => {
         this.postCreated.emit(post);
         this.content = '';
         this.selectedFile = null;
+        this.imagePreview = null;
         this.expanded = false;
         this.loading = false;
       },

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../core/services/api.service';
+import { Video } from '../../models/video.model';
 
 @Component({
   selector: 'app-watch',
@@ -13,7 +14,7 @@ import { ApiService } from '../../core/services/api.service';
   styleUrls: ['./watch.component.scss'],
 })
 export class WatchComponent implements OnInit {
-  videos: unknown[] = [];
+  videos: Video[] = [];
   loading = false;
 
   constructor(private apiService: ApiService) {}
@@ -21,16 +22,12 @@ export class WatchComponent implements OnInit {
   ngOnInit(): void {
     this.loading = true;
     this.apiService.getVideos().subscribe({
-      next: (res: unknown) => {
-        this.videos = (res as { results: unknown[] }).results;
+      next: (res) => {
+        this.videos = res.results;
         this.loading = false;
       },
       error: () => (this.loading = false),
     });
-  }
-
-  asVideo(v: unknown): { id: number; title: string; thumbnail: string | null; views_count: number; likes_count: number; duration: number; uploader: { username: string; full_name: string } } {
-    return v as ReturnType<typeof this.asVideo>;
   }
 
   formatDuration(seconds: number): string {

@@ -23,6 +23,46 @@
         <span class="font-bold">{{ currentUser.following_count }}</span>
       </div>
     </div>
+
+    <!-- Shortcuts -->
+    <div class="sidebar-card sidebar-shortcuts">
+      <a routerLink="/friends" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)">
+          <mat-icon>people</mat-icon>
+        </span>
+        <span>Friends</span>
+      </a>
+      <a routerLink="/groups" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+          <mat-icon>group</mat-icon>
+        </span>
+        <span>Groups</span>
+      </a>
+      <a routerLink="/marketplace" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#059669,#10b981)">
+          <mat-icon>storefront</mat-icon>
+        </span>
+        <span>Marketplace</span>
+      </a>
+      <a routerLink="/watch" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#dc2626,#ef4444)">
+          <mat-icon>play_circle</mat-icon>
+        </span>
+        <span>Watch</span>
+      </a>
+      <a routerLink="/pages" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">
+          <mat-icon>auto_stories</mat-icon>
+        </span>
+        <span>Pages</span>
+      </a>
+      <a routerLink="/notifications" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+          <mat-icon>notifications</mat-icon>
+        </span>
+        <span>Notifications</span>
+      </a>
+    </div>
   </aside>
 
   <!-- Main Feed -->
@@ -50,8 +90,12 @@
     </div>
 
     <div *ngIf="!loading && posts.length === 0" class="empty-feed">
-      <mat-icon>article</mat-icon>
-      <p>Your feed is empty. Follow people to see their posts!</p>
+      <div class="empty-icon">
+        <mat-icon>dynamic_feed</mat-icon>
+      </div>
+      <h3>Your feed is empty</h3>
+      <p>Follow people or join groups to see posts in your feed</p>
+      <a routerLink="/friends" mat-flat-button color="primary" class="empty-cta">Find Friends</a>
     </div>
   </main>
 

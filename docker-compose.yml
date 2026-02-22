@@ -212,6 +212,8 @@ services:
     restart: unless-stopped
     ports:
       - "4200:80"
+    volumes:
+      - media_data:/app/media:ro
     networks:
       - andromeda_network
     depends_on:

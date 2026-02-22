@@ -1,9 +1,13 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Q
 
 
 class User(AbstractUser):
     """Extended user model for Andromeda."""
+
+    # Override AbstractUser.email to enforce uniqueness across all accounts
+    email = models.EmailField(unique=True, blank=False)
 
     bio = models.TextField(blank=True, default='')
     avatar = models.ImageField(upload_to='avatars/%Y/%m/', null=True, blank=True)
@@ -60,6 +64,12 @@ class FriendRequest(models.Model):
         db_table = 'friend_requests'
         unique_together = ('sender', 'receiver')
         ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(sender=models.F('receiver')),
+                name='no_self_friend_request',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.sender} → {self.receiver} ({self.status})'

@@ -25,6 +25,7 @@ export class PostCardComponent implements OnInit {
   showComments = false;
   commentText = '';
   showReactions = false;
+  expandedImage: string | null = null;
   currentUserId: number | null = null;
 
   constructor(private apiService: ApiService, private authService: AuthService) { }
@@ -33,10 +34,15 @@ export class PostCardComponent implements OnInit {
 
   ngOnInit() {
     this.reactionByType = Object.fromEntries(this.reactions.map(r => [r.type, r]));
+    this.currentUserId = this.authService.currentUser?.id ?? null;
   }
 
   get isOwner(): boolean {
     return this.post.author.id === this.currentUserId;
+  }
+
+  get currentUserAvatarUrl(): string {
+    return this.authService.currentUser?.avatar_url ?? 'assets/default-avatar.png';
   }
 
   react(type: string): void {
