@@ -162,8 +162,15 @@ export class CreatePostComponent {
 
     const data = new FormData();
     data.append('content', this.content);
-    data.append('post_type', this.selectedFile ? 'image' : 'text');
-    if (this.selectedFile) data.append('image', this.selectedFile);
+    if (!this.selectedFile) {
+      data.append('post_type', 'text');
+    } else if (this.selectedFile.type.startsWith('video/')) {
+      data.append('post_type', 'video');
+      data.append('video', this.selectedFile);
+    } else {
+      data.append('post_type', 'image');
+      data.append('image', this.selectedFile);
+    }
 
     this.apiService.createPost(data).subscribe({
       next: (post) => {

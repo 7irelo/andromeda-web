@@ -9,7 +9,10 @@ class VideoCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoComment
         fields = ['id', 'video', 'author', 'content', 'parent', 'likes_count', 'created_at']
-        read_only_fields = ['author', 'likes_count']
+        read_only_fields = ['video', 'author', 'likes_count']
+        extra_kwargs = {
+            'parent': {'required': False, 'allow_null': True},
+        }
 
 
 class VideoSerializer(serializers.ModelSerializer):

@@ -85,7 +85,7 @@ export class ChatComponent implements OnInit {
   openNewChat(): void {
     this.showNewChat = true;
     this.newChatQuery = '';
-    this.newChatResults = [];
+    this.loadNewChatCandidates('');
   }
 
   closeNewChat(): void {
@@ -94,14 +94,27 @@ export class ChatComponent implements OnInit {
 
   searchNewChatUsers(): void {
     const q = this.newChatQuery.trim();
-    if (!q) { this.newChatResults = []; return; }
+    this.loadNewChatCandidates(q);
+  }
+
+  private loadNewChatCandidates(query: string): void {
     this.newChatSearching = true;
-    this.apiService.searchUsers(q).subscribe({
+    this.apiService.searchUsers(query).subscribe({
       next: (res) => {
-        this.newChatResults = res.results.filter((u) => u.id !== this.currentUser?.id);
+        const users = res.results.filter((u) => u.id !== this.currentUser?.id);
+        // When query is empty, prefer friends so starting a DM is fast.
+        if (!query) {
+          const friends = users.filter((u) => u.is_friend);
+          this.newChatResults = friends.length ? friends : users;
+        } else {
+          this.newChatResults = users;
+        }
         this.newChatSearching = false;
       },
-      error: () => (this.newChatSearching = false),
+      error: () => {
+        this.newChatResults = [];
+        this.newChatSearching = false;
+      },
     });
   }
 

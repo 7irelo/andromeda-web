@@ -1,5 +1,35 @@
 <div class="watch-page">
-  <h1>Watch</h1>
+  <div class="watch-header">
+    <h1>Watch</h1>
+  </div>
+
+  <div class="upload-card card">
+    <div class="upload-title">Upload Video</div>
+    <div class="upload-fields">
+      <input
+        type="text"
+        placeholder="Title (optional)"
+        [(ngModel)]="uploadTitle"
+        class="upload-input"
+      />
+      <textarea
+        placeholder="Description (optional)"
+        [(ngModel)]="uploadDescription"
+        class="upload-input upload-textarea"
+      ></textarea>
+      <div class="upload-actions">
+        <button mat-stroked-button (click)="videoInput.click()" [disabled]="uploading">
+          <mat-icon>upload_file</mat-icon>
+          {{ selectedVideo ? selectedVideo.name : 'Choose video' }}
+        </button>
+        <button mat-flat-button color="primary" (click)="uploadVideo()" [disabled]="!selectedVideo || uploading">
+          <mat-icon>cloud_upload</mat-icon>
+          {{ uploading ? 'Uploading...' : 'Upload' }}
+        </button>
+      </div>
+    </div>
+    <input #videoInput type="file" hidden accept="video/*" (change)="onVideoSelected($event)" />
+  </div>
 
   <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
 

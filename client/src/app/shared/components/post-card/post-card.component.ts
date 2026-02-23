@@ -47,10 +47,15 @@ export class PostCardComponent implements OnInit {
 
   react(type: string): void {
     this.showReactions = false;
+    const hadReaction = !!this.post.my_reaction;
     this.apiService.reactToPost(this.post.id, type).subscribe((res) => {
       this.post.my_reaction = res.reacted ? (res.reaction ?? null) : null;
-      // Optimistic count update
-      this.post.likes_count += res.reacted ? 1 : -1;
+      // Count changes only when toggling on/off, not when switching reaction type.
+      if (!hadReaction && res.reacted) {
+        this.post.likes_count++;
+      } else if (hadReaction && !res.reacted) {
+        this.post.likes_count = Math.max(0, this.post.likes_count - 1);
+      }
     });
   }
 

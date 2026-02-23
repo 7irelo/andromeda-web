@@ -237,6 +237,9 @@ _MINIO_ENDPOINT = os.environ.get('MINIO_ENDPOINT', '')
 if _MINIO_ENDPOINT:
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     AWS_S3_ENDPOINT_URL = _MINIO_ENDPOINT
+    AWS_S3_URL_PROTOCOL = os.environ.get('AWS_S3_URL_PROTOCOL', 'http:')
+    AWS_S3_USE_SSL = AWS_S3_URL_PROTOCOL == 'https:'
+    AWS_S3_ADDRESSING_STYLE = 'path'
     AWS_ACCESS_KEY_ID = os.environ.get('MINIO_ACCESS_KEY', 'andromeda')
     AWS_SECRET_ACCESS_KEY = os.environ.get('MINIO_SECRET_KEY', 'andromeda_secret')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('MINIO_BUCKET', 'andromeda-media')
