@@ -125,3 +125,6 @@ monitoring/prometheus/data/
 *.orig
 *.rej
 *.patch
+
+# Visual Studio
+.vs/
