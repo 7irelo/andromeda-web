@@ -39,6 +39,20 @@ class PostViewSet(viewsets.ModelViewSet):
         if group_id:
             qs = qs.filter(group_id=group_id)
 
+        search = self.request.query_params.get('search')
+        if search:
+            search = search.strip()
+            if search:
+                qs = qs.filter(
+                    Q(content__icontains=search) |
+                    Q(link_title__icontains=search) |
+                    Q(link_description__icontains=search) |
+                    Q(author__username__icontains=search) |
+                    Q(author__first_name__icontains=search) |
+                    Q(author__last_name__icontains=search) |
+                    Q(tags__name__icontains=search)
+                ).distinct()
+
         return qs.order_by('-created_at')
 
     def perform_create(self, serializer):

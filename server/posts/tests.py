@@ -150,3 +150,25 @@ class TestFeed:
         assert response.status_code == status.HTTP_200_OK
         usernames = [p["author"]["username"] for p in response.data["results"]]
         assert "bob" not in usernames
+
+
+class TestPostSearch:
+    def test_search_matches_post_content(self, auth_client, user):
+        match = Post.objects.create(author=user, content="Exploring the Andromeda galaxy")
+        other = Post.objects.create(author=user, content="Weekend cooking update")
+
+        response = auth_client.get(reverse("post-list") + "?search=andromeda")
+
+        assert response.status_code == status.HTTP_200_OK
+        result_ids = [p["id"] for p in response.data["results"]]
+        assert match.id in result_ids
+        assert other.id not in result_ids
+
+    def test_search_matches_author_fields(self, auth_client, other_user):
+        bob_post = Post.objects.create(author=other_user, content="Author lookup test")
+
+        response = auth_client.get(reverse("post-list") + "?search=Bob")
+
+        assert response.status_code == status.HTTP_200_OK
+        result_ids = [p["id"] for p in response.data["results"]]
+        assert bob_post.id in result_ids
