@@ -37,3 +37,10 @@ class PageSerializer(serializers.ModelSerializer):
                 username = f'{base}-{suffix}'
             validated_data['username'] = username
         return super().create(validated_data)
+
+    def validate_category(self, value):
+        if not value:
+            return Page.CATEGORY_OTHER
+        normalised = value.strip().lower()
+        valid = {choice for choice, _label in Page.CATEGORY_CHOICES}
+        return normalised if normalised in valid else Page.CATEGORY_OTHER
