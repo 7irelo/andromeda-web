@@ -118,7 +118,7 @@ export class ImageCropperComponent implements AfterViewInit, OnDestroy {
       imageSmoothingEnabled: true,
       imageSmoothingQuality: 'high',
     });
-    canvas.toBlob((blob) => {
+    canvas.toBlob((blob: Blob | null) => {
       if (blob) {
         const result: ImageCropperResult = {
           blob,
