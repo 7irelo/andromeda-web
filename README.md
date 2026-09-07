@@ -10,6 +10,11 @@
 
 ---
 
+## Screenshots
+
+![Andromeda - landing, feed, chat, marketplace, profile, REST API docs, Grafana/Prometheus monitoring, Docker Compose and the pytest suite](docs/screenshots/andromeda-ui.png)
+
+
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
