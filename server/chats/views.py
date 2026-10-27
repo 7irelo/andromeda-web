@@ -8,14 +8,16 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
-from core import visibility
+from core import ai_client, visibility
 from core.validators import validate_attachment
 from .models import ChatMember, ChatRoom, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
 
 User = get_user_model()
 MAX_GROUP_MEMBERS = 250
+CATCH_UP_MAX_MESSAGES = 300
 
 
 def _require_admin(room, user):
@@ -34,6 +36,7 @@ class ChatRoomViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     """Rooms are created through ``create`` and managed through explicit actions only."""
 
     serializer_class = ChatRoomSerializer
+    throttle_scope = 'ai'  # only used by catch_up, which opts into ScopedRateThrottle
 
     def get_queryset(self):
         return ChatRoom.objects.filter(
@@ -121,6 +124,34 @@ class ChatRoomViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
             successor.role = ChatMember.ROLE_ADMIN
             successor.save(update_fields=['role'])
         return Response({'status': 'left'})
+
+    @action(detail=True, methods=['post'], throttle_classes=[ScopedRateThrottle])
+    def catch_up(self, request, pk=None):
+        """AI summary of what the user missed. Membership is enforced by get_object()."""
+        room = self.get_object()
+        member = ChatMember.objects.get(room=room, user=request.user)
+        msgs = room.messages.filter(is_deleted=False).exclude(
+            sender_id__in=visibility.blocked_ids(request.user)
+        ).select_related('sender').order_by('-created_at')
+        unread = msgs.filter(created_at__gt=member.last_read_at) if member.last_read_at else msgs
+        batch = list(unread[:CATCH_UP_MAX_MESSAGES])
+        if len(batch) < 3:
+            # Nothing much unread (opening a room marks it read): recap the latest conversation instead.
+            batch = list(msgs[:50])
+        batch.reverse()
+        payload = {
+            'room_name': room.name,
+            'viewer': request.user.username,
+            'messages': [{'id': m.id, 'sender': m.sender.username if m.sender else 'deleted user',
+                          'text': m.content[:2000], 'sent_at': m.created_at.isoformat()} for m in batch if m.content],
+        }
+        try:
+            result = ai_client.call('/v1/catchup', payload, user_id=request.user.id)
+        except ai_client.AIRejected as exc:
+            return Response({'detail': exc.detail}, status=exc.status)
+        except ai_client.AIUnavailable:
+            return Response({'detail': 'Summaries are unavailable right now.'}, status=503)
+        return Response({**result['summary'], 'message_count': len(payload['messages'])})
 
     @action(detail=True, methods=['patch'])
     def rename(self, request, pk=None):

@@ -52,6 +52,9 @@ class Listing(models.Model):
     category = models.ForeignKey(Category, related_name='listings', on_delete=models.SET_NULL, null=True)
     location = models.CharField(max_length=255, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+    # Set by the moderation pipeline; 'removed' hides it from everyone but the author.
+    moderation_status = models.CharField(max_length=10, default='ok', db_index=True,
+                                         choices=[('ok', 'OK'), ('review', 'In review'), ('removed', 'Removed')])
     views_count = models.PositiveIntegerField(default=0)
     likes_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     # Local apps
     'core.apps.CoreConfig',
+    'moderation.apps.ModerationConfig',
     'users.apps.UsersConfig',
     'posts.apps.PostsConfig',
     'chats.apps.ChatsConfig',
@@ -199,6 +200,7 @@ REST_FRAMEWORK = {
         'write': os.environ.get('THROTTLE_WRITE', '60/min'),
         'auth': os.environ.get('THROTTLE_AUTH', '10/min'),
         'ws_ticket': os.environ.get('THROTTLE_WS_TICKET', '30/min'),
+        'ai': os.environ.get('THROTTLE_AI', '30/hour'),
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
@@ -259,6 +261,13 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = False
 
 ADMIN_URL = os.environ.get('ADMIN_URL', 'admin/')
+
+# ── AI service (internal; holds every model/provider key) ─────
+AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', '')
+AI_SERVICE_SECRET = os.environ.get('AI_SERVICE_SECRET', '')
+AI_MODERATION_ENABLED = os.environ.get('AI_MODERATION_ENABLED', 'True') == 'True'
+if AI_SERVICE_SECRET and len(AI_SERVICE_SECRET) < 32:
+    raise ImproperlyConfigured('AI_SERVICE_SECRET must be at least 32 characters.')
 PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 

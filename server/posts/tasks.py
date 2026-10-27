@@ -37,6 +37,10 @@ def process_post(post, created):
     PostTag.objects.filter(post=post).exclude(name__in=tags).delete()
     PostTag.objects.bulk_create([PostTag(post=post, name=t) for t in tags], ignore_conflicts=True)
 
+    from moderation.tasks import queue_moderation
+    if created or post.content:
+        queue_moderation('post', post.id)
+
     mentions = extract_mentions(post.content)
     if mentions:
         transaction.on_commit(lambda: send_mention_notifications.delay(post.id, mentions, created))

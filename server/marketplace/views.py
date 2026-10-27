@@ -5,6 +5,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from core import visibility
+from moderation.tasks import queue_moderation
 from core.permissions import IsOwnerOrReadOnly
 from core.validators import sanitize_image
 from .models import Listing, ListingImage, ListingLike, Category
@@ -40,7 +41,7 @@ class ListingViewSet(viewsets.ModelViewSet):
             return Listing.objects.filter(seller=self.request.user).select_related(
                 'seller', 'category').prefetch_related('images')
         qs = Listing.objects.filter(
-            Q(status=Listing.STATUS_ACTIVE) | Q(seller=self.request.user)
+            (Q(status=Listing.STATUS_ACTIVE) & ~Q(moderation_status='removed')) | Q(seller=self.request.user)
         ).exclude(seller_id__in=visibility.blocked_ids(self.request.user)).select_related('seller', 'category')
         category = self.request.query_params.get('category')
         if category:
@@ -63,6 +64,7 @@ class ListingViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         images = _clean_images(self.request.FILES.getlist('images'))
         listing = serializer.save(seller=self.request.user)
+        queue_moderation('listing', listing.id)
         for i, img in enumerate(images):
             ListingImage.objects.create(listing=listing, image=img, is_primary=(i == 0), order=i)
 

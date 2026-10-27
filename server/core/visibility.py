@@ -56,7 +56,8 @@ def visible_posts(user, qs=None):
         | Q(privacy=Post.PRIVACY_FRIENDS, author_id__in=friend_ids(user))
     )
     group = Q(group__isnull=True) | Q(group__privacy='public') | Q(group_id__in=member_group_ids(user))
-    return qs.filter(privacy & group).exclude(author_id__in=blocked_ids(user))
+    moderation = Q(author=user) | ~Q(moderation_status='removed')
+    return qs.filter(privacy & group & moderation).exclude(author_id__in=blocked_ids(user))
 
 
 def can_view_post(user, post):

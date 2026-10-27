@@ -57,7 +57,7 @@ def _pages(user, q):
 
 def _listings(user, q):
     from marketplace.models import Listing
-    qs = Listing.objects.filter(status=Listing.STATUS_ACTIVE).exclude(
+    qs = Listing.objects.filter(status=Listing.STATUS_ACTIVE).exclude(moderation_status='removed').exclude(
         seller_id__in=visibility.blocked_ids(user)).prefetch_related('images')
     return _text_filter(qs, ['title', 'description'], q)
 

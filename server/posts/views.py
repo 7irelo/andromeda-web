@@ -9,6 +9,7 @@ from core import visibility
 from core.permissions import IsOwnerOrReadOnly
 from .models import Post, Like, Comment
 from .serializers import PostSerializer, CommentSerializer
+from moderation.tasks import queue_moderation
 from .tasks import process_post
 
 logger = logging.getLogger(__name__)
@@ -115,11 +116,12 @@ class PostViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             comments = post.comments.filter(parent=None).exclude(
                 author_id__in=visibility.blocked_ids(request.user)
-            ).select_related('author').prefetch_related('replies__author')[:200]
+            ).exclude(Q(moderation_status='removed') & ~Q(author=request.user)).select_related('author').prefetch_related('replies__author')[:200]
             return Response(CommentSerializer(comments, many=True, context={'request': request}).data)
         serializer = CommentSerializer(data=request.data, context={'request': request, 'post': post})
         serializer.is_valid(raise_exception=True)
         comment = serializer.save(author=request.user, post=post)
+        queue_moderation('comment', comment.id)
         if post.author_id != request.user.id:
             try:
                 from notifications.tasks import send_comment_notification

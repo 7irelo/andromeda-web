@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import serializers
 
 from core import visibility
@@ -46,7 +47,8 @@ class CommentSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             replies = obj.replies.all()
             if request:
-                replies = replies.exclude(author_id__in=visibility.blocked_ids(request.user))
+                replies = replies.exclude(author_id__in=visibility.blocked_ids(request.user)).exclude(
+                    Q(moderation_status='removed') & ~Q(author=request.user))
             return CommentSerializer(replies[:5], many=True, context=self.context).data
         return []
 
@@ -67,12 +69,12 @@ class PostSerializer(serializers.ModelSerializer):
             'group', 'page',
             'likes_count', 'comments_count', 'shares_count',
             'shared_post', 'shared_post_data',
-            'is_edited', 'tags', 'media', 'my_reaction',
+            'is_edited', 'tags', 'media', 'my_reaction', 'moderation_status',
             'created_at', 'updated_at',
         ]
         # Shares go through the share action, which checks the original's visibility.
         read_only_fields = ['author', 'likes_count', 'comments_count', 'shares_count',
-                            'is_edited', 'shared_post']
+                            'is_edited', 'shared_post', 'moderation_status']
 
     def _user(self):
         return self.context['request'].user

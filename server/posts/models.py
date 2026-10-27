@@ -59,6 +59,9 @@ class Post(models.Model):
     )
 
     is_edited = models.BooleanField(default=False)
+    # Set by the moderation pipeline; 'removed' hides it from everyone but the author.
+    moderation_status = models.CharField(max_length=10, default='ok', db_index=True,
+                                         choices=[('ok', 'OK'), ('review', 'In review'), ('removed', 'Removed')])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -117,6 +120,9 @@ class Comment(models.Model):
     parent = models.ForeignKey(
         'self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE
     )
+    # Set by the moderation pipeline; 'removed' hides it from everyone but the author.
+    moderation_status = models.CharField(max_length=10, default='ok', db_index=True,
+                                         choices=[('ok', 'OK'), ('review', 'In review'), ('removed', 'Removed')])
     likes_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
