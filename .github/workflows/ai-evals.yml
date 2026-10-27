@@ -21,8 +21,8 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
@@ -33,7 +33,7 @@ jobs:
       - name: Moderation eval (gate - macro-F1 >= 0.65 and zero severe misses)
         if: steps.keys.outputs.skip != 'true'
         run: python -m evals.run_moderation --gate 0.65
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always() && steps.keys.outputs.skip != 'true'
         with:
           name: moderation-eval
