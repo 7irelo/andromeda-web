@@ -11,11 +11,10 @@ import { ChatRoom } from '../../models/chat.model';
 import { User } from '../../models/user.model';
 
 @Component({
-  selector: 'app-chat',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatInputModule],
-  templateUrl: './chat.component.html',
-  styleUrls: ['./chat.component.scss'],
+    selector: 'app-chat',
+    imports: [CommonModule, RouterOutlet, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatInputModule],
+    templateUrl: './chat.component.html',
+    styleUrls: ['./chat.component.scss']
 })
 export class ChatComponent implements OnInit {
   rooms: ChatRoom[] = [];

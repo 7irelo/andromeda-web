@@ -9,14 +9,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [
-    CommonModule, ReactiveFormsModule, RouterLink,
-    MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
-  ],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
+    selector: 'app-login',
+    imports: [
+        CommonModule, ReactiveFormsModule, RouterLink,
+        MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+    ],
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
   form = this.fb.group({

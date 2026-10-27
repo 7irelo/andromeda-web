@@ -7,10 +7,9 @@ import { ApiService } from '../../../core/services/api.service';
 import { User } from '../../../models/user.model';
 
 @Component({
-  selector: 'app-user-card',
-  standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule],
-  template: `
+    selector: 'app-user-card',
+    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule],
+    template: `
     <div class="user-card">
       <a [routerLink]="'/profile/' + user.username" class="user-info">
         <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="user.username" />
@@ -30,12 +29,12 @@ import { User } from '../../../models/user.model';
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .user-card { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; gap: 8px; }
     .user-info { display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; flex: 1; }
     .user-actions { display: flex; align-items: center; gap: 4px; }
     .small-btn { height: 30px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
-  `],
+  `]
 })
 export class UserCardComponent {
   @Input() user!: User;

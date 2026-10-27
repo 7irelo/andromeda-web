@@ -11,11 +11,10 @@ import { CatchUp, Message, ChatRoom } from '../../../models/chat.model';
 import { User } from '../../../models/user.model';
 
 @Component({
-  selector: 'app-chat-window',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule],
-  templateUrl: './chat-window.component.html',
-  styleUrls: ['./chat-window.component.scss'],
+    selector: 'app-chat-window',
+    imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule],
+    templateUrl: './chat-window.component.html',
+    styleUrls: ['./chat-window.component.scss']
 })
 export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked {
   @Input() roomId!: string;

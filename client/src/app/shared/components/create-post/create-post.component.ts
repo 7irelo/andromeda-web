@@ -11,10 +11,9 @@ import { User } from '../../../models/user.model';
 import { ImageCropperComponent, ImageCropperResult } from '../image-cropper/image-cropper.component';
 
 @Component({
-  selector: 'app-create-post',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDialogModule],
-  template: `
+    selector: 'app-create-post',
+    imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDialogModule],
+    template: `
     <div class="create-post card">
       <div class="create-top">
         <img [src]="currentUser?.avatar_url || 'assets/default-avatar.png'" class="avatar md" alt="You" />
@@ -59,7 +58,7 @@ import { ImageCropperComponent, ImageCropperResult } from '../image-cropper/imag
       <input #imageInput type="file" accept="image/*,video/*" hidden (change)="onFileSelected($event)" />
     </div>
   `,
-  styles: [`
+    styles: [`
     .create-post { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .create-top { display: flex; align-items: flex-start; gap: 10px; }
     .textarea-wrapper { flex: 1; }
@@ -105,7 +104,7 @@ import { ImageCropperComponent, ImageCropperResult } from '../image-cropper/imag
     .media-btns { display: flex; gap: 4px; }
     .media-btn { border-radius: 8px; }
     .post-btn { min-width: 80px; display: flex; align-items: center; gap: 6px; }
-  `],
+  `]
 })
 export class CreatePostComponent {
   @Input() currentUser: User | null = null;

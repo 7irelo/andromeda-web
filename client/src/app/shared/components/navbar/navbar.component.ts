@@ -15,16 +15,15 @@ import { ApiService } from '../../../core/services/api.service';
 import { User } from '../../../models/user.model';
 
 @Component({
-  selector: 'app-navbar',
-  standalone: true,
-  imports: [
-    CommonModule, RouterLink, RouterLinkActive,
-    MatIconModule, MatBadgeModule, MatMenuModule,
-    MatButtonModule, MatDividerModule, MatInputModule,
-    MatTooltipModule, FormsModule,
-  ],
-  templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.scss'],
+    selector: 'app-navbar',
+    imports: [
+        CommonModule, RouterLink, RouterLinkActive,
+        MatIconModule, MatBadgeModule, MatMenuModule,
+        MatButtonModule, MatDividerModule, MatInputModule,
+        MatTooltipModule, FormsModule,
+    ],
+    templateUrl: './navbar.component.html',
+    styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {
   currentUser: User | null = null;

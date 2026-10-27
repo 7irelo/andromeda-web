@@ -20,10 +20,9 @@ export interface ImageCropperResult {
 }
 
 @Component({
-  selector: 'app-image-cropper',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatDialogModule],
-  template: `
+    selector: 'app-image-cropper',
+    imports: [CommonModule, MatButtonModule, MatIconModule, MatDialogModule],
+    template: `
     <h2 mat-dialog-title>{{ data.title || 'Crop Image' }}</h2>
     <mat-dialog-content class="cropper-content">
       <div class="cropper-wrapper">
@@ -54,7 +53,7 @@ export interface ImageCropperResult {
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
+    styles: [`
     .cropper-content { padding: 0; overflow: hidden; }
     .cropper-wrapper {
       width: 100%;

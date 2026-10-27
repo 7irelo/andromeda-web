@@ -16,13 +16,12 @@ import { Post } from '../../../models/post.model';
 import { User } from '../../../models/user.model';
 
 @Component({
-  selector: 'app-group-detail',
-  standalone: true,
-  imports: [
-    CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule,
-    CreatePostComponent, PostCardComponent,
-  ],
-  template: `
+    selector: 'app-group-detail',
+    imports: [
+        CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule,
+        CreatePostComponent, PostCardComponent,
+    ],
+    template: `
     <div class="group-detail" *ngIf="group">
       <div class="group-cover">
         <img [src]="group.cover_photo || 'assets/default-cover.png'" alt="" />
@@ -99,7 +98,7 @@ import { User } from '../../../models/user.model';
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   `,
-  styles: [`
+    styles: [`
     .group-detail { max-width: 800px; margin: 0 auto; padding: 16px; }
     .group-cover {
       position: relative; height: 240px; border-radius: 16px; overflow: hidden; margin-bottom: 20px;

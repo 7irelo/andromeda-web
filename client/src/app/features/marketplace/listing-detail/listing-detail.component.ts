@@ -10,10 +10,9 @@ import { ApiService } from '../../../core/services/api.service';
 import { Listing } from '../../../models/listing.model';
 
 @Component({
-  selector: 'app-listing-detail',
-  standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule],
-  template: `
+    selector: 'app-listing-detail',
+    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule],
+    template: `
     <div class="listing-detail" *ngIf="listing">
       <div class="listing-images">
         <img [src]="currentImage" alt="" class="main-img" />
@@ -81,7 +80,7 @@ import { Listing } from '../../../models/listing.model';
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   `,
-  styles: [`
+    styles: [`
     .listing-detail {
       display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
       max-width: 960px; margin: 0 auto; padding: 24px 16px;

@@ -15,14 +15,13 @@ import { ApiService } from '../../core/services/api.service';
 import { User } from '../../models/user.model';
 
 @Component({
-  selector: 'app-settings',
-  standalone: true,
-  imports: [
-    CommonModule, FormsModule, ReactiveFormsModule,
-    MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
-  ],
-  template: `
+    selector: 'app-settings',
+    imports: [
+        CommonModule, FormsModule, ReactiveFormsModule,
+        MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
+        MatSelectModule, MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
+    ],
+    template: `
     <div class="settings-page">
       <div class="page-header-gradient">
         <h1><mat-icon>settings</mat-icon> Settings</h1>
@@ -196,7 +195,7 @@ import { User } from '../../models/user.model';
       </section>
     </div>
   `,
-  styles: [`
+    styles: [`
     .settings-page { max-width: 700px; margin: 0 auto; padding: 16px; }
     .page-header-gradient {
       background: var(--gradient-primary); color: #fff; padding: 28px 32px;

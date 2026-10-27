@@ -10,11 +10,10 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Comment, Post, Reaction, REACTIONS } from '../../../models/post.model';
 
 @Component({
-  selector: 'app-post-card',
-  standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatMenuModule],
-  templateUrl: './post-card.component.html',
-  styleUrls: ['./post-card.component.scss'],
+    selector: 'app-post-card',
+    imports: [CommonModule, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatMenuModule],
+    templateUrl: './post-card.component.html',
+    styleUrls: ['./post-card.component.scss']
 })
 export class PostCardComponent implements OnInit {
   @Input() post!: Post;

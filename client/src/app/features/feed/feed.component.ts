@@ -14,14 +14,13 @@ import { CreatePostComponent } from '../../shared/components/create-post/create-
 import { UserCardComponent } from '../../shared/components/user-card/user-card.component';
 
 @Component({
-  selector: 'app-feed',
-  standalone: true,
-  imports: [
-    CommonModule, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
-    MatIconModule, PostCardComponent, CreatePostComponent, UserCardComponent,
-  ],
-  templateUrl: './feed.component.html',
-  styleUrls: ['./feed.component.scss'],
+    selector: 'app-feed',
+    imports: [
+        CommonModule, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
+        MatIconModule, PostCardComponent, CreatePostComponent, UserCardComponent,
+    ],
+    templateUrl: './feed.component.html',
+    styleUrls: ['./feed.component.scss']
 })
 export class FeedComponent implements OnInit {
   posts: Post[] = [];

@@ -10,10 +10,9 @@ import { SearchResponse, SearchType } from '../../models/search.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
 
 @Component({
-  selector: 'app-search',
-  standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonToggleModule, MatIconModule, MatProgressSpinnerModule, PostCardComponent],
-  template: `
+    selector: 'app-search',
+    imports: [CommonModule, RouterLink, MatButtonToggleModule, MatIconModule, MatProgressSpinnerModule, PostCardComponent],
+    template: `
     <div class="search-page">
       <h1>Results for “{{ query }}”</h1>
       <mat-button-toggle-group [value]="type" (change)="setType($event.value)" class="tabs" aria-label="Result type">
@@ -73,7 +72,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
       <p class="text-secondary empty" *ngIf="error">{{ error }}</p>
     </div>
   `,
-  styles: [`
+    styles: [`
     .search-page { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
     h1 { font-size: 22px; margin-bottom: 16px; }
     h2 { font-size: 16px; margin: 24px 0 8px; }
@@ -82,7 +81,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
     .row { display: flex; align-items: center; gap: 12px; padding: 12px; color: inherit; text-decoration: none; }
     .empty { margin-top: 32px; text-align: center; }
     .loading-center { display: flex; justify-content: center; padding: 40px; }
-  `],
+  `]
 })
 export class SearchComponent implements OnInit, OnDestroy {
   readonly types: SearchType[] = ['all', 'people', 'posts', 'groups', 'pages', 'listings', 'videos'];

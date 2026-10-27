@@ -6,19 +6,18 @@ import { AuthService } from './core/services/auth.service';
 import { WebSocketService } from './core/services/websocket.service';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet, CommonModule, NavbarComponent],
-  template: `
+    selector: 'app-root',
+    imports: [RouterOutlet, CommonModule, NavbarComponent],
+    template: `
     <app-navbar *ngIf="authService.isLoggedIn()"></app-navbar>
     <main [class.with-nav]="authService.isLoggedIn()">
       <router-outlet></router-outlet>
     </main>
   `,
-  styles: [`
+    styles: [`
     main { min-height: 100vh; }
     main.with-nav { padding-top: 56px; }
-  `],
+  `]
 })
 export class AppComponent implements OnInit {
   constructor(

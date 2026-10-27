@@ -13,15 +13,14 @@ import { AuthService } from '../../core/services/auth.service';
 import { User, FriendRequest } from '../../models/user.model';
 
 @Component({
-  selector: 'app-friends',
-  standalone: true,
-  imports: [
-    CommonModule, RouterLink, FormsModule, MatIconModule,
-    MatButtonModule, MatTabsModule, MatInputModule, MatProgressSpinnerModule,
-    MatSnackBarModule,
-  ],
-  templateUrl: './friends.component.html',
-  styleUrls: ['./friends.component.scss'],
+    selector: 'app-friends',
+    imports: [
+        CommonModule, RouterLink, FormsModule, MatIconModule,
+        MatButtonModule, MatTabsModule, MatInputModule, MatProgressSpinnerModule,
+        MatSnackBarModule,
+    ],
+    templateUrl: './friends.component.html',
+    styleUrls: ['./friends.component.scss']
 })
 export class FriendsComponent implements OnInit {
   suggestions: User[] = [];

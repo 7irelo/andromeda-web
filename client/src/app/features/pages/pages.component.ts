@@ -11,14 +11,13 @@ import { ApiService } from '../../core/services/api.service';
 import { Page } from '../../models/page.model';
 
 @Component({
-  selector: 'app-pages',
-  standalone: true,
-  imports: [
-    CommonModule, ReactiveFormsModule,
-    MatIconModule, MatButtonModule, MatProgressSpinnerModule,
-    MatFormFieldModule, MatInputModule, MatSnackBarModule,
-  ],
-  template: `
+    selector: 'app-pages',
+    imports: [
+        CommonModule, ReactiveFormsModule,
+        MatIconModule, MatButtonModule, MatProgressSpinnerModule,
+        MatFormFieldModule, MatInputModule, MatSnackBarModule,
+    ],
+    template: `
     <div class="pages-page">
       <div class="page-header-gradient">
         <div>
@@ -101,7 +100,7 @@ import { Page } from '../../models/page.model';
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .pages-page { max-width: 1100px; margin: 0 auto; padding: 16px; }
     .page-header-gradient {
       display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;

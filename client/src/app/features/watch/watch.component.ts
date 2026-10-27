@@ -10,19 +10,18 @@ import { ApiService } from '../../core/services/api.service';
 import { Video } from '../../models/video.model';
 
 @Component({
-  selector: 'app-watch',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterLink,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-  ],
-  templateUrl: './watch.component.html',
-  styleUrls: ['./watch.component.scss'],
+    selector: 'app-watch',
+    imports: [
+        CommonModule,
+        FormsModule,
+        RouterLink,
+        MatIconModule,
+        MatButtonModule,
+        MatProgressSpinnerModule,
+        MatSnackBarModule,
+    ],
+    templateUrl: './watch.component.html',
+    styleUrls: ['./watch.component.scss']
 })
 export class WatchComponent implements OnInit {
   videos: Video[] = [];

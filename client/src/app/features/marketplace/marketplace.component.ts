@@ -13,15 +13,14 @@ import { ApiService } from '../../core/services/api.service';
 import { Listing } from '../../models/listing.model';
 
 @Component({
-  selector: 'app-marketplace',
-  standalone: true,
-  imports: [
-    CommonModule, RouterLink, FormsModule, ReactiveFormsModule,
-    MatIconModule, MatButtonModule, MatInputModule, MatProgressSpinnerModule,
-    MatFormFieldModule, MatSelectModule, MatSnackBarModule,
-  ],
-  templateUrl: './marketplace.component.html',
-  styleUrls: ['./marketplace.component.scss'],
+    selector: 'app-marketplace',
+    imports: [
+        CommonModule, RouterLink, FormsModule, ReactiveFormsModule,
+        MatIconModule, MatButtonModule, MatInputModule, MatProgressSpinnerModule,
+        MatFormFieldModule, MatSelectModule, MatSnackBarModule,
+    ],
+    templateUrl: './marketplace.component.html',
+    styleUrls: ['./marketplace.component.scss']
 })
 export class MarketplaceComponent implements OnInit {
   listings: Listing[] = [];

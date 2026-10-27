@@ -23,15 +23,14 @@ function passwordMatchValidator(control: AbstractControl) {
 }
 
 @Component({
-  selector: 'app-register',
-  standalone: true,
-  imports: [
-    CommonModule, ReactiveFormsModule, RouterLink,
-    MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
-    MatSnackBarModule, MatDialogModule,
-  ],
-  templateUrl: './register.component.html',
-  styleUrls: ['../login/login.component.scss', './register.component.scss'],
+    selector: 'app-register',
+    imports: [
+        CommonModule, ReactiveFormsModule, RouterLink,
+        MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+        MatSnackBarModule, MatDialogModule,
+    ],
+    templateUrl: './register.component.html',
+    styleUrls: ['../login/login.component.scss', './register.component.scss']
 })
 export class RegisterComponent {
   @ViewChild('avatarInput') avatarInput!: ElementRef<HTMLInputElement>;

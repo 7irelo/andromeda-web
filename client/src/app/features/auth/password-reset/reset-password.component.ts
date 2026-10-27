@@ -8,10 +8,9 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-reset-password',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatInputModule, MatButtonModule, MatSnackBarModule],
-  template: `
+    selector: 'app-reset-password',
+    imports: [CommonModule, ReactiveFormsModule, RouterLink, MatInputModule, MatButtonModule, MatSnackBarModule],
+    template: `
     <div class="auth-shell">
       <div class="auth-card card">
         <h1>Choose a new password</h1>
@@ -36,7 +35,7 @@ import { AuthService } from '../../../core/services/auth.service';
       </div>
     </div>
   `,
-  styleUrls: ['./password-reset.scss'],
+    styleUrls: ['./password-reset.scss']
 })
 export class ResetPasswordComponent implements OnInit {
   form = this.fb.group({

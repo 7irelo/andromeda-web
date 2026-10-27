@@ -20,16 +20,15 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
 import { ImageCropperComponent, ImageCropperResult } from '../../shared/components/image-cropper/image-cropper.component';
 
 @Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [
-    CommonModule, ReactiveFormsModule, FormsModule,
-    MatButtonModule, MatIconModule, MatTabsModule,
-    MatProgressSpinnerModule, MatFormFieldModule, MatInputModule,
-    MatSnackBarModule, MatDialogModule, MatMenuModule, PostCardComponent,
-  ],
-  templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss'],
+    selector: 'app-profile',
+    imports: [
+        CommonModule, ReactiveFormsModule, FormsModule,
+        MatButtonModule, MatIconModule, MatTabsModule,
+        MatProgressSpinnerModule, MatFormFieldModule, MatInputModule,
+        MatSnackBarModule, MatDialogModule, MatMenuModule, PostCardComponent,
+    ],
+    templateUrl: './profile.component.html',
+    styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
   @Input() username!: string;

@@ -8,10 +8,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-forgot-password',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatInputModule, MatButtonModule, MatIconModule],
-  template: `
+    selector: 'app-forgot-password',
+    imports: [CommonModule, ReactiveFormsModule, RouterLink, MatInputModule, MatButtonModule, MatIconModule],
+    template: `
     <div class="auth-shell">
       <div class="auth-card card">
         <h1>Reset your password</h1>
@@ -35,7 +34,7 @@ import { AuthService } from '../../../core/services/auth.service';
       </div>
     </div>
   `,
-  styleUrls: ['./password-reset.scss'],
+    styleUrls: ['./password-reset.scss']
 })
 export class ForgotPasswordComponent {
   form = this.fb.group({ email: ['', [Validators.required, Validators.email]] });

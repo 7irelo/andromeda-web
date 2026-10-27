@@ -9,10 +9,9 @@ import { ApiService } from '../../../core/services/api.service';
 import { Video, VideoComment } from '../../../models/video.model';
 
 @Component({
-  selector: 'app-video-player',
-  standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
-  template: `
+    selector: 'app-video-player',
+    imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+    template: `
     <div class="player-page" *ngIf="video">
       <video controls class="video-player" [src]="video.video_file"></video>
 
@@ -74,7 +73,7 @@ import { Video, VideoComment } from '../../../models/video.model';
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   `,
-  styles: [`
+    styles: [`
     .player-page { max-width: 900px; margin: 0 auto; padding: 16px; }
     .video-player { width: 100%; border-radius: 12px; background: #000; max-height: 500px; }
     .video-meta { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; }

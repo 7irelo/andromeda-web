@@ -14,15 +14,14 @@ import { ApiService } from '../../core/services/api.service';
 import { Group } from '../../models/group.model';
 
 @Component({
-  selector: 'app-groups',
-  standalone: true,
-  imports: [
-    CommonModule, RouterLink, ReactiveFormsModule,
-    MatIconModule, MatButtonModule, MatTabsModule, MatProgressSpinnerModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatSnackBarModule,
-  ],
-  templateUrl: './groups.component.html',
-  styleUrls: ['./groups.component.scss'],
+    selector: 'app-groups',
+    imports: [
+        CommonModule, RouterLink, ReactiveFormsModule,
+        MatIconModule, MatButtonModule, MatTabsModule, MatProgressSpinnerModule,
+        MatFormFieldModule, MatInputModule, MatSelectModule, MatSnackBarModule,
+    ],
+    templateUrl: './groups.component.html',
+    styleUrls: ['./groups.component.scss']
 })
 export class GroupsComponent implements OnInit {
   allGroups: Group[] = [];

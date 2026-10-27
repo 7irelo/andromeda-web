@@ -10,11 +10,10 @@ import { WebSocketService } from '../../core/services/websocket.service';
 import { Notification } from '../../models/notification.model';
 
 @Component({
-  selector: 'app-notifications',
-  standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
-  templateUrl: './notifications.component.html',
-  styleUrls: ['./notifications.component.scss'],
+    selector: 'app-notifications',
+    imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+    templateUrl: './notifications.component.html',
+    styleUrls: ['./notifications.component.scss']
 })
 export class NotificationsComponent implements OnInit {
   notifications: Notification[] = [];
