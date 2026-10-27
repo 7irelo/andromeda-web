@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -21,8 +21,9 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY . .
 
-# Media and static directories
-RUN mkdir -p /app/media /app/staticfiles
+# Media and static directories, owned by an unprivileged runtime user
+RUN useradd --system --uid 10001 --home-dir /app andromeda &&     mkdir -p /app/media /app/staticfiles &&     chown -R andromeda:andromeda /app/media /app/staticfiles
+USER andromeda
 
 EXPOSE 8000
 

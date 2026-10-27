@@ -1,0 +1,15 @@
+line-length = 120
+extend-exclude = ["migrations"]
+
+[lint]
+# Pyflakes (undefined names, unused imports), syntax errors, and bandit-style
+# security rules.
+select = ["E9", "F", "S"]
+ignore = [
+  "S101",  # assert is idiomatic in pytest
+  "S311",  # non-crypto randomness is fine for slugs and sampling
+]
+
+[lint.per-file-ignores]
+"**/test*.py" = ["S105", "S106"]  # hard-coded test passwords
+"andromeda/settings*.py" = ["S105"]
