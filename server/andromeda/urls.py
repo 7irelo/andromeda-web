@@ -5,6 +5,8 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from core.search import SearchView
+
 
 def health_check(request):
     return JsonResponse({'status': 'ok', 'service': 'andromeda-api'})
@@ -27,6 +29,7 @@ urlpatterns = [
     path('api/marketplace/', include('marketplace.urls')),
     path('api/watch/', include('watch.urls')),
     path('api/pages/', include('pages.urls')),
+    path('api/search/', SearchView.as_view(), name='search'),
 
     # OpenAPI schema + docs (admin-only outside DEBUG, see SPECTACULAR_SETTINGS)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

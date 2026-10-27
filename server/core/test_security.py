@@ -491,3 +491,27 @@ def test_seed_refuses_in_production(db, settings):
     settings.DEBUG = False
     with pytest.raises(CommandError):
         call_command('seed', users=1)
+
+
+class TestSearch:
+    def test_search_respects_privacy(self, alice, mallory):
+        Post.objects.create(author=alice, content='galaxy secrets', privacy='private')
+        public = Post.objects.create(author=alice, content='galaxy photos', privacy='public')
+        Group.objects.create(name='galaxy hidden', privacy='secret', created_by=alice)
+        r = client_for(mallory).get(reverse('search') + '?q=galaxy')
+        assert r.status_code == 200
+        assert [p['id'] for p in r.data['results']['posts']] == [public.id]
+        assert r.data['results']['groups'] == []
+
+    def test_search_hides_blocked_and_unsearchable(self, alice, bob, mallory):
+        Block.objects.create(blocker=alice, blocked=mallory)
+        bob.searchable = False
+        bob.save()
+        r = client_for(mallory).get(reverse('search') + '?q=a&type=people')
+        assert r.status_code == 400  # too short
+        names = {u['username'] for u in client_for(mallory).get(
+            reverse('search') + '?q=o&type=people'.replace('q=o', 'q=bo')).data['results']['people']}
+        assert 'bob' not in names
+        names = {u['username'] for u in client_for(mallory).get(
+            reverse('search') + '?q=al&type=people').data['results']['people']}
+        assert 'alice' not in names

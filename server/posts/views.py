@@ -9,6 +9,7 @@ from core import visibility
 from core.permissions import IsOwnerOrReadOnly
 from .models import Post, Like, Comment
 from .serializers import PostSerializer, CommentSerializer
+from .tasks import process_post
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,10 @@ class PostViewSet(viewsets.ModelViewSet):
         if author_id and author_id.isdigit():
             qs = qs.filter(author_id=author_id)
 
+        tag = self.request.query_params.get('tag', '').strip().lstrip('#').lower()[:50]
+        if tag:
+            qs = qs.filter(tags__name=tag)
+
         group_id = self.request.query_params.get('group')
         if group_id and group_id.isdigit():
             qs = qs.filter(group_id=group_id)
@@ -53,10 +58,10 @@ class PostViewSet(viewsets.ModelViewSet):
         return qs.order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        process_post(serializer.save(author=self.request.user), created=True)
 
     def perform_update(self, serializer):
-        serializer.save(is_edited=True)
+        process_post(serializer.save(is_edited=True), created=False)
 
     @action(detail=True, methods=['post'])
     def react(self, request, pk=None):
