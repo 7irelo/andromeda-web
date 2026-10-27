@@ -150,6 +150,10 @@ services:
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-andromeda_secret}
       - MINIO_BUCKET=andromeda-media
       - MINIO_EXTERNAL_URL=${MINIO_EXTERNAL_URL:-http://localhost:4200/media}
+      - AI_SERVICE_URL=http://ai:8100
+      # Provider keys live only in the ai service.
+      - ANTHROPIC_API_KEY=
+      - OPENAI_API_KEY=
     volumes:
       - media_data:/app/media
       - static_data:/app/staticfiles
@@ -179,6 +183,9 @@ services:
     env_file:
       - .env
     environment:
+      - AI_SERVICE_URL=http://ai:8100
+      - ANTHROPIC_API_KEY=
+      - OPENAI_API_KEY=
       - POSTGRES_HOST=postgres
       - NEO4J_BOLT_URL=bolt://neo4j:${NEO4J_PASSWORD:-andromeda_secret}@neo4j:7687
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
@@ -244,6 +251,35 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+  # ============================================================
+  # AI service (internal only: no published ports)
+  # ============================================================
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: andromeda_ai
+    restart: unless-stopped
+    # Only the variables this service needs; nothing else from .env.
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - AI_SERVICE_SECRET=${AI_SERVICE_SECRET:?Set AI_SERVICE_SECRET in .env}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/2
+      - DAILY_USER_TOKEN_BUDGET=${AI_DAILY_USER_TOKEN_BUDGET:-200000}
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - andromeda_network
+    depends_on:
+      redis:
+        condition: service_healthy
 
   # ============================================================
   # Frontend + Reverse Proxy

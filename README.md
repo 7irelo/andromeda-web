@@ -3,7 +3,8 @@
 > A full-stack social platform with a feed, real-time chat, groups, a
 > marketplace, video and pages. Built on Django, Angular, PostgreSQL, a Neo4j
 > social graph and an event-driven Celery backbone, with authorization and
-> privacy enforced on every request.
+> privacy enforced on every request, and an internal AI service for
+> moderation and chat summaries.
 
 [![CI](https://github.com/7irelo/andromeda-web/actions/workflows/ci.yml/badge.svg)](https://github.com/7irelo/andromeda-web/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
@@ -19,6 +20,7 @@
 
 - [Features](#features)
 - [Security model](#security-model)
+- [AI features](#ai-features)
 - [Tech stack](#tech-stack)
 - [Architecture](#architecture)
 - [Quick start (Docker)](#quick-start-docker)
@@ -45,6 +47,7 @@
 | **Watch** | Video upload and playback, likes, comments, one view counted per viewer |
 | **Pages** | Business and community pages, follow/unfollow, posting as a page for its admins and editors |
 | **Search** | One search across people, posts, groups, pages, listings and videos (Postgres full-text ranking) |
+| **AI** | Automatic moderation of posts, comments and listings with a staff review queue; "Catch me up" chat summaries with verified citations |
 | **Operations** | Prometheus metrics, a pre-built Grafana dashboard, OpenAPI docs, a demo-data seeder |
 
 ---
@@ -101,6 +104,25 @@ rather than a public issue.
 
 ---
 
+## AI features
+
+All model calls go through an internal FastAPI service ([`ai/`](ai/README.md)).
+It is the only component holding provider keys, and Django calls it with
+short-lived signed service tokens.
+
+| Feature | How it works |
+|---|---|
+| **Moderation** | New posts, comments and listings are checked within seconds. OpenAI's free moderation endpoint runs first, then Claude Haiku 5.5 applies the community policy, and Claude Sonnet 5.5 is called only when Haiku is unsure. Clear violations are hidden (the author is notified), and borderline cases go to a staff queue at `/api/moderation/cases/` where every action is audit-logged. |
+| **Catch me up** | One click in a chat summarises what you missed: topics, decisions and questions for you. Every point cites real message ids, links that weren't in the chat are removed, and blocked users' messages are never sent to the model. |
+
+Guardrails include per-user daily token budgets, a cross-provider fallback,
+circuit breakers, prompt-injection delimiting and graceful degradation when
+models are unavailable. A live eval set (35 items) gates quality: the
+current baseline has zero severe misses and zero false removals at
+**$0.32 per 1,000 items**. See [`ai/README.md`](ai/README.md).
+
+---
+
 ## Tech stack
 
 | Layer | Technology |
@@ -114,6 +136,7 @@ rather than a public issue.
 | Cache | Redis 7 |
 | Media | MinIO (S3-compatible), split into public and private prefixes |
 | Observability | Prometheus, Grafana, Redis and Postgres exporters |
+| AI | FastAPI, Pydantic, Anthropic (Claude Haiku/Sonnet 5.5) and OpenAI SDKs |
 | Delivery | Docker Compose, nginx, GitHub Actions |
 
 ---
@@ -154,7 +177,8 @@ rather than a public issue.
 
 ```bash
 cp .env.example .env
-# Required: set SECRET_KEY and FLOWER_PASSWORD, and change every *_PASSWORD
+# Required: set SECRET_KEY, FLOWER_PASSWORD and AI_SERVICE_SECRET, and change every *_PASSWORD.
+# Optional: ANTHROPIC_API_KEY and OPENAI_API_KEY enable moderation and chat summaries.
 python -c "import secrets; print(secrets.token_urlsafe(64))"   # use as SECRET_KEY
 docker compose up --build
 ```
@@ -252,6 +276,7 @@ every push and pull request:
 |---|---|
 | Backend | ruff, migration drift, migrations applied on PostgreSQL, `check --deploy`, pytest with a coverage gate |
 | Frontend | unit tests, production build |
+| AI service | ruff, unit tests with fake providers (live evals run on demand in `ai-evals.yml`) |
 | Dependency audit | `pip-audit`, `npm audit` |
 | Secret scan | gitleaks over the full history |
 | Docker | compose validation, image builds, Trivy vulnerability scan |
@@ -296,8 +321,9 @@ andromeda-web/
 │   ├── features/              lazy routes: feed, chat, profile, groups, search, settings, …
 │   ├── shared/                navbar, post card, composer, image cropper
 │   └── models/                TypeScript interfaces
+├── ai/                        internal AI service: gateway, moderation, catch-up, evals
 ├── monitoring/                Prometheus config, Grafana provisioning and dashboards
-├── docker-compose.yml         full stack (15 services)
+├── docker-compose.yml         full stack (16 services)
 └── dev.sh / dev.ps1           hybrid local dev launcher
 ```
 

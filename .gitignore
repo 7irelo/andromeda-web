@@ -129,3 +129,4 @@ monitoring/prometheus/data/
 # Visual Studio
 .vs/
 .venv-dev/
+ai/evals/results/

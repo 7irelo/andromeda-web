@@ -13,6 +13,12 @@ alerting:
         - targets: []
 
 scrape_configs:
+  # AI service: model calls, tokens, cost, latency, fallbacks
+  - job_name: ai
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["ai:8100"]
+
   # Django application metrics (via django-prometheus)
   - job_name: django
     static_configs:

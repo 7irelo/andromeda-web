@@ -1,0 +1,40 @@
+name: AI evals
+
+# Live model evals cost money, so they run on demand (and on a weekly schedule
+# to catch provider-side drift), never on every push. Add ANTHROPIC_API_KEY and
+# OPENAI_API_KEY as repository secrets to enable them.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  moderation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Skip when keys are not configured
+        id: keys
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Moderation eval (gate - macro-F1 >= 0.65 and zero severe misses)
+        if: steps.keys.outputs.skip != 'true'
+        run: python -m evals.run_moderation --gate 0.65
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.keys.outputs.skip != 'true'
+        with:
+          name: moderation-eval
+          path: ai/evals/results/
