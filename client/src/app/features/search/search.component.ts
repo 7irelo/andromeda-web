@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -72,6 +72,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
       <p class="text-secondary empty" *ngIf="error">{{ error }}</p>
     </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     .search-page { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
     h1 { font-size: 22px; margin-bottom: 16px; }

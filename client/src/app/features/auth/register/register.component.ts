@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
@@ -30,6 +30,7 @@ function passwordMatchValidator(control: AbstractControl) {
         MatSnackBarModule, MatDialogModule,
     ],
     templateUrl: './register.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['../login/login.component.scss', './register.component.scss']
 })
 export class RegisterComponent {

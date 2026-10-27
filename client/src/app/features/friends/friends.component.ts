@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +20,7 @@ import { User, FriendRequest } from '../../models/user.model';
         MatSnackBarModule,
     ],
     templateUrl: './friends.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./friends.component.scss']
 })
 export class FriendsComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,6 +14,7 @@ import { User } from '../../../models/user.model';
     selector: 'app-chat-window',
     imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule],
     templateUrl: './chat-window.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./chat-window.component.scss']
 })
 export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked {

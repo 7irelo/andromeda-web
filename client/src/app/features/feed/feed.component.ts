@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -20,6 +20,7 @@ import { UserCardComponent } from '../../shared/components/user-card/user-card.c
         MatIconModule, PostCardComponent, CreatePostComponent, UserCardComponent,
     ],
     templateUrl: './feed.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./feed.component.scss']
 })
 export class FeedComponent implements OnInit {

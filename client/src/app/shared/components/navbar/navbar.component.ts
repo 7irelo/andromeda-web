@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,6 +23,7 @@ import { User } from '../../../models/user.model';
         MatTooltipModule, FormsModule,
     ],
     templateUrl: './navbar.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {

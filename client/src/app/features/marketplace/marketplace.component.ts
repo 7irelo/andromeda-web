@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -20,6 +20,7 @@ import { Listing } from '../../models/listing.model';
         MatFormFieldModule, MatSelectModule, MatSnackBarModule,
     ],
     templateUrl: './marketplace.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./marketplace.component.scss']
 })
 export class MarketplaceComponent implements OnInit {

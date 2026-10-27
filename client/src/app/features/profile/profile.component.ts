@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, OnDestroy, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -28,6 +28,7 @@ import { ImageCropperComponent, ImageCropperResult } from '../../shared/componen
         MatSnackBarModule, MatDialogModule, MatMenuModule, PostCardComponent,
     ],
     templateUrl: './profile.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnInit, OnChanges, OnDestroy {

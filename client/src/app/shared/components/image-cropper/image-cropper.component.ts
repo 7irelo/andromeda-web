@@ -1,6 +1,7 @@
 import {
   Component, AfterViewInit, OnDestroy,
   ViewChild, ElementRef, Inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -53,6 +54,7 @@ export interface ImageCropperResult {
       </button>
     </mat-dialog-actions>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     .cropper-content { padding: 0; overflow: hidden; }
     .cropper-wrapper {

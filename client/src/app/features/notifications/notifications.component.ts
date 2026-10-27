@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
@@ -13,6 +13,7 @@ import { Notification } from '../../models/notification.model';
     selector: 'app-notifications',
     imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
     templateUrl: './notifications.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./notifications.component.scss']
 })
 export class NotificationsComponent implements OnInit {

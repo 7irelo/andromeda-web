@@ -9,7 +9,7 @@
 [![CI](https://github.com/7irelo/andromeda-web/actions/workflows/ci.yml/badge.svg)](https://github.com/7irelo/andromeda-web/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/django-5.2_LTS-green.svg)](https://djangoproject.com/)
-[![Angular](https://img.shields.io/badge/angular-17-red.svg)](https://angular.dev/)
+[![Angular](https://img.shields.io/badge/angular-22-red.svg)](https://angular.dev/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
 ![Andromeda: feed, chat, marketplace, profile, API, monitoring](docs/screenshots/andromeda-ui.png)
@@ -127,7 +127,7 @@ current baseline has zero severe misses and zero false removals at
 
 | Layer | Technology |
 |---|---|
-| Frontend | Angular 17 (standalone components), Angular Material, RxJS |
+| Frontend | Angular 22 (standalone components), Angular Material, RxJS, TypeScript 6 |
 | API | Django 5.2 LTS, Django REST Framework, SimpleJWT, drf-spectacular |
 | Real-time | Django Channels over Redis (chat, notifications, presence) |
 | Relational DB | PostgreSQL 15 (source of truth, full-text search) |

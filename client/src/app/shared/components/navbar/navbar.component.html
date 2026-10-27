@@ -58,13 +58,13 @@
     <button class="avatar-btn" [matMenuTriggerFor]="profileMenu">
       <img
         [src]="currentUser?.avatar_url || 'assets/default-avatar.png'"
-        [alt]="currentUser?.username"
+        [alt]="$safeNavigationMigration(currentUser?.username)"
         class="avatar sm"
       />
     </button>
 
     <mat-menu #profileMenu="matMenu">
-      <a mat-menu-item [routerLink]="'/profile/' + currentUser?.username">
+      <a mat-menu-item [routerLink]="'/profile/' + $safeNavigationMigration(currentUser?.username)">
         <mat-icon>person</mat-icon>
         <span>My Profile</span>
       </a>

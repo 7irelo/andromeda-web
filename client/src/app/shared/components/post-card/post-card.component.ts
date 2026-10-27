@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,6 +13,7 @@ import { Comment, Post, Reaction, REACTIONS } from '../../../models/post.model';
     selector: 'app-post-card',
     imports: [CommonModule, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatMenuModule],
     templateUrl: './post-card.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./post-card.component.scss']
 })
 export class PostCardComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -58,6 +58,7 @@ import { ImageCropperComponent, ImageCropperResult } from '../image-cropper/imag
       <input #imageInput type="file" accept="image/*,video/*" hidden (change)="onFileSelected($event)" />
     </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     .create-post { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .create-top { display: flex; align-items: flex-start; gap: 10px; }

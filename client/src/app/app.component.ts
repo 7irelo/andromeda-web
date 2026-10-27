@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
@@ -14,6 +14,7 @@ import { WebSocketService } from './core/services/websocket.service';
       <router-outlet></router-outlet>
     </main>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     main { min-height: 100vh; }
     main.with-nav { padding-top: 56px; }

@@ -38,7 +38,7 @@
         *ngIf="!isMyMessage(msg)"
         [src]="msg.sender?.avatar_url || 'assets/default-avatar.png'"
         class="avatar sm"
-        [alt]="msg.sender?.username"
+        [alt]="$safeNavigationMigration(msg.sender?.username)"
       />
       <div class="bubble-wrapper">
         <div class="sender-name text-xs text-secondary" *ngIf="!isMyMessage(msg)">

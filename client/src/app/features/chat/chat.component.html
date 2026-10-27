@@ -50,7 +50,7 @@
         </div>
         <div class="last-msg text-secondary text-xs">
           {{ room.last_message?.content || 'No messages yet' }}
-          · {{ timeAgo(room.last_message?.created_at) }}
+          · {{ timeAgo($safeNavigationMigration(room.last_message?.created_at)) }}
         </div>
       </div>
     </div>

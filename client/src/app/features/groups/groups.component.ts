@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -21,6 +21,7 @@ import { Group } from '../../models/group.model';
         MatFormFieldModule, MatInputModule, MatSelectModule, MatSnackBarModule,
     ],
     templateUrl: './groups.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./groups.component.scss']
 })
 export class GroupsComponent implements OnInit {

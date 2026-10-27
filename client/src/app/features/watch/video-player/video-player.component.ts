@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -73,6 +73,7 @@ import { Video, VideoComment } from '../../../models/video.model';
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     .player-page { max-width: 900px; margin: 0 auto; padding: 16px; }
     .video-player { width: 100%; border-radius: 12px; background: #000; max-height: 500px; }

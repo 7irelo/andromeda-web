@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { User } from '../../models/user.model';
     selector: 'app-chat',
     imports: [CommonModule, RouterOutlet, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatInputModule],
     templateUrl: './chat.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./chat.component.scss']
 })
 export class ChatComponent implements OnInit {

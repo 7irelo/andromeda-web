@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,6 +29,7 @@ import { User } from '../../../models/user.model';
       </div>
     </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     .user-card { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; gap: 8px; }
     .user-info { display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; flex: 1; }

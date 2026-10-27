@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -98,6 +98,7 @@ import { User } from '../../../models/user.model';
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     .group-detail { max-width: 800px; margin: 0 auto; padding: 16px; }
     .group-cover {

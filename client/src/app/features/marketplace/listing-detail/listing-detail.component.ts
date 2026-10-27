@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -80,6 +80,7 @@ import { Listing } from '../../../models/listing.model';
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     .listing-detail {
       display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
