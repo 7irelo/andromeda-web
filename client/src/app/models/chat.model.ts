@@ -40,3 +40,16 @@ export interface WsMessage {
   type: 'message' | 'typing' | 'read' | 'status' | 'notification';
   [key: string]: unknown;
 }
+
+export interface CitedPoint {
+  text: string;
+  message_ids: number[];
+}
+
+export interface CatchUp {
+  tldr: string;
+  topics: { title: string; summary: string; message_ids: number[] }[];
+  decisions: CitedPoint[];
+  questions_for_you: CitedPoint[];
+  message_count: number;
+}

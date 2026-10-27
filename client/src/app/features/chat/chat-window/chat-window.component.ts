@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
-import { Message, ChatRoom } from '../../../models/chat.model';
+import { CatchUp, Message, ChatRoom } from '../../../models/chat.model';
 import { User } from '../../../models/user.model';
 
 @Component({
@@ -28,12 +28,32 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   currentUser: User | null = null;
   typingUsers: string[] = [];
   private subs = new Subscription();
+  summary: CatchUp | null = null;
+  catchingUp = false;
+  catchUpError = '';
 
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
     private wsService: WebSocketService,
   ) {}
+
+  catchUp(): void {
+    this.catchingUp = true;
+    this.catchUpError = '';
+    this.apiService.catchUp(parseInt(this.roomId, 10)).subscribe({
+      next: (s) => {
+        this.summary = s;
+        this.catchingUp = false;
+      },
+      error: (err) => {
+        this.catchingUp = false;
+        this.catchUpError = err?.status === 429
+          ? "You've used your summaries for now. Try again later."
+          : err?.error?.detail ?? 'Summaries are unavailable right now.';
+      },
+    });
+  }
 
   ngOnInit(): void {
     this.currentUser = this.authService.currentUser;

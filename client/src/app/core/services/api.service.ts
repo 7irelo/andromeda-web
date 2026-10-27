@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Post, Comment } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
-import { ChatRoom, Message } from '../../models/chat.model';
+import { CatchUp, ChatRoom, Message } from '../../models/chat.model';
 import { Notification } from '../../models/notification.model';
 import { Listing, ListingCategory } from '../../models/listing.model';
 import { Group, GroupJoinRequest, GroupMember } from '../../models/group.model';
@@ -120,6 +120,10 @@ export class ApiService {
     return this.http.get<PaginatedResponse<Message>>(
       `${this.API}/chats/rooms/${roomId}/messages/?page=${page}`
     );
+  }
+
+  catchUp(roomId: number): Observable<CatchUp> {
+    return this.http.post<CatchUp>(`${this.API}/chats/rooms/${roomId}/catch_up/`, {});
   }
 
   markRoomRead(roomId: number): Observable<{ status: string }> {

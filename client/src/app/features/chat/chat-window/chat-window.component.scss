@@ -96,3 +96,27 @@
   color: var(--text-primary);
   &::placeholder { color: var(--text-secondary); }
 }
+
+.catchup-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px 0;
+}
+
+.catchup-panel {
+  position: relative;
+  margin: 8px 12px 0;
+  padding: 12px 40px 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-secondary, #f0f2f5);
+  font-size: 14px;
+  line-height: 1.45;
+
+  .close { position: absolute; top: 2px; right: 2px; }
+  .tldr { font-weight: 600; margin-bottom: 6px; }
+  .topic { margin-bottom: 4px; }
+  .group { margin-top: 8px; }
+  .label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+  .foot { margin-top: 8px; }
+  .error { color: var(--danger, #e41e3f); }
+}

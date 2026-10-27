@@ -1,4 +1,32 @@
 <div class="chat-window">
+  <!-- AI recap -->
+  <div class="catchup-bar">
+    <button mat-stroked-button (click)="catchUp()" [disabled]="catchingUp">
+      <mat-icon>auto_awesome</mat-icon> {{ catchingUp ? 'Summarising...' : 'Catch me up' }}
+    </button>
+  </div>
+  <div class="catchup-panel" *ngIf="summary || catchUpError" role="region" aria-label="Chat summary">
+    <button mat-icon-button class="close" (click)="summary = null; catchUpError = ''" aria-label="Close summary">
+      <mat-icon>close</mat-icon>
+    </button>
+    <p class="error" *ngIf="catchUpError">{{ catchUpError }}</p>
+    <ng-container *ngIf="summary">
+      <p class="tldr">{{ summary.tldr }}</p>
+      <div *ngFor="let t of summary.topics" class="topic">
+        <strong>{{ t.title }}</strong> {{ t.summary }}
+      </div>
+      <div *ngIf="summary.decisions.length" class="group">
+        <div class="label">Decided</div>
+        <div *ngFor="let d of summary.decisions">• {{ d.text }}</div>
+      </div>
+      <div *ngIf="summary.questions_for_you.length" class="group">
+        <div class="label">For you</div>
+        <div *ngFor="let q of summary.questions_for_you">• {{ q.text }}</div>
+      </div>
+      <div class="foot text-xs text-secondary">AI summary of {{ summary.message_count }} messages. It can make mistakes.</div>
+    </ng-container>
+  </div>
+
   <!-- Messages -->
   <div class="messages-area">
     <div

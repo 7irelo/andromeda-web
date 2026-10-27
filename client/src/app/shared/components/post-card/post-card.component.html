@@ -1,5 +1,9 @@
 <article class="post-card">
   <!-- Header -->
+  <div class="moderation-notice" *ngIf="post.moderation_status === 'removed'" role="status">
+    <mat-icon>visibility_off</mat-icon>
+    Only you can see this post. It was removed for breaking the community guidelines.
+  </div>
   <div class="post-header">
     <a [routerLink]="'/profile/' + post.author.username" class="author-link">
       <img [src]="post.author.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="post.author.username" />

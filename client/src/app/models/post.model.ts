@@ -20,6 +20,8 @@ export interface Post {
   shared_post: number | null;
   shared_post_data: Post | null;
   is_edited: boolean;
+  /** Only meaningful to the author: 'removed' posts are hidden from everyone else. */
+  moderation_status?: 'ok' | 'review' | 'removed';
   tags: { name: string }[];
   media: { id: number; file: string; media_type: string; order: number }[];
   my_reaction: string | null;
