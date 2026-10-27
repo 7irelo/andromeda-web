@@ -98,7 +98,7 @@ jobs:
         run: pip install pip-audit && pip-audit -r server/requirements.txt -r ai/requirements.txt
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
       - name: JavaScript (npm audit, production deps)
         working-directory: client
         run: npm audit --omit=dev --audit-level=high
@@ -125,7 +125,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
           cache-dependency-path: client/package-lock.json
 
