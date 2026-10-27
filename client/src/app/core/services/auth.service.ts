@@ -1,14 +1,25 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { User, AuthTokens, LoginResponse } from '../../models/user.model';
+import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, switchMap, tap } from 'rxjs';
+import { User, SessionResponse } from '../../models/user.model';
 import { environment } from '../../../environments/environment';
 
+/**
+ * Session handling.
+ *
+ * - The access token lives only in memory, never in localStorage, so a script
+ *   injection can't harvest a long-lived credential.
+ * - The refresh token is an HttpOnly, SameSite=Strict cookie set by the API and
+ *   scoped to /api/auth/. JavaScript never sees it.
+ * - On page load, `restoreSession()` exchanges the cookie for a fresh access token.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly API = environment.apiUrl;
-  private _currentUser = new BehaviorSubject<User | null>(this.loadUser());
+  private accessToken: string | null = null;
+  private refreshInFlight$: Observable<string> | null = null;
+  private _currentUser = new BehaviorSubject<User | null>(null);
   currentUser$ = this._currentUser.asObservable();
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -18,73 +29,111 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('access_token');
+    return !!this.accessToken && !!this._currentUser.value;
+  }
+
+  getAccessToken(): string | null {
+    return this.accessToken;
   }
 
   register(data: {
     username: string; email: string;
     first_name: string; last_name: string;
     password: string; password2: string;
-  }): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.API}/auth/register/`, data).pipe(
-      tap((res) => this.storeSession(res))
-    );
+  }): Observable<SessionResponse> {
+    return this.http
+      .post<SessionResponse>(`${this.API}/auth/register/`, data, { withCredentials: true })
+      .pipe(tap((res) => this.startSession(res)));
   }
 
-  login(credentials: { username: string; password: string }): Observable<{ access: string; refresh: string }> {
-    return this.http.post<{ access: string; refresh: string }>(`${this.API}/auth/login/`, credentials).pipe(
-      tap((tokens) => {
-        localStorage.setItem('access_token', tokens.access);
-        localStorage.setItem('refresh_token', tokens.refresh);
-        this.fetchMe().subscribe();
+  login(credentials: { username: string; password: string }): Observable<SessionResponse> {
+    return this.http
+      .post<SessionResponse>(`${this.API}/auth/login/`, credentials, { withCredentials: true })
+      .pipe(tap((res) => this.startSession(res)));
+  }
+
+  /** Called once at startup: silently resume a session from the refresh cookie. */
+  restoreSession(): Observable<boolean> {
+    return this.refreshAccessToken().pipe(
+      switchMap(() => this.fetchMe()),
+      map(() => true),
+      catchError(() => {
+        this.clearSession();
+        return of(false);
       })
     );
   }
 
   fetchMe(): Observable<User> {
-    return this.http.get<User>(`${this.API}/auth/me/`).pipe(
-      tap((user) => {
-        this._currentUser.next(user);
-        localStorage.setItem('user', JSON.stringify(user));
-      })
-    );
+    return this.http.get<User>(`${this.API}/auth/me/`).pipe(tap((user) => this._currentUser.next(user)));
+  }
+
+  /** Concurrent 401s share a single refresh request (the cookie rotates on each use). */
+  refreshAccessToken(): Observable<string> {
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.http
+        .post<{ access: string }>(`${this.API}/auth/token/refresh/`, {}, { withCredentials: true })
+        .pipe(
+          map((res) => res.access),
+          tap((access) => (this.accessToken = access)),
+          finalize(() => (this.refreshInFlight$ = null)),
+          shareReplay(1)
+        );
+    }
+    return this.refreshInFlight$;
+  }
+
+  /** One-time ticket for authenticating a WebSocket handshake. */
+  getWebSocketTicket(): Observable<string> {
+    return this.http.post<{ ticket: string }>(`${this.API}/auth/ws-ticket/`, {}).pipe(map((r) => r.ticket));
+  }
+
+  changePassword(current_password: string, new_password: string): Observable<SessionResponse> {
+    return this.http
+      .post<SessionResponse>(`${this.API}/auth/password/change/`, { current_password, new_password }, { withCredentials: true })
+      .pipe(tap((res) => this.startSession(res)));
+  }
+
+  requestPasswordReset(email: string): Observable<unknown> {
+    return this.http.post(`${this.API}/auth/password/reset/`, { email });
+  }
+
+  confirmPasswordReset(uid: string, token: string, new_password: string): Observable<unknown> {
+    return this.http.post(`${this.API}/auth/password/reset/confirm/`, { uid, token, new_password });
+  }
+
+  deleteAccount(password: string): Observable<void> {
+    return this.http
+      .post<void>(`${this.API}/auth/me/delete/`, { password }, { withCredentials: true })
+      .pipe(tap(() => this.endSession()));
+  }
+
+  logoutEverywhere(): void {
+    this.http.post(`${this.API}/auth/logout-all/`, {}, { withCredentials: true })
+      .pipe(catchError(() => of(null)))
+      .subscribe(() => this.endSession());
   }
 
   logout(): void {
-    const refresh = localStorage.getItem('refresh_token');
-    if (refresh) {
-      this.http.post(`${this.API}/auth/token/blacklist/`, { refresh }).subscribe();
-    }
-    localStorage.clear();
+    this.http.post(`${this.API}/auth/logout/`, {}, { withCredentials: true })
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+    this.endSession();
+  }
+
+  /** Drop local state without calling the API (e.g. the refresh cookie already expired). */
+  clearSession(): void {
+    this.accessToken = null;
     this._currentUser.next(null);
+  }
+
+  private endSession(): void {
+    this.clearSession();
     this.router.navigate(['/login']);
   }
 
-  getAccessToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem('refresh_token');
-  }
-
-  refreshAccessToken(): Observable<{ access: string }> {
-    return this.http.post<{ access: string }>(`${this.API}/auth/token/refresh/`, {
-      refresh: this.getRefreshToken(),
-    }).pipe(
-      tap((res) => localStorage.setItem('access_token', res.access))
-    );
-  }
-
-  private storeSession(res: LoginResponse): void {
-    localStorage.setItem('access_token', res.tokens.access);
-    localStorage.setItem('refresh_token', res.tokens.refresh);
-    localStorage.setItem('user', JSON.stringify(res.user));
+  private startSession(res: SessionResponse): void {
+    this.accessToken = res.access;
     this._currentUser.next(res.user);
-  }
-
-  private loadUser(): User | null {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
   }
 }

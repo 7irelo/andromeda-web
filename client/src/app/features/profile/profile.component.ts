@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup } from '@angul
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,7 +26,7 @@ import { ImageCropperComponent, ImageCropperResult } from '../../shared/componen
     CommonModule, ReactiveFormsModule, FormsModule,
     MatButtonModule, MatIconModule, MatTabsModule,
     MatProgressSpinnerModule, MatFormFieldModule, MatInputModule,
-    MatSnackBarModule, MatDialogModule, PostCardComponent,
+    MatSnackBarModule, MatDialogModule, MatMenuModule, PostCardComponent,
   ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
@@ -58,6 +59,7 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
   // Delete account
   isConfirmingDelete = false;
   deleteInput = '';
+  deletePassword = '';
   deleting = false;
 
   constructor(
@@ -145,6 +147,7 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
   openDeleteDialog(): void {
     this.isConfirmingDelete = true;
     this.deleteInput = '';
+    this.deletePassword = '';
   }
 
   cancelDelete(): void {
@@ -152,14 +155,14 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   confirmDeleteAccount(): void {
-    if (this.deleteInput !== this.currentUser?.username || this.deleting) return;
+    if (this.deleteInput !== this.currentUser?.username || !this.deletePassword || this.deleting) return;
     this.deleting = true;
-    const refresh = this.authService.getRefreshToken() ?? '';
-    this.apiService.deleteAccount(refresh).subscribe({
-      next: () => this.authService.logout(),
-      error: () => {
+    this.authService.deleteAccount(this.deletePassword).subscribe({
+      error: (err) => {
         this.deleting = false;
-        this.snackBar.open('Failed to delete account', 'Dismiss', { duration: 3000 });
+        this.deletePassword = '';
+        const msg = err?.error?.password?.[0] ?? 'Failed to delete account';
+        this.snackBar.open(msg, 'Dismiss', { duration: 3000 });
       },
     });
   }
@@ -257,8 +260,29 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   unfriend(): void {
-    // For now, just show a message - full unfriend requires backend endpoint
-    this.snackBar.open('Unfriend feature coming soon', 'Dismiss', { duration: 3000 });
+    if (!this.profile) return;
+    this.apiService.unfriend(this.profile.id).subscribe({
+      next: () => {
+        if (this.profile) {
+          this.profile = { ...this.profile, is_friend: false, friends_count: Math.max(0, this.profile.friends_count - 1) };
+        }
+        this.snackBar.open('Removed from friends', 'Dismiss', { duration: 3000 });
+      },
+      error: () => this.snackBar.open('Failed to unfriend', 'Dismiss', { duration: 3000 }),
+    });
+  }
+
+  toggleBlock(): void {
+    if (!this.profile) return;
+    const target = this.profile;
+    const req = target.is_blocked ? this.apiService.unblockUser(target.id) : this.apiService.blockUser(target.id);
+    req.subscribe({
+      next: ({ blocked }) => {
+        this.profile = { ...target, is_blocked: blocked, is_friend: blocked ? false : target.is_friend };
+        this.snackBar.open(blocked ? `Blocked ${target.username}` : `Unblocked ${target.username}`, 'Dismiss', { duration: 3000 });
+      },
+      error: () => this.snackBar.open('Something went wrong', 'Dismiss', { duration: 3000 }),
+    });
   }
 
   startChat(): void {

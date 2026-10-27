@@ -21,6 +21,18 @@ export const routes: Routes = [
       import('./features/auth/register/register.component').then((m) => m.RegisterComponent),
   },
   {
+    path: 'forgot-password',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./features/auth/password-reset/forgot-password.component').then((m) => m.ForgotPasswordComponent),
+  },
+  {
+    // Reachable signed in or out: the link arrives by email.
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./features/auth/password-reset/reset-password.component').then((m) => m.ResetPasswordComponent),
+  },
+  {
     path: 'feed',
     canActivate: [authGuard],
     loadComponent: () =>

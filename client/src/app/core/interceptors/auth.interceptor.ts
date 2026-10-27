@@ -2,35 +2,31 @@ import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
+
+// Auth endpoints that must never trigger a refresh-and-retry loop.
+const NO_RETRY = ['/auth/token/refresh/', '/auth/login/', '/auth/register/', '/auth/logout/'];
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
   const authService = inject(AuthService);
-  const router = inject(Router);
-  const token = authService.getAccessToken();
 
-  const authReq = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+  // Only ever attach the bearer token to our own API.
+  const isApi = req.url.startsWith(environment.apiUrl) || req.url.startsWith('/api/');
+  const withToken = (token: string | null) =>
+    isApi && token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
-  return next(authReq).pipe(
+  return next(withToken(authService.getAccessToken())).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401 && !req.url.includes('token/refresh')) {
-        return authService.refreshAccessToken().pipe(
-          switchMap((res) => {
-            const retryReq = req.clone({
-              setHeaders: { Authorization: `Bearer ${res.access}` },
-            });
-            return next(retryReq);
-          }),
-          catchError(() => {
-            authService.logout();
-            router.navigate(['/login']);
-            return throwError(() => err);
-          })
-        );
+      if (err.status !== 401 || !isApi || NO_RETRY.some((p) => req.url.includes(p))) {
+        return throwError(() => err);
       }
-      return throwError(() => err);
+      return authService.refreshAccessToken().pipe(
+        switchMap((access) => next(withToken(access))),
+        catchError(() => {
+          authService.logout();
+          return throwError(() => err);
+        })
+      );
     })
   );
 };

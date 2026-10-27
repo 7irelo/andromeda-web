@@ -4,58 +4,82 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { Notification } from '../../models/notification.model';
 
+const MAX_BACKOFF_MS = 30_000;
+
+/**
+ * WebSockets authenticate with a single-use ticket fetched over HTTPS
+ * immediately before each connection. Tokens never appear in socket URLs.
+ */
 @Injectable({ providedIn: 'root' })
 export class WebSocketService {
   private notificationSocket: WebSocket | null = null;
   private chatSocket: WebSocket | null = null;
+  private notificationRetries = 0;
+  private notificationsWanted = false;
+  private chatRoomId: number | null = null;
 
   notification$ = new Subject<Notification>();
   unreadCount$ = new BehaviorSubject<number>(0);
   chatMessage$ = new Subject<unknown>();
   typing$ = new Subject<unknown>();
+  chatError$ = new Subject<{ code: string; detail: string }>();
 
   constructor(private authService: AuthService) {}
 
+  private open(path: string, onOpen: (ws: WebSocket) => void, onFail: () => void): void {
+    this.authService.getWebSocketTicket().subscribe({
+      next: (ticket) => onOpen(new WebSocket(`${environment.wsUrl}${path}?ticket=${encodeURIComponent(ticket)}`)),
+      error: onFail,
+    });
+  }
+
   connectNotifications(): void {
-    if (this.notificationSocket?.readyState === WebSocket.OPEN) return;
+    this.notificationsWanted = true;
+    if (this.notificationSocket && this.notificationSocket.readyState <= WebSocket.OPEN) return;
 
-    const token = this.authService.getAccessToken();
-    const url = `${environment.wsUrl}/notifications/?token=${token}`;
+    this.open('/notifications/', (ws) => {
+      this.notificationSocket = ws;
+      ws.onopen = () => (this.notificationRetries = 0);
+      ws.onmessage = (event) => {
+        try {
+          this.notification$.next(JSON.parse(event.data));
+          this.unreadCount$.next(this.unreadCount$.value + 1);
+        } catch {
+          /* ignore malformed frames */
+        }
+      };
+      ws.onclose = () => this.scheduleNotificationReconnect();
+    }, () => this.scheduleNotificationReconnect());
+  }
 
-    this.notificationSocket = new WebSocket(url);
-
-    this.notificationSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      this.notification$.next(data);
-      this.unreadCount$.next(this.unreadCount$.value + 1);
-    };
-
-    this.notificationSocket.onerror = (err) => console.error('Notification WS error', err);
-
-    this.notificationSocket.onclose = () => {
-      // Auto-reconnect after 5s if still logged in
-      setTimeout(() => {
-        if (this.authService.isLoggedIn()) this.connectNotifications();
-      }, 5000);
-    };
+  private scheduleNotificationReconnect(): void {
+    this.notificationSocket = null;
+    if (!this.notificationsWanted || !this.authService.isLoggedIn()) return;
+    const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** this.notificationRetries++);
+    setTimeout(() => this.connectNotifications(), delay);
   }
 
   connectChat(roomId: number): void {
     this.disconnectChat();
-    const token = this.authService.getAccessToken();
-    const url = `${environment.wsUrl}/chat/${roomId}/?token=${token}`;
-    this.chatSocket = new WebSocket(url);
-
-    this.chatSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'message') {
-        this.chatMessage$.next(data);
-      } else if (data.type === 'typing') {
-        this.typing$.next(data);
+    this.chatRoomId = roomId;
+    this.open(`/chat/${roomId}/`, (ws) => {
+      if (this.chatRoomId !== roomId) {
+        ws.close();
+        return;
       }
-    };
-
-    this.chatSocket.onerror = (err) => console.error('Chat WS error', err);
+      this.chatSocket = ws;
+      ws.onmessage = (event) => {
+        let data: { type?: string; code?: string; detail?: string };
+        try {
+          data = JSON.parse(event.data);
+        } catch {
+          return;
+        }
+        if (data.type === 'message') this.chatMessage$.next(data);
+        else if (data.type === 'typing') this.typing$.next(data);
+        else if (data.type === 'error') this.chatError$.next({ code: data.code ?? '', detail: data.detail ?? '' });
+      };
+    }, () => this.chatError$.next({ code: 'connect_failed', detail: 'Could not connect to chat.' }));
   }
 
   sendChatMessage(content: string, replyTo?: number): void {
@@ -77,11 +101,13 @@ export class WebSocketService {
   }
 
   disconnectChat(): void {
+    this.chatRoomId = null;
     this.chatSocket?.close();
     this.chatSocket = null;
   }
 
   disconnect(): void {
+    this.notificationsWanted = false;
     this.notificationSocket?.close();
     this.notificationSocket = null;
     this.disconnectChat();

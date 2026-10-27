@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,7 +18,7 @@ import { User } from '../../models/user.model';
   selector: 'app-settings',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule,
+    CommonModule, FormsModule, ReactiveFormsModule,
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
   ],
@@ -158,10 +158,17 @@ import { User } from '../../models/user.model';
             <mat-label>New Password</mat-label>
             <input matInput type="password" formControlName="new_password" />
           </mat-form-field>
-          <button mat-flat-button color="primary" type="submit" [disabled]="passwordForm.invalid">
-            Update Password
+          <button mat-flat-button color="primary" type="submit" [disabled]="passwordForm.invalid || changingPassword">
+            {{ changingPassword ? 'Updating...' : 'Update Password' }}
           </button>
         </form>
+        <div class="setting-item" style="margin-top:16px">
+          <div>
+            <div class="font-semibold">Sign out everywhere</div>
+            <div class="text-secondary text-sm">End every session on every device, including this one</div>
+          </div>
+          <button mat-stroked-button (click)="logoutEverywhere()">Sign out all devices</button>
+        </div>
       </section>
 
       <!-- Danger Zone -->
@@ -172,7 +179,19 @@ import { User } from '../../models/user.model';
             <div class="font-semibold">Delete Account</div>
             <div class="text-secondary text-sm">Permanently delete your account and all data</div>
           </div>
-          <button mat-stroked-button color="warn" (click)="confirmDelete()">Delete Account</button>
+          <button mat-stroked-button color="warn" *ngIf="!showDelete" (click)="showDelete = true">Delete Account</button>
+        </div>
+        <div *ngIf="showDelete" class="settings-form" style="margin-top:12px">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Enter your password to confirm</mat-label>
+            <input matInput type="password" autocomplete="current-password" [(ngModel)]="deletePassword" />
+          </mat-form-field>
+          <div style="display:flex;gap:8px">
+            <button mat-stroked-button (click)="showDelete = false; deletePassword = ''">Cancel</button>
+            <button mat-flat-button color="warn" [disabled]="!deletePassword || deleting" (click)="confirmDelete()">
+              {{ deleting ? 'Deleting...' : 'Permanently delete my account' }}
+            </button>
+          </div>
         </div>
       </section>
     </div>
@@ -204,6 +223,10 @@ import { User } from '../../models/user.model';
 export class SettingsComponent implements OnInit {
   currentUser: User | null = null;
   isDark = false;
+  changingPassword = false;
+  showDelete = false;
+  deletePassword = '';
+  deleting = false;
   savingProfile = false;
   savingPrivacy = false;
 
@@ -227,7 +250,7 @@ export class SettingsComponent implements OnInit {
 
   passwordForm = this.fb.group({
     current_password: ['', Validators.required],
-    new_password: ['', [Validators.required, Validators.minLength(8)]],
+    new_password: ['', [Validators.required, Validators.minLength(10)]],
   });
 
   constructor(
@@ -303,19 +326,37 @@ export class SettingsComponent implements OnInit {
   }
 
   changePassword(): void {
-    this.snackBar.open('Password change coming soon', 'Dismiss', { duration: 3000 });
+    if (this.passwordForm.invalid || this.changingPassword) return;
+    const { current_password, new_password } = this.passwordForm.value as { current_password: string; new_password: string };
+    this.changingPassword = true;
+    this.authService.changePassword(current_password, new_password).subscribe({
+      next: () => {
+        this.changingPassword = false;
+        this.passwordForm.reset();
+        this.snackBar.open('Password updated. Other devices have been signed out.', 'Dismiss', { duration: 4000 });
+      },
+      error: (err) => {
+        this.changingPassword = false;
+        const e = err?.error ?? {};
+        const msg = e.current_password?.[0] ?? e.new_password?.[0] ?? e.non_field_errors?.[0] ?? 'Failed to update password';
+        this.snackBar.open(msg, 'Dismiss', { duration: 4000 });
+      },
+    });
+  }
+
+  logoutEverywhere(): void {
+    this.authService.logoutEverywhere();
   }
 
   confirmDelete(): void {
-    if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
-      const refresh = localStorage.getItem('refresh_token') || '';
-      this.apiService.deleteAccount(refresh).subscribe({
-        next: () => {
-          this.authService.logout();
-          this.router.navigate(['/login']);
-        },
-        error: () => this.snackBar.open('Failed to delete account', 'Dismiss', { duration: 3000 }),
-      });
-    }
+    if (!this.deletePassword || this.deleting) return;
+    this.deleting = true;
+    this.authService.deleteAccount(this.deletePassword).subscribe({
+      error: (err) => {
+        this.deleting = false;
+        this.deletePassword = '';
+        this.snackBar.open(err?.error?.password?.[0] ?? 'Failed to delete account', 'Dismiss', { duration: 3000 });
+      },
+    });
   }
 }

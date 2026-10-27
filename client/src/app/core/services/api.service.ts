@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Post, Comment } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
@@ -167,7 +167,9 @@ export class ApiService {
   }
 
   getGroupMembers(id: number): Observable<GroupMember[]> {
-    return this.http.get<GroupMember[]>(`${this.API}/groups/${id}/members/`);
+    return this.http
+      .get<PaginatedResponse<GroupMember>>(`${this.API}/groups/${id}/members/`)
+      .pipe(map((res) => res.results));
   }
 
   // ── Profile ────────────────────────────────────────────────────────────────
@@ -175,8 +177,27 @@ export class ApiService {
     return this.http.patch<User>(`${this.API}/auth/me/`, data);
   }
 
-  deleteAccount(refresh: string): Observable<void> {
-    return this.http.delete<void>(`${this.API}/auth/me/`, { body: { refresh } });
+  // ── Relationships ──────────────────────────────────────────────────────────
+  unfriend(userId: number): Observable<{ is_friend: boolean }> {
+    return this.http.delete<{ is_friend: boolean }>(`${this.API}/auth/users/${userId}/friend/`);
+  }
+
+  getFriends(userId: number, page = 1): Observable<PaginatedResponse<User>> {
+    return this.http.get<PaginatedResponse<User>>(`${this.API}/auth/users/${userId}/friends/`, {
+      params: { page: page.toString() },
+    });
+  }
+
+  blockUser(userId: number): Observable<{ blocked: boolean }> {
+    return this.http.post<{ blocked: boolean }>(`${this.API}/auth/users/${userId}/block/`, {});
+  }
+
+  unblockUser(userId: number): Observable<{ blocked: boolean }> {
+    return this.http.delete<{ blocked: boolean }>(`${this.API}/auth/users/${userId}/block/`);
+  }
+
+  getBlockedUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.API}/auth/users/blocked/`);
   }
 
   // ── Marketplace ───────────────────────────────────────────────────────

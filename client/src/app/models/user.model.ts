@@ -1,7 +1,8 @@
 export interface User {
   id: number;
   username: string;
-  email: string;
+  /** Only present on the signed-in user's own record. */
+  email?: string;
   first_name: string;
   last_name: string;
   full_name: string;
@@ -10,7 +11,7 @@ export interface User {
   cover_photo_url: string | null;
   location: string;
   website: string;
-  birth_date: string | null;
+  birth_date?: string | null;
   is_verified: boolean;
   friends_count: number;
   posts_count: number;
@@ -18,6 +19,7 @@ export interface User {
   is_friend?: boolean;
   friend_request_sent?: boolean;
   friend_request_received?: boolean;
+  is_blocked?: boolean;
 
   // Privacy settings
   privacy_profile?: string;
@@ -37,12 +39,8 @@ export interface FriendRequest {
   created_at: string;
 }
 
-export interface AuthTokens {
+/** Returned by login, register and password change. The refresh token arrives as an HttpOnly cookie. */
+export interface SessionResponse {
   access: string;
-  refresh: string;
-}
-
-export interface LoginResponse {
   user: User;
-  tokens: AuthTokens;
 }

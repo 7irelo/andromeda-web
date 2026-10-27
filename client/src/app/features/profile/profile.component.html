@@ -37,6 +37,10 @@
         </div>
       </div>
       <div class="profile-actions" *ngIf="!isSelf">
+        <button mat-stroked-button color="warn" *ngIf="profile.is_blocked" (click)="toggleBlock()">
+          <mat-icon>block</mat-icon> Unblock
+        </button>
+        <ng-container *ngIf="!profile.is_blocked">
         <!-- Already friends -->
         <ng-container *ngIf="profile.is_friend">
           <span class="badge badge-success" style="padding:8px 16px;font-size:14px">
@@ -78,6 +82,15 @@
           <button mat-stroked-button (click)="startChat()">
             <mat-icon>chat</mat-icon> Message
           </button>
+        </ng-container>
+          <button mat-icon-button [matMenuTriggerFor]="moreMenu" aria-label="More actions">
+            <mat-icon>more_horiz</mat-icon>
+          </button>
+          <mat-menu #moreMenu="matMenu">
+            <button mat-menu-item (click)="toggleBlock()">
+              <mat-icon>block</mat-icon> Block {{ profile.username }}
+            </button>
+          </mat-menu>
         </ng-container>
       </div>
       <div class="profile-actions" *ngIf="isSelf">
@@ -156,11 +169,15 @@
       <mat-label>Type your username to confirm</mat-label>
       <input matInput [(ngModel)]="deleteInput" [placeholder]="currentUser?.username ?? ''" />
     </mat-form-field>
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Your password</mat-label>
+      <input matInput type="password" autocomplete="current-password" [(ngModel)]="deletePassword" />
+    </mat-form-field>
   </div>
   <div class="edit-dialog-actions">
     <button mat-stroked-button (click)="cancelDelete()" [disabled]="deleting">Cancel</button>
     <button mat-flat-button color="warn"
-      [disabled]="deleteInput !== currentUser?.username || deleting"
+      [disabled]="deleteInput !== currentUser?.username || !deletePassword || deleting"
       (click)="confirmDeleteAccount()">
       <mat-spinner *ngIf="deleting" diameter="18"></mat-spinner>
       {{ deleting ? 'Deleting...' : 'Delete My Account' }}
