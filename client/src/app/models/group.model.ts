@@ -9,6 +9,7 @@ export interface Group {
   creator: Pick<User, 'id' | 'username' | 'full_name' | 'avatar_url'>;
   members_count: number;
   is_member: boolean;
+  my_role?: 'admin' | 'moderator' | 'member' | null;
   created_at: string;
   updated_at: string;
 }
@@ -18,4 +19,11 @@ export interface GroupMember {
   user: Pick<User, 'id' | 'username' | 'full_name' | 'avatar_url'>;
   role: 'admin' | 'moderator' | 'member';
   joined_at: string;
+}
+
+export interface GroupJoinRequest {
+  id: number;
+  user: User;
+  status: string;
+  created_at: string;
 }

@@ -1,6 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -10,7 +12,7 @@ import { Listing } from '../../../models/listing.model';
 @Component({
   selector: 'app-listing-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule],
   template: `
     <div class="listing-detail" *ngIf="listing">
       <div class="listing-images">
@@ -50,8 +52,21 @@ import { Listing } from '../../../models/listing.model';
           </a>
         </div>
 
-        <div class="action-buttons">
-          <button mat-flat-button color="primary" class="message-btn">
+        <div class="action-buttons" *ngIf="isOwner">
+          <span class="status-pill">{{ listing.status | titlecase }}</span>
+          <button mat-flat-button color="primary" *ngIf="listing.status !== 'sold'" (click)="setStatus('sold')">
+            <mat-icon>sell</mat-icon> Mark as sold
+          </button>
+          <button mat-stroked-button *ngIf="listing.status === 'sold'" (click)="setStatus('active')">
+            <mat-icon>replay</mat-icon> Relist
+          </button>
+          <button mat-stroked-button color="warn" (click)="remove()">
+            <mat-icon>delete</mat-icon> Delete
+          </button>
+        </div>
+
+        <div class="action-buttons" *ngIf="!isOwner">
+          <button mat-flat-button color="primary" class="message-btn" (click)="messageSeller()" [disabled]="messaging">
             <mat-icon>chat</mat-icon> Message Seller
           </button>
           <button mat-stroked-button (click)="toggleLike()" [class.liked]="listing.is_liked">
@@ -98,7 +113,8 @@ import { Listing } from '../../../models/listing.model';
     }
     .seller-link { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
     .seller-link:hover { text-decoration: none; }
-    .action-buttons { display: flex; gap: 10px; margin-top: 4px; }
+    .action-buttons { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+    .status-pill { padding: 4px 12px; border-radius: 999px; background: var(--bg-secondary); font-size: 13px; }
     .message-btn { flex: 1; }
     .liked { color: var(--danger); border-color: var(--danger); }
     .loading-center { display: flex; justify-content: center; padding: 60px; }
@@ -109,7 +125,46 @@ export class ListingDetailComponent implements OnInit {
   listing: Listing | null = null;
   currentImage = '';
 
-  constructor(private apiService: ApiService) {}
+  messaging = false;
+
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService,
+    private router: Router,
+    private snackBar: MatSnackBar,
+  ) {}
+
+  get isOwner(): boolean {
+    return !!this.listing && this.listing.seller?.id === this.authService.currentUser?.id;
+  }
+
+  messageSeller(): void {
+    if (!this.listing?.seller) return;
+    this.messaging = true;
+    this.apiService.createChatRoom({ member_ids: [this.listing.seller.id], room_type: 'direct' }).subscribe({
+      next: (room) => this.router.navigate(['/chat', (room as { id: number }).id]),
+      error: (err) => {
+        this.messaging = false;
+        this.snackBar.open(err?.error?.detail ?? 'This seller is not accepting messages', 'Dismiss', { duration: 3000 });
+      },
+    });
+  }
+
+  setStatus(status: 'active' | 'sold'): void {
+    if (!this.listing) return;
+    this.apiService.updateListing(this.listing.id, { status }).subscribe({
+      next: (l) => (this.listing = { ...this.listing!, status: l.status }),
+      error: () => this.snackBar.open('Could not update the listing', 'Dismiss', { duration: 3000 }),
+    });
+  }
+
+  remove(): void {
+    if (!this.listing) return;
+    this.apiService.deleteListing(this.listing.id).subscribe({
+      next: () => this.router.navigate(['/marketplace']),
+      error: () => this.snackBar.open('Could not delete the listing', 'Dismiss', { duration: 3000 }),
+    });
+  }
 
   ngOnInit(): void {
     this.apiService.getListing(Number(this.id)).subscribe((l) => {

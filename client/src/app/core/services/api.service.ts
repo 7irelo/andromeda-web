@@ -7,7 +7,8 @@ import { User, FriendRequest } from '../../models/user.model';
 import { ChatRoom, Message } from '../../models/chat.model';
 import { Notification } from '../../models/notification.model';
 import { Listing, ListingCategory } from '../../models/listing.model';
-import { Group, GroupMember } from '../../models/group.model';
+import { Group, GroupJoinRequest, GroupMember } from '../../models/group.model';
+import { SearchResponse, SearchType } from '../../models/search.model';
 import { Video, VideoComment } from '../../models/video.model';
 import { Page } from '../../models/page.model';
 
@@ -172,6 +173,19 @@ export class ApiService {
       .pipe(map((res) => res.results));
   }
 
+  getGroupJoinRequests(id: number): Observable<GroupJoinRequest[]> {
+    return this.http.get<GroupJoinRequest[]>(`${this.API}/groups/${id}/join_requests/`);
+  }
+
+  decideGroupJoinRequest(groupId: number, requestId: number, decision: 'approve' | 'decline'): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/join_requests/${requestId}/${decision}/`, {});
+  }
+
+  // ── Search ─────────────────────────────────────────────────────────────────
+  search(q: string, type: SearchType = 'all'): Observable<SearchResponse> {
+    return this.http.get<SearchResponse>(`${this.API}/search/`, { params: { q, type } });
+  }
+
   // ── Profile ────────────────────────────────────────────────────────────────
   updateProfile(data: FormData | Partial<User>): Observable<User> {
     return this.http.patch<User>(`${this.API}/auth/me/`, data);
@@ -217,6 +231,14 @@ export class ApiService {
 
   uploadListingImages(listingId: number, formData: FormData): Observable<unknown> {
     return this.http.post(`${this.API}/marketplace/listings/${listingId}/upload_images/`, formData);
+  }
+
+  updateListing(id: number, data: Partial<Listing>): Observable<Listing> {
+    return this.http.patch<Listing>(`${this.API}/marketplace/listings/${id}/`, data);
+  }
+
+  deleteListing(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/marketplace/listings/${id}/`);
   }
 
   likeListing(id: number): Observable<{ liked: boolean }> {

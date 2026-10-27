@@ -7,10 +7,21 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
 import { Group, GroupMember } from '../../../models/group.model';
 
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { CreatePostComponent } from '../../../shared/components/create-post/create-post.component';
+import { PostCardComponent } from '../../../shared/components/post-card/post-card.component';
+import { AuthService } from '../../../core/services/auth.service';
+import { GroupJoinRequest } from '../../../models/group.model';
+import { Post } from '../../../models/post.model';
+import { User } from '../../../models/user.model';
+
 @Component({
   selector: 'app-group-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [
+    CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule,
+    CreatePostComponent, PostCardComponent,
+  ],
   template: `
     <div class="group-detail" *ngIf="group">
       <div class="group-cover">
@@ -28,14 +39,41 @@ import { Group, GroupMember } from '../../../models/group.model';
             <p>{{ group.description }}</p>
           </div>
           <div class="group-actions">
-            <button mat-flat-button color="primary" *ngIf="!group.is_member" (click)="join()">
-              <mat-icon>group_add</mat-icon> Join Group
+            <button mat-flat-button color="primary" *ngIf="!group.is_member && !requested" (click)="join()">
+              <mat-icon>group_add</mat-icon> {{ group.privacy === 'public' ? 'Join Group' : 'Request to Join' }}
+            </button>
+            <button mat-stroked-button disabled *ngIf="!group.is_member && requested">
+              <mat-icon>schedule</mat-icon> Request Sent
             </button>
             <button mat-stroked-button color="warn" *ngIf="group.is_member" (click)="leave()">
               <mat-icon>logout</mat-icon> Leave Group
             </button>
           </div>
         </div>
+
+        <!-- Pending join requests (admins and moderators) -->
+        <div class="members-section" *ngIf="joinRequests.length > 0">
+          <h3>Join requests ({{ joinRequests.length }})</h3>
+          <div class="request-row" *ngFor="let jr of joinRequests">
+            <a [routerLink]="'/profile/' + jr.user.username" class="member-card">
+              <img [src]="jr.user.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="jr.user.username" />
+              <span class="font-semibold text-sm">{{ jr.user.full_name }}</span>
+            </a>
+            <button mat-flat-button color="primary" (click)="decide(jr.id, 'approve')">Approve</button>
+            <button mat-stroked-button (click)="decide(jr.id, 'decline')">Decline</button>
+          </div>
+        </div>
+
+        <!-- Posts (members, or anyone for public groups) -->
+        <div class="group-posts" *ngIf="canSeeContent">
+          <app-create-post *ngIf="group.is_member" [currentUser]="currentUser" [groupId]="group.id"
+            (postCreated)="posts.unshift($event)"></app-create-post>
+          <app-post-card *ngFor="let p of posts" [post]="p" (postDeleted)="onPostDeleted($event)"></app-post-card>
+          <p class="text-secondary" *ngIf="posts.length === 0">No posts yet.</p>
+        </div>
+        <p class="text-secondary private-note" *ngIf="!canSeeContent">
+          <mat-icon>lock</mat-icon> Only members can see posts and members of this group.
+        </p>
 
         <!-- Members -->
         <div class="members-section" *ngIf="members.length > 0">
@@ -88,6 +126,10 @@ import { Group, GroupMember } from '../../../models/group.model';
     }
     .member-card:hover { box-shadow: var(--shadow-md); text-decoration: none; }
     .member-info { display: flex; flex-direction: column; }
+    .request-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .request-row .member-card { flex: 1; }
+    .group-posts { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .private-note { display: flex; align-items: center; gap: 6px; margin-top: 24px; }
     .loading-center { display: flex; justify-content: center; padding: 60px; }
   `]
 })
@@ -97,7 +139,22 @@ export class GroupDetailComponent implements OnInit {
   members: GroupMember[] = [];
   loading = false;
 
-  constructor(private apiService: ApiService) {}
+  joinRequests: GroupJoinRequest[] = [];
+  posts: Post[] = [];
+  requested = false;
+  currentUser: User | null = null;
+
+  constructor(private apiService: ApiService, private authService: AuthService, private snackBar: MatSnackBar) {
+    this.currentUser = this.authService.currentUser;
+  }
+
+  get canSeeContent(): boolean {
+    return !!this.group && (this.group.privacy === 'public' || this.group.is_member);
+  }
+
+  get isModerator(): boolean {
+    return this.group?.my_role === 'admin' || this.group?.my_role === 'moderator';
+  }
 
   ngOnInit(): void {
     this.loading = true;
@@ -106,7 +163,11 @@ export class GroupDetailComponent implements OnInit {
       next: (g) => {
         this.group = g;
         this.loading = false;
-        this.loadMembers(groupId);
+        if (this.canSeeContent) {
+          this.loadMembers(groupId);
+          this.loadPosts(groupId);
+        }
+        if (this.isModerator) this.loadJoinRequests(groupId);
       },
       error: () => (this.loading = false),
     });
@@ -118,13 +179,50 @@ export class GroupDetailComponent implements OnInit {
     });
   }
 
+  loadPosts(groupId: number): void {
+    this.apiService.getPosts({ group: String(groupId) }).subscribe({ next: (res) => (this.posts = res.results) });
+  }
+
+  loadJoinRequests(groupId: number): void {
+    this.apiService.getGroupJoinRequests(groupId).subscribe({ next: (reqs) => (this.joinRequests = reqs) });
+  }
+
+  decide(requestId: number, decision: 'approve' | 'decline'): void {
+    if (!this.group) return;
+    const group = this.group;
+    this.apiService.decideGroupJoinRequest(group.id, requestId, decision).subscribe({
+      next: () => {
+        this.joinRequests = this.joinRequests.filter((r) => r.id !== requestId);
+        if (decision === 'approve') {
+          group.members_count++;
+          this.loadMembers(group.id);
+        }
+      },
+      error: () => this.snackBar.open('Could not update the request', 'Dismiss', { duration: 3000 }),
+    });
+  }
+
+  onPostDeleted(postId: number): void {
+    this.posts = this.posts.filter((p) => p.id !== postId);
+  }
+
   join(): void {
     if (!this.group) return;
-    this.apiService.joinGroup(this.group.id).subscribe(() => {
-      if (this.group) {
-        this.group.is_member = true;
-        this.group.members_count++;
-      }
+    const group = this.group;
+    this.apiService.joinGroup(group.id).subscribe({
+      next: (res) => {
+        if (res.status === 'request_pending') {
+          this.requested = true;
+          this.snackBar.open('Request sent to the group admins', 'Dismiss', { duration: 3000 });
+          return;
+        }
+        group.is_member = true;
+        group.my_role = 'member';
+        group.members_count++;
+        this.loadMembers(group.id);
+        this.loadPosts(group.id);
+      },
+      error: (err) => this.snackBar.open(err?.error?.detail ?? 'Could not join', 'Dismiss', { duration: 3000 }),
     });
   }
 

@@ -109,6 +109,8 @@ import { ImageCropperComponent, ImageCropperResult } from '../image-cropper/imag
 })
 export class CreatePostComponent {
   @Input() currentUser: User | null = null;
+  /** When set, the post is published into this group. */
+  @Input() groupId: number | null = null;
   @Output() postCreated = new EventEmitter<Post>();
 
   content = '';
@@ -162,6 +164,7 @@ export class CreatePostComponent {
 
     const data = new FormData();
     data.append('content', this.content);
+    if (this.groupId) data.append('group', String(this.groupId));
     if (!this.selectedFile) {
       data.append('post_type', 'text');
     } else if (this.selectedFile.type.startsWith('video/')) {

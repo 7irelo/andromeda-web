@@ -112,6 +112,12 @@ export const routes: Routes = [
       import('./features/pages/pages.component').then((m) => m.PagesComponent),
   },
   {
+    path: 'search',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/search/search.component').then((m) => m.SearchComponent),
+  },
+  {
     path: 'settings',
     canActivate: [authGuard],
     loadComponent: () =>

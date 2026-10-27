@@ -64,7 +64,7 @@ export class NavbarComponent implements OnInit {
 
   search(): void {
     if (this.searchQuery.trim()) {
-      this.router.navigate(['/friends'], { queryParams: { q: this.searchQuery } });
+      this.router.navigate(['/search'], { queryParams: { q: this.searchQuery.trim() } });
       this.mobileMenuOpen = false;
     }
   }
