@@ -1,14 +1,13 @@
 # Andromeda
 
-> A full-stack social platform: feed, real-time chat, groups, marketplace,
-> video and pages. It is built on Django, Angular, Postgres, a Neo4j social
-> graph and an event-driven Celery backbone. It is also being built into an
-> **AI-native** platform, with semantic search, safety, summarisation, an
-> agentic assistant and voice.
+> A full-stack social platform with a feed, real-time chat, groups, a
+> marketplace, video and pages. Built on Django, Angular, PostgreSQL, a Neo4j
+> social graph and an event-driven Celery backbone, with authorization and
+> privacy enforced on every request.
 
 [![CI](https://github.com/7irelo/andromeda-web/actions/workflows/ci.yml/badge.svg)](https://github.com/7irelo/andromeda-web/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/django-4.2-green.svg)](https://djangoproject.com/)
+[![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/django-5.2_LTS-green.svg)](https://djangoproject.com/)
 [![Angular](https://img.shields.io/badge/angular-17-red.svg)](https://angular.dev/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
@@ -16,30 +15,15 @@
 
 ---
 
-## Project status
-
-**Active development. Not production-ready.**
-
-Andromeda has a broad feature surface and solid infrastructure, but several
-features are only partly built, and authorization is incomplete (see the
-[audit in the roadmap](docs/ROADMAP.md#audit-findings)). **Don't deploy it
-with real user data yet.**
-
-| Plan | What it covers |
-|---|---|
-| 📋 [**Completion roadmap**](docs/ROADMAP.md) | Security fixes, finishing every feature, polish, trust & safety, scale |
-| 🤖 [**AI integration plan**](docs/AI_PLAN.md) | AI architecture, per-job model selection (Anthropic + OpenAI), evals, LLMOps, safety, voice |
-
----
-
 ## Contents
 
 - [Features](#features)
+- [Security model](#security-model)
 - [Tech stack](#tech-stack)
 - [Architecture](#architecture)
 - [Quick start (Docker)](#quick-start-docker)
 - [Local development](#local-development)
-- [Testing](#testing)
+- [Testing & CI](#testing--ci)
 - [Monitoring](#monitoring)
 - [Project structure](#project-structure)
 - [Contributing](#contributing)
@@ -48,22 +32,72 @@ with real user data yet.**
 
 ## Features
 
-✅ working · 🟡 partial · 🔜 planned
+| Area | What you can do |
+|---|---|
+| **Accounts** | Register, sign in, password change, email password reset, sign out of every device, password-confirmed account deletion |
+| **Feed & posts** | Text/image/video posts, public / friends / only-me audiences, six reactions, threaded comments, sharing, #hashtags, @mentions, automatic link previews |
+| **Friends** | Requests (send, accept, decline, cancel), unfriend, friends lists, blocking, suggestions from the Neo4j graph |
+| **Privacy** | Per-user controls over who can see your profile, friends list and online status, who can message you or send friend requests, and whether you appear in search |
+| **Chat** | Real-time DMs and group chats over WebSockets, typing indicators, read receipts, presence, private attachments, group admin tools |
+| **Notifications** | Real-time push (Celery → RabbitMQ → Channels) for likes, comments, mentions and friend requests |
+| **Groups** | Public, private and secret groups, a group feed, join requests with an admin approval queue, admin/moderator roles |
+| **Marketplace** | Listings with image galleries, categories, price filters, saved items, reviews, Message Seller, mark sold / relist |
+| **Watch** | Video upload and playback, likes, comments, one view counted per viewer |
+| **Pages** | Business and community pages, follow/unfollow, posting as a page for its admins and editors |
+| **Search** | One search across people, posts, groups, pages, listings and videos (Postgres full-text ranking) |
+| **Operations** | Prometheus metrics, a pre-built Grafana dashboard, OpenAPI docs, a demo-data seeder |
 
-| Area | Status | Today | Next ([roadmap](docs/ROADMAP.md)) |
-|---|---|---|---|
-| **Auth** | 🟡 | JWT register/login/logout, silent refresh, account deletion | Password change and reset, email verification, sessions, 2FA |
-| **Feed & posts** | 🟡 | Text/image/video posts, 6 reactions, comments with replies, sharing, infinite scroll, search | Visibility enforcement, multi-image, link previews, mentions/hashtags, editing UI |
-| **Friends** | 🟡 | Requests (send/accept/decline/cancel), suggestions from the Neo4j graph | Unfriend, friends lists, blocking, explained suggestions |
-| **Chat** | 🟡 | WebSocket DMs and group rooms, typing indicators, read receipts, presence | Room-scoped permissions, attachments, edit/delete, reactions, reconnect sync |
-| **Notifications** | ✅ | Real-time push via Celery + RabbitMQ → Channels, unread counts | Preferences, digests, Web Push, grouping |
-| **Groups** | 🟡 | Create, join/leave public groups, members list | Join requests, roles, group feed, private/secret enforcement |
-| **Marketplace** | 🟡 | Listings with image galleries, categories, price filters, likes | Edit/sold flow, message seller, saved listings, reviews UI |
-| **Watch** | 🟡 | Video upload, playback, likes, comments | Transcoding to HLS, thumbnails, captions, watch history |
-| **Pages** | 🟡 | Create, list, follow/unfollow | Page detail, admins, posting as a page |
-| **Settings** | 🟡 | Profile editing, privacy preferences, dark mode | Server-side enforcement of privacy settings |
-| **Monitoring** | ✅ | Prometheus metrics + pre-provisioned Grafana dashboard | Tracing, SLO alerts, error tracking |
-| **AI** | 🔜 | — | Semantic search, moderation, Catch Me Up, assistant, voice ([plan](docs/AI_PLAN.md)) |
+---
+
+## Security model
+
+Security is a first-class feature, and the regression suite in
+[`server/core/test_security.py`](server/core/test_security.py) locks it in.
+
+**Authorization**
+- Every endpoint is authenticated by default. Object-level permissions mean
+  only owners (or group and page admins) can edit or delete content.
+- One visibility service ([`core/visibility.py`](server/core/visibility.py))
+  decides what each user may see. It applies post audience, friendship,
+  group privacy and two-way blocking, and every list, detail, search and
+  notification path goes through it.
+- Chat rooms and messages are visible only to members. Attachments are
+  streamed through an authenticated endpoint, never a public URL.
+- Other users never receive your email, birth date or privacy settings.
+
+**Sessions**
+- Access tokens last 15 minutes, live only in browser memory and carry no
+  personal data.
+- Refresh tokens are `HttpOnly`, `Secure`, `SameSite=Strict` cookies scoped
+  to `/api/auth/`. They rotate on every use and are blacklisted afterwards.
+- Changing or resetting the password revokes every session. Password reset
+  responses don't reveal whether an account exists.
+- WebSockets authenticate with single-use, 30-second tickets, so no token
+  ever appears in a URL or a log.
+
+**Input & uploads**
+- Uploads are identified by their content, not their filename. Images are
+  re-encoded, which strips EXIF and GPS metadata and refuses decompression
+  bombs. Executables and active content are rejected, and stored filenames
+  are random.
+- Link previews are SSRF-safe: public IPs only, the resolved IP is pinned
+  against DNS rebinding, every redirect is re-validated, and size and time
+  are capped.
+- Throttling applies to anonymous traffic, per-user traffic, writes and the
+  auth endpoints. WebSocket frames are rate-limited and size-capped.
+
+**Platform**
+- The app refuses to start without a strong `SECRET_KEY` when `DEBUG` is off.
+- Secure cookies, HSTS (configurable), and a strict CSP and security headers
+  are served from nginx.
+- Only the web app's port is published. Databases, brokers and dashboards
+  bind to `127.0.0.1`, Flower requires a password, and containers run as
+  non-root.
+- CI runs bandit-style lint rules, `pip-audit`, `npm audit`, gitleaks,
+  Trivy and Django's deploy checks on every push.
+
+Found a vulnerability? Please open a private security advisory on GitHub
+rather than a public issue.
 
 ---
 
@@ -72,49 +106,45 @@ with real user data yet.**
 | Layer | Technology |
 |---|---|
 | Frontend | Angular 17 (standalone components), Angular Material, RxJS |
-| API | Django 4.2, Django REST Framework, SimpleJWT |
+| API | Django 5.2 LTS, Django REST Framework, SimpleJWT, drf-spectacular |
 | Real-time | Django Channels over Redis (chat, notifications, presence) |
-| Relational DB | PostgreSQL 15 |
+| Relational DB | PostgreSQL 15 (source of truth, full-text search) |
 | Social graph | Neo4j 5 (friend-of-friend suggestions, mutual friends) |
-| Async work | Celery 5 + RabbitMQ 3 (queues: `notifications`, `messages`, `emails`, `default`), Celery Beat, Flower |
+| Async work | Celery 5.5 + RabbitMQ 3 (`notifications`, `messages`, `emails`, `default` queues), Celery Beat, Flower |
 | Cache | Redis 7 |
-| Media | MinIO (S3-compatible), with local storage as the fallback |
+| Media | MinIO (S3-compatible), split into public and private prefixes |
 | Observability | Prometheus, Grafana, Redis and Postgres exporters |
-| Delivery | Docker Compose, Nginx (serves the Angular build), GitHub Actions |
-| *Planned AI* | FastAPI service, pgvector, Temporal, Langfuse, Anthropic + OpenAI behind a provider gateway |
-
-> Django 4.2 and Angular 17 are past end of support. Upgrading them is part of
-> [Phase 0](docs/ROADMAP.md#phase-0--foundations--security--3-weeks-).
+| Delivery | Docker Compose, nginx, GitHub Actions |
 
 ---
 
 ## Architecture
 
 ```
-                     ┌───────────────────────────────┐
-  Browser ─ HTTP ──► │ Nginx  (Angular static build) │
-  (Angular)          └───────────────┬───────────────┘
-     │                               │ /api
-     │ WebSocket /ws                 ▼
-     └──────────────────►  Django (DRF + Channels, ASGI/uvicorn)
-                              │        │          │
-                              ▼        ▼          ▼
-                         PostgreSQL  Neo4j     Redis ◄── channel layer
-                                                 ▲
-                              RabbitMQ ──► Celery workers ┘
-                              (notifications · messages · emails)
+                     ┌─────────────────────────────────────────────┐
+  Browser ─ HTTPS ─► │ nginx  (Angular build, CSP, /media/public/) │
+  (Angular)          └──────────────┬──────────────────────────────┘
+     │  WebSocket /ws (ticket auth)  │ /api
+     └────────────────────►  Django 5.2 (DRF + Channels, ASGI)
+                              │         │          │
+                              ▼         ▼          ▼
+                         PostgreSQL  Redis      MinIO
+                         (truth)   (cache, WS)  (media)
+                              │
+                       on commit │
+                              ▼
+                RabbitMQ ──► Celery workers ──► Neo4j (graph read model)
+                (notifications · messages · emails · default)
 
-  MinIO: media      Prometheus ◄── /metrics, exporters ──► Grafana
+  Prometheus ◄── /metrics + exporters (internal only) ──► Grafana
 ```
 
-- **Writes** go to Postgres. Signals mirror users, friendships and posts into
-  Neo4j for graph queries.
-- **Side effects** (notifications, offline message alerts, emails) go to
-  Celery through RabbitMQ. Workers push to users through the Channels layer.
-- **Chat** is a Channels consumer per room. Messages are persisted, then
-  broadcast to the room group.
-
-The planned AI architecture is in [AI_PLAN §1](docs/AI_PLAN.md#1-architecture).
+- **Writes** go to Postgres. Graph projections and side effects are queued
+  only after the transaction commits, as idempotent, retried Celery tasks,
+  so a Neo4j or broker outage never fails a request.
+- **Real-time** events go through Celery to the Channels layer and out to
+  each user's notification socket or chat room.
+- **Reads** pass through the visibility service before serialization.
 
 ---
 
@@ -123,26 +153,33 @@ The planned AI architecture is in [AI_PLAN §1](docs/AI_PLAN.md#1-architecture).
 **Requirements:** Docker Desktop ≥ 24.
 
 ```bash
-cp .env.example .env          # change the secrets before any real deployment
+cp .env.example .env
+# Required: set SECRET_KEY and FLOWER_PASSWORD, and change every *_PASSWORD
+python -c "import secrets; print(secrets.token_urlsafe(64))"   # use as SECRET_KEY
 docker compose up --build
 ```
 
-Migrations run automatically on first boot. Then:
+Migrations run on start-up. Then create an admin account and, optionally,
+demo data:
 
 ```bash
 docker compose exec django python manage.py createsuperuser
+docker compose exec django python manage.py seed --users 200 --i-know-this-is-not-production
 ```
 
-| Service | URL | Default credentials (from `.env.example`) |
+| Service | URL | Notes |
 |---|---|---|
-| App | http://localhost | register an account |
-| API | http://localhost:8000/api/ | JWT |
-| Django admin | http://localhost:8000/admin/ | your superuser |
-| Grafana | http://localhost:3000 | `admin` / `admin_secret` |
-| Prometheus | http://localhost:9090 | — |
-| RabbitMQ | http://localhost:15672 | `andromeda` / `andromeda_secret` |
-| Flower | http://localhost:5555 | — |
-| Neo4j Browser | http://localhost:7474 | `neo4j` / `andromeda_secret` |
+| **App** | http://localhost:4200 | register, or sign in as a seeded `demo0` user |
+| API docs | http://localhost:8000/api/docs/ | staff accounts only when `DEBUG` is off |
+| Django admin | http://localhost:8000/admin/ | path set by `ADMIN_URL` |
+| Grafana | http://localhost:3000 | `GRAFANA_USER` / `GRAFANA_PASSWORD` |
+| Prometheus | http://localhost:9090 | |
+| RabbitMQ | http://localhost:15672 | `RABBITMQ_USER` / `RABBITMQ_PASSWORD` |
+| Flower | http://localhost:5555 | `FLOWER_USER` / `FLOWER_PASSWORD` |
+| Neo4j Browser | http://localhost:7474 | `neo4j` / `NEO4J_PASSWORD` |
+
+Everything except the app is bound to `127.0.0.1`. Behind TLS in
+production, also set `SECURE_SSL_REDIRECT=True` and `SECURE_HSTS_SECONDS`.
 
 ```bash
 docker compose down        # stop, keep data
@@ -157,8 +194,8 @@ Run the infrastructure in Docker and the app processes natively, with hot
 reload:
 
 ```bash
-bash dev.sh                # macOS / Linux / Git Bash   flags: --no-client --no-celery --reset-db
-.\dev.ps1                  # Windows PowerShell         flags: -NoClient -NoCelery -ResetDb
+bash dev.sh        # macOS / Linux / Git Bash   flags: --no-client --no-celery --reset-db
+.\dev.ps1          # Windows PowerShell         flags: -NoClient -NoCelery -ResetDb
 ```
 
 <details>
@@ -170,26 +207,25 @@ bash dev.sh                # macOS / Linux / Git Bash   flags: --no-client --no-
 docker compose up -d postgres redis rabbitmq neo4j minio
 
 cd server
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
 
-export POSTGRES_HOST=localhost
+export DEBUG=True POSTGRES_HOST=localhost
 export REDIS_URL=redis://:redis_secret@localhost:6379/0
 export RABBITMQ_URL=amqp://andromeda:andromeda_secret@localhost:5672/andromeda
 export NEO4J_BOLT_URL=bolt://neo4j:andromeda_secret@localhost:7687
 
 python manage.py migrate
+python manage.py seed --users 100
 python manage.py runserver
-celery -A andromeda worker -l info      # separate terminal, same env
-celery -A andromeda beat -l info        # optional: periodic tasks
+celery -A andromeda worker -l info -Q notifications,messages,emails,default   # separate terminal
 ```
 
 **Frontend**
 
 ```bash
 cd client
-npm install
+npm ci --legacy-peer-deps
 npm start      # http://localhost:4200, proxies /api and /ws to :8000
 ```
 
@@ -197,38 +233,34 @@ npm start      # http://localhost:4200, proxies /api and /ws to :8000
 
 ---
 
-## Testing
-
-**Backend** uses pytest-django. The test settings use in-memory SQLite and
-stub out Neo4j, Redis and RabbitMQ, so no services are needed.
+## Testing & CI
 
 ```bash
 cd server
-pip install -r requirements.txt
-pytest                                   # settings come from pytest.ini
-pip install pytest-cov && pytest --cov=. --cov-report=term-missing
+pytest                                          # in-memory SQLite, no services needed
+pytest --cov=. --cov-report=term-missing        # coverage (CI gate: 70%)
+ruff check .                                    # pyflakes + bandit security rules
+
+cd ../client
+npm run test:ci                                 # Karma, headless Chrome
 ```
 
-**Frontend** uses Karma and Jasmine:
+The GitHub Actions pipeline ([`ci.yml`](.github/workflows/ci.yml)) runs on
+every push and pull request:
 
-```bash
-cd client
-npm test           # watch mode
-npm run test:ci    # single run, headless Chrome
-```
-
-**CI** (`.github/workflows/ci.yml`) currently runs `manage.py check`, a Python
-compile check, the Angular production build and a Docker Compose build. It
-**doesn't run the test suites yet**. Adding lint, type checks, tests with a
-coverage gate, E2E and security scans is
-[roadmap item 0.6](docs/ROADMAP.md#06-real-ci--m).
+| Job | Checks |
+|---|---|
+| Backend | ruff, migration drift, migrations applied on PostgreSQL, `check --deploy`, pytest with a coverage gate |
+| Frontend | unit tests, production build |
+| Dependency audit | `pip-audit`, `npm audit` |
+| Secret scan | gitleaks over the full history |
+| Docker | compose validation, image builds, Trivy vulnerability scan |
 
 ---
 
 ## Monitoring
 
-Grafana (http://localhost:3000) ships with the **Andromeda Overview**
-dashboard:
+Grafana ships with the **Andromeda Overview** dashboard:
 
 | Panel | Metric |
 |---|---|
@@ -240,8 +272,7 @@ dashboard:
 | Postgres connections | `pg_stat_activity_count` |
 | Celery task rate | `flower_tasks_total` |
 
-AI-specific panels (tokens, cost, latency and fallback rate per feature) are
-planned in [AI_PLAN §3.2](docs/AI_PLAN.md#32-observability).
+`/metrics` is only reachable inside the Docker network.
 
 ---
 
@@ -251,20 +282,21 @@ planned in [AI_PLAN §3.2](docs/AI_PLAN.md#32-observability).
 andromeda-web/
 ├── server/                    Django backend
 │   ├── andromeda/             settings, URLs, ASGI, Celery app
-│   ├── users/                 auth, profiles, privacy, friend requests, Neo4j models + sync
-│   ├── posts/                 posts, reactions, comments, tags
-│   ├── chats/                 rooms, messages, WebSocket consumer, JWT WS middleware
+│   ├── core/                  permissions, visibility, upload validation, throttles,
+│   │                          WebSocket tickets, global search, seed command, security tests
+│   ├── users/                 auth, sessions, profiles, privacy, friends, blocking, graph sync
+│   ├── posts/                 posts, reactions, comments, hashtags, mentions, link previews
+│   ├── chats/                 rooms, messages, attachments, WebSocket consumer, ticket auth
 │   ├── notifications/         model, Celery tasks, WebSocket consumer
-│   ├── groups/  pages/        groups and memberships, pages and follows
+│   ├── groups/  pages/        groups, roles and join requests; pages, admins and follows
 │   ├── marketplace/           listings, images, categories, reviews
 │   └── watch/                 videos, views, likes, comments
 ├── client/src/app/            Angular frontend
-│   ├── core/                  auth service, API service, WebSocket service, guards, interceptor
-│   ├── features/              lazy-loaded routes (feed, chat, profile, groups, …)
-│   ├── shared/                navbar, post card, create post, image cropper, …
+│   ├── core/                  auth (in-memory session), API, WebSocket, guards, interceptor
+│   ├── features/              lazy routes: feed, chat, profile, groups, search, settings, …
+│   ├── shared/                navbar, post card, composer, image cropper
 │   └── models/                TypeScript interfaces
 ├── monitoring/                Prometheus config, Grafana provisioning and dashboards
-├── docs/                      ROADMAP.md, AI_PLAN.md, screenshots
 ├── docker-compose.yml         full stack (15 services)
 └── dev.sh / dev.ps1           hybrid local dev launcher
 ```
@@ -273,12 +305,12 @@ andromeda-web/
 
 ## Contributing
 
-1. Branch from `main`. Use Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`).
-2. Add tests for new behaviour. Every new endpoint needs a permission test
-   showing that a stranger can't read or modify another user's data.
-3. Run `pytest` and `npm run test:ci` locally before opening a PR.
-4. Check the [roadmap](docs/ROADMAP.md) first. Phase 0 (security) items take
-   priority over new features.
+1. Branch from `main` and use Conventional Commits (`feat:`, `fix:`,
+   `chore:`, `docs:`).
+2. Every new endpoint needs an authorization test showing that a stranger,
+   a blocked user and a non-member can't read or change data they shouldn't.
+   Add it to `core/test_security.py` or next to the feature.
+3. Run `pytest`, `ruff check .` and `npm run test:ci` before opening a PR.
 
 ## License
 
