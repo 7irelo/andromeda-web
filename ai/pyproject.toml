@@ -1,0 +1,20 @@
+[project]
+name = "andromeda-ai"
+version = "0.1.0"
+description = "Andromeda AI service: model gateway, moderation and summarisation"
+requires-python = ">=3.12"
+# Runtime and dev dependencies are pinned in requirements*.txt.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E9", "F", "S", "B", "UP"]
+ignore = ["S101", "B008"]  # B008: FastAPI dependencies are declared as defaults
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106"]
+"evals/*" = ["S311"]

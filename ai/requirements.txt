@@ -1,0 +1,8 @@
+anthropic~=2.3
+openai~=3.40
+fastapi~=0.162
+uvicorn[standard]~=0.34
+pydantic-settings~=2.6
+pyjwt~=2.15
+prometheus-client~=0.21
+redis~=5.2
