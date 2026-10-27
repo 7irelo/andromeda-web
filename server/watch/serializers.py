@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from core.validators import sanitize_image, validate_video
 from .models import Video, VideoComment
 from users.serializers import UserSerializer
 
@@ -27,7 +28,13 @@ class VideoSerializer(serializers.ModelSerializer):
             'views_count', 'likes_count', 'comments_count',
             'is_public', 'tags', 'is_liked', 'created_at',
         ]
-        read_only_fields = ['uploader', 'views_count', 'likes_count', 'comments_count', 'status']
+        read_only_fields = ['uploader', 'views_count', 'likes_count', 'comments_count', 'status', 'duration']
+
+    def validate_video_file(self, value):
+        return validate_video(value)
+
+    def validate_thumbnail(self, value):
+        return sanitize_image(value) if value else value
 
     def get_is_liked(self, obj):
         request = self.context.get('request')

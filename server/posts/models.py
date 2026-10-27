@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from core.validators import RandomFilename
+
 
 class Post(models.Model):
     TYPE_TEXT = 'text'
@@ -31,8 +33,8 @@ class Post(models.Model):
     privacy = models.CharField(max_length=10, choices=PRIVACY_CHOICES, default=PRIVACY_PUBLIC)
 
     # Media
-    image = models.ImageField(upload_to='posts/images/%Y/%m/', null=True, blank=True)
-    video = models.FileField(upload_to='posts/videos/%Y/%m/', null=True, blank=True)
+    image = models.ImageField(upload_to=RandomFilename('public/posts/images'), null=True, blank=True)
+    video = models.FileField(upload_to=RandomFilename('public/posts/videos'), null=True, blank=True)
     link_url = models.URLField(blank=True)
     link_title = models.CharField(max_length=255, blank=True)
     link_description = models.TextField(blank=True)
@@ -70,7 +72,7 @@ class Post(models.Model):
 
 class PostMedia(models.Model):
     post = models.ForeignKey(Post, related_name='media', on_delete=models.CASCADE)
-    file = models.FileField(upload_to='posts/media/%Y/%m/')
+    file = models.FileField(upload_to=RandomFilename('public/posts/media'))
     media_type = models.CharField(max_length=10, choices=[('image', 'Image'), ('video', 'Video')])
     order = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

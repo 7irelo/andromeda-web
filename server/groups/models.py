@@ -1,11 +1,13 @@
 from django.conf import settings
 from django.db import models
 
+from core.validators import RandomFilename
+
 
 class Group(models.Model):
     PRIVACY_PUBLIC = 'public'
     PRIVACY_PRIVATE = 'private'
-    PRIVACY_SECRET = 'secret'
+    PRIVACY_SECRET = 'secret'  # noqa: S105 - a privacy level, not a credential
     PRIVACY_CHOICES = [
         (PRIVACY_PUBLIC, 'Public'),
         (PRIVACY_PRIVATE, 'Private'),
@@ -14,8 +16,8 @@ class Group(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    cover_photo = models.ImageField(upload_to='groups/covers/', null=True, blank=True)
-    avatar = models.ImageField(upload_to='groups/avatars/', null=True, blank=True)
+    cover_photo = models.ImageField(upload_to=RandomFilename('public/groups/covers'), null=True, blank=True)
+    avatar = models.ImageField(upload_to=RandomFilename('public/groups/avatars'), null=True, blank=True)
     privacy = models.CharField(max_length=10, choices=PRIVACY_CHOICES, default=PRIVACY_PUBLIC)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='created_groups', on_delete=models.SET_NULL, null=True

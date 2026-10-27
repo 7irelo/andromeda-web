@@ -7,16 +7,33 @@ class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
     reply_to_data = serializers.SerializerMethodField()
     read_by_count = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
+    content = serializers.CharField(max_length=5000, allow_blank=True, required=False)
 
     class Meta:
         model = Message
         fields = [
             'id', 'room', 'sender', 'content', 'message_type',
-            'file', 'reply_to', 'reply_to_data',
+            'file', 'file_url', 'reply_to', 'reply_to_data',
             'is_edited', 'is_deleted', 'read_by_count',
             'created_at', 'updated_at',
         ]
-        read_only_fields = ['sender', 'is_edited', 'created_at', 'updated_at']
+        read_only_fields = ['sender', 'is_edited', 'is_deleted', 'created_at', 'updated_at']
+        # Attachments are private: clients get an authenticated URL, never the storage path.
+        extra_kwargs = {'file': {'write_only': True}}
+
+    def validate(self, attrs):
+        if self.instance is not None:
+            # Edits may only change the text.
+            attrs = {k: v for k, v in attrs.items() if k == 'content'}
+        return attrs
+
+    def get_file_url(self, obj):
+        if not obj.file:
+            return None
+        request = self.context.get('request')
+        path = f'/api/chats/messages/{obj.id}/file/'
+        return request.build_absolute_uri(path) if request else path
 
     def get_reply_to_data(self, obj):
         if obj.reply_to:

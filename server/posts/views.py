@@ -1,57 +1,54 @@
+import logging
 from django.db.models import Q
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
-from users.models import FriendRequest
+from core import visibility
+from core.permissions import IsOwnerOrReadOnly
 from .models import Post, Like, Comment
 from .serializers import PostSerializer, CommentSerializer
+
+logger = logging.getLogger(__name__)
+
+VALID_REACTIONS = {choice for choice, _ in Like.REACTION_CHOICES}
 
 
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
+    permission_classes = [IsOwnerOrReadOnly]
+    owner_field = 'author'
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         user = self.request.user
-        qs = Post.objects.select_related('author', 'shared_post__author').prefetch_related(
-            'media', 'tags'
-        )
+        qs = visibility.visible_posts(user).select_related(
+            'author', 'shared_post__author', 'group'
+        ).prefetch_related('media', 'tags')
 
-        # Feed: posts from friends + own posts
-        feed_filter = self.request.query_params.get('feed')
-        if feed_filter == 'true':
-            accepted = FriendRequest.objects.filter(
-                status=FriendRequest.STATUS_ACCEPTED
-            ).filter(Q(sender=user) | Q(receiver=user))
-            friend_ids = set()
-            for fr in accepted:
-                friend_ids.add(fr.sender_id if fr.receiver_id == user.id else fr.receiver_id)
-            qs = qs.filter(
-                Q(author_id__in=friend_ids) | Q(author=user),
-                privacy__in=['public', 'friends'],
-            )
+        if self.request.query_params.get('feed') == 'true':
+            qs = qs.filter(Q(author_id__in=visibility.friend_ids(user)) | Q(author=user))
 
         author_id = self.request.query_params.get('author')
-        if author_id:
+        if author_id and author_id.isdigit():
             qs = qs.filter(author_id=author_id)
 
         group_id = self.request.query_params.get('group')
-        if group_id:
+        if group_id and group_id.isdigit():
             qs = qs.filter(group_id=group_id)
 
-        search = self.request.query_params.get('search')
+        search = self.request.query_params.get('search', '').strip()[:200]
         if search:
-            search = search.strip()
-            if search:
-                qs = qs.filter(
-                    Q(content__icontains=search) |
-                    Q(link_title__icontains=search) |
-                    Q(link_description__icontains=search) |
-                    Q(author__username__icontains=search) |
-                    Q(author__first_name__icontains=search) |
-                    Q(author__last_name__icontains=search) |
-                    Q(tags__name__icontains=search)
-                ).distinct()
+            qs = qs.filter(
+                Q(content__icontains=search) |
+                Q(link_title__icontains=search) |
+                Q(link_description__icontains=search) |
+                Q(author__username__icontains=search) |
+                Q(author__first_name__icontains=search) |
+                Q(author__last_name__icontains=search) |
+                Q(tags__name__icontains=search)
+            ).distinct()
 
         return qs.order_by('-created_at')
 
@@ -65,18 +62,18 @@ class PostViewSet(viewsets.ModelViewSet):
     def react(self, request, pk=None):
         post = self.get_object()
         reaction = request.data.get('reaction', 'like')
-        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        if reaction not in VALID_REACTIONS:
+            raise ValidationError({'reaction': f'Choose one of: {", ".join(sorted(VALID_REACTIONS))}.'})
+        like, created = Like.objects.get_or_create(
+            user=request.user, post=post, defaults={'reaction': reaction}
+        )
         if not created:
             if like.reaction == reaction:
-                # Toggle off
                 like.delete()
                 return Response({'reacted': False})
             like.reaction = reaction
-            like.save()
-        else:
-            like.reaction = reaction
-            like.save()
-            # Trigger notification via Celery
+            like.save(update_fields=['reaction'])
+        elif post.author_id != request.user.id:
             try:
                 from notifications.tasks import send_like_notification
                 send_like_notification.apply_async(
@@ -84,50 +81,65 @@ class PostViewSet(viewsets.ModelViewSet):
                     queue='notifications',
                 )
             except Exception:
-                pass
+                logger.warning('Background dispatch failed', exc_info=True)
         return Response({'reacted': True, 'reaction': like.reaction})
 
     @action(detail=True, methods=['post'])
     def share(self, request, pk=None):
         original = self.get_object()
+        # Re-sharing widens the audience, so only public posts (or your own) can be shared.
+        if original.privacy != Post.PRIVACY_PUBLIC and original.author_id != request.user.id:
+            raise PermissionDenied('Only public posts can be shared.')
+        if original.group_id and original.group.privacy != 'public':
+            raise PermissionDenied('Posts from private groups cannot be shared.')
+        content = str(request.data.get('content', ''))[:10000]
         shared = Post.objects.create(
             author=request.user,
-            content=request.data.get('content', ''),
+            content=content,
             post_type=Post.TYPE_TEXT,
             shared_post=original,
         )
-        Post.objects.filter(pk=original.pk).update(shares_count=Post.objects.filter(shared_post=original).count())
+        Post.objects.filter(pk=original.pk).update(
+            shares_count=Post.objects.filter(shared_post=original).count()
+        )
         return Response(PostSerializer(shared, context={'request': request}).data, status=201)
 
     @action(detail=True, methods=['get', 'post'])
     def comments(self, request, pk=None):
         post = self.get_object()
         if request.method == 'GET':
-            comments = post.comments.filter(parent=None).select_related('author').prefetch_related('replies__author')
+            comments = post.comments.filter(parent=None).exclude(
+                author_id__in=visibility.blocked_ids(request.user)
+            ).select_related('author').prefetch_related('replies__author')[:200]
             return Response(CommentSerializer(comments, many=True, context={'request': request}).data)
-        serializer = CommentSerializer(data=request.data, context={'request': request})
+        serializer = CommentSerializer(data=request.data, context={'request': request, 'post': post})
         serializer.is_valid(raise_exception=True)
         comment = serializer.save(author=request.user, post=post)
-        # Trigger notification
-        try:
-            from notifications.tasks import send_comment_notification
-            send_comment_notification.apply_async(
-                args=[request.user.id, post.author_id, post.id, comment.id],
-                queue='notifications',
-            )
-        except Exception:
-            pass
+        if post.author_id != request.user.id:
+            try:
+                from notifications.tasks import send_comment_notification
+                send_comment_notification.apply_async(
+                    args=[request.user.id, post.author_id, post.id, comment.id],
+                    queue='notifications',
+                )
+            except Exception:
+                logger.warning('Background dispatch failed', exc_info=True)
         return Response(CommentSerializer(comment, context={'request': request}).data, status=201)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    """Edit or delete a comment. Authors can edit; authors and the post's author can delete."""
+
     serializer_class = CommentSerializer
+    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
-        return Comment.objects.filter(author=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        user = self.request.user
+        return Comment.objects.filter(
+            post__in=visibility.visible_posts(user)
+        ).filter(Q(author=user) | Q(post__author=user)).select_related('post')
 
     def perform_update(self, serializer):
+        if serializer.instance.author_id != self.request.user.id:
+            raise PermissionDenied('You can only edit your own comments.')
         serializer.save()

@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from core.validators import RandomFilename
+
 
 class Page(models.Model):
     CATEGORY_BUSINESS = 'business'
@@ -24,8 +26,8 @@ class Page(models.Model):
     username = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default=CATEGORY_OTHER)
-    avatar = models.ImageField(upload_to='pages/avatars/', null=True, blank=True)
-    cover_photo = models.ImageField(upload_to='pages/covers/', null=True, blank=True)
+    avatar = models.ImageField(upload_to=RandomFilename('public/pages/avatars'), null=True, blank=True)
+    cover_photo = models.ImageField(upload_to=RandomFilename('public/pages/covers'), null=True, blank=True)
     website = models.URLField(blank=True)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)

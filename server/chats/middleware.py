@@ -1,35 +1,34 @@
 """
-JWT Auth middleware for Django Channels WebSocket connections.
-Reads token from query string: ws://host/ws/chat/?token=<JWT>
+WebSocket authentication for Django Channels.
+
+Clients connect with ``?ticket=<one-time ticket>`` obtained from
+``POST /api/auth/ws-ticket/``. JWTs are deliberately not accepted in the URL,
+because query strings end up in proxy and access logs.
 """
 from urllib.parse import parse_qs
+
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework_simplejwt.exceptions import TokenError
+
+from core import ws_tickets
 
 
 @database_sync_to_async
-def get_user_from_token(token_str):
-    try:
-        token = AccessToken(token_str)
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        return User.objects.get(id=token['user_id'])
-    except (TokenError, Exception):
+def get_user_from_ticket(ticket):
+    from django.contrib.auth import get_user_model
+
+    user_id = ws_tickets.redeem(ticket)
+    if user_id is None:
         return AnonymousUser()
+    return get_user_model().objects.filter(id=user_id, is_active=True).first() or AnonymousUser()
 
 
-class JWTAuthMiddleware:
+class TicketAuthMiddleware:
     def __init__(self, inner):
         self.inner = inner
 
     async def __call__(self, scope, receive, send):
-        query_string = scope.get('query_string', b'').decode()
-        params = parse_qs(query_string)
-        token_list = params.get('token', [])
-        if token_list:
-            scope['user'] = await get_user_from_token(token_list[0])
-        else:
-            scope['user'] = AnonymousUser()
+        params = parse_qs(scope.get('query_string', b'').decode())
+        ticket = (params.get('ticket') or [None])[0]
+        scope = dict(scope, user=await get_user_from_ticket(ticket) if ticket else AnonymousUser())
         return await self.inner(scope, receive, send)

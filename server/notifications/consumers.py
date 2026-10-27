@@ -1,6 +1,6 @@
 """
 WebSocket consumer for real-time notifications.
-URL: ws://host/ws/notifications/?token=<JWT>
+URL: ws://host/ws/notifications/?ticket=<one-time ticket>
 """
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -23,10 +23,15 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         if hasattr(self, 'group_name'):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-        if data.get('type') == 'mark_read':
-            await self.mark_notification_read(data.get('notification_id'))
+    async def receive(self, text_data=None, bytes_data=None):
+        if not text_data or len(text_data) > 4096:
+            return
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            return
+        if isinstance(data, dict) and data.get('type') == 'mark_read' and str(data.get('notification_id')).isdigit():
+            await self.mark_notification_read(int(data['notification_id']))
 
     async def send_notification(self, event):
         """Called by channel layer when a notification is pushed."""

@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Q
 
+from core.validators import RandomFilename
+
 
 class User(AbstractUser):
     """Extended user model for Andromeda."""
@@ -10,8 +12,8 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, blank=False)
 
     bio = models.TextField(blank=True, default='')
-    avatar = models.ImageField(upload_to='avatars/%Y/%m/', null=True, blank=True)
-    cover_photo = models.ImageField(upload_to='covers/%Y/%m/', null=True, blank=True)
+    avatar = models.ImageField(upload_to=RandomFilename('public/avatars'), null=True, blank=True)
+    cover_photo = models.ImageField(upload_to=RandomFilename('public/covers'), null=True, blank=True)
     location = models.CharField(max_length=120, blank=True)
     website = models.URLField(blank=True)
     birth_date = models.DateField(null=True, blank=True)
@@ -98,7 +100,7 @@ class FriendRequest(models.Model):
         ordering = ['-created_at']
         constraints = [
             models.CheckConstraint(
-                check=~Q(sender=models.F('receiver')),
+                condition=~Q(sender=models.F('receiver')),
                 name='no_self_friend_request',
             ),
         ]

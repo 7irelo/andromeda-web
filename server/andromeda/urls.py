@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 
 def health_check(request):
@@ -10,7 +11,7 @@ def health_check(request):
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
 
     # Health
     path('api/health/', health_check),
@@ -27,6 +28,14 @@ urlpatterns = [
     path('api/watch/', include('watch.urls')),
     path('api/pages/', include('pages.urls')),
 
-    # Prometheus metrics endpoint
+    # OpenAPI schema + docs (admin-only outside DEBUG, see SPECTACULAR_SETTINGS)
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='api-docs'),
+
+    # Prometheus metrics endpoint. Not exposed publicly: nginx only proxies /api
+    # and /ws, and the compose file binds Django's port to localhost.
     path('', include('django_prometheus.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

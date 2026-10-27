@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from core.validators import RandomFilename
+
 
 class Video(models.Model):
     STATUS_PROCESSING = 'processing'
@@ -17,8 +19,8 @@ class Video(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    video_file = models.FileField(upload_to='watch/videos/%Y/%m/')
-    thumbnail = models.ImageField(upload_to='watch/thumbnails/%Y/%m/', null=True, blank=True)
+    video_file = models.FileField(upload_to=RandomFilename('public/watch/videos'))
+    thumbnail = models.ImageField(upload_to=RandomFilename('public/watch/thumbnails'), null=True, blank=True)
     duration = models.PositiveIntegerField(default=0, help_text='Seconds')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STATUS_PROCESSING)
     views_count = models.PositiveIntegerField(default=0)

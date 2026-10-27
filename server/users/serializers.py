@@ -2,79 +2,114 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from core import visibility
+from core.validators import sanitize_image
 from .models import User, FriendRequest
+
+# Visible to anyone who can see the user at all (search results, post authors).
+BASIC_FIELDS = ['id', 'username', 'first_name', 'last_name', 'full_name', 'avatar_url', 'is_verified']
+# Visible when the viewer passes the user's profile-privacy setting.
+PROFILE_FIELDS = BASIC_FIELDS + [
+    'bio', 'cover_photo_url', 'location', 'website', 'friends_count', 'posts_count', 'created_at',
+]
+RELATIONSHIP_FIELDS = ['is_friend', 'friend_request_sent', 'friend_request_received', 'is_blocked']
+# Only ever returned to the account owner.
+PRIVATE_FIELDS = [
+    'email', 'birth_date', 'avatar', 'cover_photo',
+    'privacy_profile', 'privacy_messages', 'privacy_friend_requests',
+    'privacy_friends_list', 'default_post_privacy', 'show_online_status', 'searchable',
+]
+
+
+def _absolute(request, f):
+    if f and request:
+        return request.build_absolute_uri(f.url)
+    return None
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Public view of a user. Fields are trimmed to what the viewer is entitled
+    to see: email, birth date and privacy settings are never exposed to other
+    users, and profile details respect ``privacy_profile``.
+    """
+
     avatar_url = serializers.SerializerMethodField()
     cover_photo_url = serializers.SerializerMethodField()
     is_friend = serializers.SerializerMethodField()
     friend_request_sent = serializers.SerializerMethodField()
     friend_request_received = serializers.SerializerMethodField()
+    is_blocked = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = [
-            'id', 'username', 'email', 'first_name', 'last_name',
-            'full_name', 'bio', 'avatar_url', 'avatar', 'cover_photo_url', 'cover_photo',
-            'location', 'website', 'birth_date', 'is_verified',
-            'friends_count', 'posts_count',
-            'created_at', 'is_friend', 'friend_request_sent', 'friend_request_received',
-            # Privacy fields
-            'privacy_profile', 'privacy_messages', 'privacy_friend_requests',
-            'privacy_friends_list', 'default_post_privacy',
-            'show_online_status', 'searchable',
-        ]
-        read_only_fields = [
-            'id', 'friends_count', 'posts_count', 'created_at', 'is_verified',
-        ]
-        extra_kwargs = {
-            'avatar': {'write_only': True},
-            'cover_photo': {'write_only': True},
-        }
+        fields = PROFILE_FIELDS + RELATIONSHIP_FIELDS
+        read_only_fields = fields
+
+    def _viewer(self):
+        request = self.context.get('request')
+        return request.user if request and request.user.is_authenticated else None
+
+    def to_representation(self, obj):
+        data = super().to_representation(obj)
+        viewer = self._viewer()
+        if viewer is None or (viewer.id != obj.id and not visibility.can_view_profile(viewer, obj)):
+            allowed = set(BASIC_FIELDS + RELATIONSHIP_FIELDS)
+            data = {k: v for k, v in data.items() if k in allowed}
+        return data
 
     def get_avatar_url(self, obj):
-        request = self.context.get('request')
-        if obj.avatar and request:
-            return request.build_absolute_uri(obj.avatar.url)
-        return None
+        return _absolute(self.context.get('request'), obj.avatar)
 
     def get_cover_photo_url(self, obj):
-        request = self.context.get('request')
-        if obj.cover_photo and request:
-            return request.build_absolute_uri(obj.cover_photo.url)
-        return None
+        return _absolute(self.context.get('request'), obj.cover_photo)
+
+    def _pending(self, sender, receiver):
+        return FriendRequest.objects.filter(
+            sender=sender, receiver=receiver, status=FriendRequest.STATUS_PENDING
+        ).exists()
 
     def get_is_friend(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated and request.user != obj:
-            return FriendRequest.objects.filter(
-                status=FriendRequest.STATUS_ACCEPTED
-            ).filter(
-                Q(sender=request.user, receiver=obj) |
-                Q(sender=obj, receiver=request.user)
+        viewer = self._viewer()
+        if viewer and viewer.id != obj.id:
+            return FriendRequest.objects.filter(status=FriendRequest.STATUS_ACCEPTED).filter(
+                Q(sender=viewer, receiver=obj) | Q(sender=obj, receiver=viewer)
             ).exists()
         return False
 
     def get_friend_request_sent(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated and request.user != obj:
-            return FriendRequest.objects.filter(
-                sender=request.user,
-                receiver=obj,
-                status=FriendRequest.STATUS_PENDING,
-            ).exists()
-        return False
+        viewer = self._viewer()
+        return bool(viewer and viewer.id != obj.id and self._pending(viewer, obj))
 
     def get_friend_request_received(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated and request.user != obj:
-            return FriendRequest.objects.filter(
-                sender=obj,
-                receiver=request.user,
-                status=FriendRequest.STATUS_PENDING,
-            ).exists()
-        return False
+        viewer = self._viewer()
+        return bool(viewer and viewer.id != obj.id and self._pending(obj, viewer))
+
+    def get_is_blocked(self, obj):
+        """True only when the viewer blocked this user (never reveals being blocked)."""
+        viewer = self._viewer()
+        return bool(viewer and viewer.blocking_set.filter(blocked=obj).exists())
+
+
+class MeSerializer(UserSerializer):
+    """The account owner's own view, including private fields and settings."""
+
+    class Meta(UserSerializer.Meta):
+        fields = PROFILE_FIELDS + PRIVATE_FIELDS
+        # Username and email changes go through dedicated, re-authenticated flows.
+        read_only_fields = ['id', 'username', 'email', 'full_name', 'is_verified',
+                            'friends_count', 'posts_count', 'created_at']
+        extra_kwargs = {'avatar': {'write_only': True}, 'cover_photo': {'write_only': True}}
+
+    def to_representation(self, obj):
+        return serializers.ModelSerializer.to_representation(self, obj)
+
+    def validate_avatar(self, value):
+        return sanitize_image(value) if value else value
+
+    def validate_cover_photo(self, value):
+        return sanitize_image(value) if value else value
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -99,21 +134,52 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs.pop('password2'):
             raise serializers.ValidationError({'password': 'Passwords do not match.'})
+        validate_password(attrs['password'], User(username=attrs['username'], email=attrs['email']))
         return attrs
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
+        return User.objects.create_user(**validated_data)
 
 
 class AndromedaTokenSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        token['username'] = user.username
-        token['email'] = user.email
-        token['is_verified'] = user.is_verified
-        return token
+    # Keep the access token free of PII: it's a bearer credential that ends up
+    # in browser memory and, potentially, in logs.
+    pass
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_current_password(self, value):
+        if not self.context['request'].user.check_password(value):
+            raise serializers.ValidationError('Current password is incorrect.')
+        return value
+
+    def validate(self, attrs):
+        validate_password(attrs['new_password'], self.context['request'].user)
+        if attrs['new_password'] == attrs['current_password']:
+            raise serializers.ValidationError({'new_password': 'Choose a different password.'})
+        return attrs
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
+
+
+class ReauthSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+
+    def validate_password(self, value):
+        if not self.context['request'].user.check_password(value):
+            raise serializers.ValidationError('Password is incorrect.')
+        return value
 
 
 class FriendRequestSerializer(serializers.ModelSerializer):
@@ -123,4 +189,4 @@ class FriendRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = FriendRequest
         fields = ['id', 'sender', 'receiver', 'status', 'created_at']
-        read_only_fields = ['sender', 'status', 'created_at']
+        read_only_fields = fields

@@ -133,9 +133,9 @@ class TestComments:
 # ── Feed ──────────────────────────────────────────────────────────────────────
 
 class TestFeed:
-    def test_feed_shows_followed_user_posts(self, api_client, user, other_user):
-        from users.models import Follow
-        Follow.objects.create(follower=user, following=other_user)
+    def test_feed_shows_friend_posts(self, api_client, user, other_user):
+        from users.models import FriendRequest
+        FriendRequest.objects.create(sender=user, receiver=other_user, status="accepted")
         Post.objects.create(author=other_user, content="Bob's post", privacy="public")
         api_client.force_authenticate(user=user)
         response = api_client.get(reverse("post-list") + "?feed=true")
@@ -143,7 +143,7 @@ class TestFeed:
         usernames = [p["author"]["username"] for p in response.data["results"]]
         assert "bob" in usernames
 
-    def test_feed_excludes_unfollowed_users(self, api_client, user, other_user):
+    def test_feed_excludes_non_friends(self, api_client, user, other_user):
         Post.objects.create(author=other_user, content="Stranger's post", privacy="public")
         api_client.force_authenticate(user=user)
         response = api_client.get(reverse("post-list") + "?feed=true")

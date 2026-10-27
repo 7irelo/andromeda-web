@@ -3,6 +3,7 @@ import string
 
 from django.utils.text import slugify
 from rest_framework import serializers
+from core.validators import sanitize_image
 from .models import Page
 from users.serializers import UserSerializer
 
@@ -10,7 +11,7 @@ from users.serializers import UserSerializer
 class PageSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     is_following = serializers.SerializerMethodField()
-    username = serializers.CharField(required=False, allow_blank=True)
+    username = serializers.RegexField(r'^[a-z0-9][a-z0-9._-]{2,99}$', required=False, allow_blank=True)
 
     class Meta:
         model = Page
@@ -20,6 +21,12 @@ class PageSerializer(serializers.ModelSerializer):
             'is_verified', 'followers_count', 'created_by', 'is_following', 'created_at',
         ]
         read_only_fields = ['created_by', 'followers_count', 'is_verified']
+
+    def validate_avatar(self, value):
+        return sanitize_image(value) if value else value
+
+    def validate_cover_photo(self, value):
+        return sanitize_image(value) if value else value
 
     def get_is_following(self, obj):
         request = self.context.get('request')

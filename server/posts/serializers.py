@@ -1,6 +1,10 @@
 from rest_framework import serializers
-from .models import Post, Like, Comment, PostMedia, PostTag
+
+from core import visibility
+from core.permissions import is_page_admin
+from core.validators import sanitize_image, validate_video
 from users.serializers import UserSerializer
+from .models import Post, Like, Comment, PostMedia, PostTag
 
 
 class PostTagSerializer(serializers.ModelSerializer):
@@ -18,6 +22,7 @@ class PostMediaSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
+    content = serializers.CharField(max_length=5000)
 
     class Meta:
         model = Comment
@@ -27,9 +32,22 @@ class CommentSerializer(serializers.ModelSerializer):
             'parent': {'required': False, 'allow_null': True},
         }
 
+    def validate(self, attrs):
+        post = self.context.get('post')
+        parent = attrs.get('parent')
+        if parent is not None and post is not None and parent.post_id != post.id:
+            raise serializers.ValidationError({'parent': 'Replies must belong to the same post.'})
+        if self.instance is not None:
+            attrs = {k: v for k, v in attrs.items() if k == 'content'}
+        return attrs
+
     def get_replies(self, obj):
         if obj.parent is None:
-            return CommentSerializer(obj.replies.all()[:5], many=True, context=self.context).data
+            request = self.context.get('request')
+            replies = obj.replies.all()
+            if request:
+                replies = replies.exclude(author_id__in=visibility.blocked_ids(request.user))
+            return CommentSerializer(replies[:5], many=True, context=self.context).data
         return []
 
 
@@ -39,6 +57,7 @@ class PostSerializer(serializers.ModelSerializer):
     media = PostMediaSerializer(many=True, read_only=True)
     my_reaction = serializers.SerializerMethodField()
     shared_post_data = serializers.SerializerMethodField()
+    content = serializers.CharField(max_length=10000, allow_blank=True, required=False)
 
     class Meta:
         model = Post
@@ -51,7 +70,43 @@ class PostSerializer(serializers.ModelSerializer):
             'is_edited', 'tags', 'media', 'my_reaction',
             'created_at', 'updated_at',
         ]
-        read_only_fields = ['author', 'likes_count', 'comments_count', 'shares_count', 'is_edited']
+        # Shares go through the share action, which checks the original's visibility.
+        read_only_fields = ['author', 'likes_count', 'comments_count', 'shares_count',
+                            'is_edited', 'shared_post']
+
+    def _user(self):
+        return self.context['request'].user
+
+    def validate_image(self, value):
+        return sanitize_image(value) if value else value
+
+    def validate_video(self, value):
+        return validate_video(value) if value else value
+
+    def validate_link_url(self, value):
+        if value and not value.lower().startswith(('http://', 'https://')):
+            raise serializers.ValidationError('Only http(s) links are allowed.')
+        return value
+
+    validate_link_image = validate_link_url
+
+    def validate_group(self, group):
+        if group is None:
+            return group
+        if self.instance is not None and self.instance.group_id != group.id:
+            raise serializers.ValidationError('A post cannot be moved to another group.')
+        if not group.memberships.filter(user=self._user()).exists():
+            raise serializers.ValidationError('Join this group before posting in it.')
+        return group
+
+    def validate_page(self, page):
+        if page is None:
+            return page
+        if self.instance is not None and self.instance.page_id != page.id:
+            raise serializers.ValidationError('A post cannot be moved to another page.')
+        if not is_page_admin(self._user(), page, roles=('admin', 'editor')):
+            raise serializers.ValidationError('Only page admins and editors can post as this page.')
+        return page
 
     def get_my_reaction(self, obj):
         request = self.context.get('request')
@@ -61,6 +116,9 @@ class PostSerializer(serializers.ModelSerializer):
         return None
 
     def get_shared_post_data(self, obj):
-        if obj.shared_post:
-            return PostSerializer(obj.shared_post, context=self.context).data
-        return None
+        if not obj.shared_post:
+            return None
+        request = self.context.get('request')
+        if request and not visibility.can_view_post(request.user, obj.shared_post):
+            return {'id': None, 'unavailable': True}
+        return PostSerializer(obj.shared_post, context=self.context).data

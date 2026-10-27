@@ -17,6 +17,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='friendrequest',
-            constraint=models.CheckConstraint(check=models.Q(('sender', models.F('receiver')), _negated=True), name='no_self_friend_request'),
+            constraint=models.CheckConstraint(condition=models.Q(('sender', models.F('receiver')), _negated=True), name='no_self_friend_request'),
         ),
     ]

@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Group, GroupMember
+from core.validators import sanitize_image
+from .models import Group, GroupMember, GroupJoinRequest
 from users.serializers import UserSerializer
 
 
@@ -25,6 +26,12 @@ class GroupSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['created_by', 'members_count']
 
+    def validate_avatar(self, value):
+        return sanitize_image(value) if value else value
+
+    def validate_cover_photo(self, value):
+        return sanitize_image(value) if value else value
+
     def get_is_member(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -37,3 +44,12 @@ class GroupSerializer(serializers.ModelSerializer):
             m = obj.memberships.filter(user=request.user).first()
             return m.role if m else None
         return None
+
+
+class GroupJoinRequestSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = GroupJoinRequest
+        fields = ['id', 'user', 'status', 'created_at']
+        read_only_fields = fields

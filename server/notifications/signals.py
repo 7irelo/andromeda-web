@@ -1,6 +1,9 @@
+import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from users.models import FriendRequest
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=FriendRequest)
@@ -13,4 +16,4 @@ def notify_on_friend_request(sender, instance, created, **kwargs):
                 queue='notifications',
             )
         except Exception:
-            pass
+            logger.warning('Background dispatch failed', exc_info=True)

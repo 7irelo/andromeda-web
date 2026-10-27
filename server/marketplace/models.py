@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from core.validators import RandomFilename
+
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -65,7 +67,7 @@ class Listing(models.Model):
 
 class ListingImage(models.Model):
     listing = models.ForeignKey(Listing, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='marketplace/%Y/%m/')
+    image = models.ImageField(upload_to=RandomFilename('public/marketplace'))
     is_primary = models.BooleanField(default=False)
     order = models.PositiveSmallIntegerField(default=0)
 

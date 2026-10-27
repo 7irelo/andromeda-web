@@ -58,8 +58,9 @@ class TestRegister:
         response = api_client.post(url, payload, format="json")
         assert response.status_code == status.HTTP_201_CREATED
         assert User.objects.filter(username="charlie").exists()
-        assert "tokens" in response.data
-        assert "access" in response.data["tokens"]
+        assert "access" in response.data
+        assert response.data["user"]["username"] == "charlie"
+        assert "andromeda_refresh" in response.cookies
 
     def test_register_password_mismatch(self, api_client, db):
         url = reverse("register")
@@ -96,7 +97,10 @@ class TestLogin:
         response = api_client.post(url, {"username": "alice", "password": "testpass123"})
         assert response.status_code == status.HTTP_200_OK
         assert "access" in response.data
-        assert "refresh" in response.data
+        # The refresh token is only ever delivered as an HttpOnly cookie.
+        assert "refresh" not in response.data
+        cookie = response.cookies["andromeda_refresh"]
+        assert cookie["httponly"] and cookie["samesite"] == "Strict"
 
     def test_login_wrong_password(self, api_client, user):
         url = reverse("login")
@@ -125,24 +129,16 @@ class TestMe:
 
 # ── Follow ────────────────────────────────────────────────────────────────────
 
-class TestFollow:
-    def test_follow_user(self, auth_client, user, other_user):
-        url = reverse("follow", kwargs={"user_id": other_user.id})
-        response = auth_client.post(url)
+class TestUnfriend:
+    def test_unfriend(self, auth_client, user, other_user):
+        from users.models import FriendRequest
+        FriendRequest.objects.create(sender=user, receiver=other_user, status="accepted")
+        response = auth_client.delete(reverse("user-friend", kwargs={"pk": other_user.id}))
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["following"] is True
+        assert not FriendRequest.objects.filter(sender=user, receiver=other_user).exists()
 
-    def test_unfollow_user(self, auth_client, user, other_user):
-        from users.models import Follow
-        Follow.objects.create(follower=user, following=other_user)
-        url = reverse("follow", kwargs={"user_id": other_user.id})
-        response = auth_client.delete(url)
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["following"] is False
-
-    def test_cannot_follow_self(self, auth_client, user):
-        url = reverse("follow", kwargs={"user_id": user.id})
-        response = auth_client.post(url)
+    def test_unfriend_non_friend_fails(self, auth_client, other_user):
+        response = auth_client.delete(reverse("user-friend", kwargs={"pk": other_user.id}))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 

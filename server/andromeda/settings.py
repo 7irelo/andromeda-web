@@ -4,8 +4,13 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+from django.core.exceptions import ImproperlyConfigured
+
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+_DEV_SECRET_KEY = 'django-insecure-dev-key-change-in-production'
+SECRET_KEY = os.environ.get('SECRET_KEY', _DEV_SECRET_KEY if DEBUG else '')
+if not DEBUG and (not SECRET_KEY or SECRET_KEY.startswith('django-insecure') or SECRET_KEY.startswith('change-me')):
+    raise ImproperlyConfigured('Set a strong SECRET_KEY (50+ random characters) when DEBUG is off.')
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,django').split(',')
 
 # ============================================================
@@ -32,8 +37,10 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'django_filters',
+    'drf_spectacular',
 
     # Local apps
+    'core.apps.CoreConfig',
     'users.apps.UsersConfig',
     'posts.apps.PostsConfig',
     'chats.apps.ChatsConfig',
@@ -97,6 +104,7 @@ DATABASES = {
 NEOMODEL_NEO4J_BOLT_URL = os.environ.get(
     'NEO4J_BOLT_URL', 'bolt://neo4j:andromeda_secret@localhost:7687'
 )
+NEO4J_ENABLED = os.environ.get('NEO4J_ENABLED', 'True') == 'True'
 NEOMODEL_SIGNALS = True
 NEOMODEL_FORCE_TIMEZONE = True
 
@@ -161,10 +169,6 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.cleanup_old_notifications',
         'schedule': crontab(hour=3, minute=0),
     },
-    'product-spotlight-hourly': {
-        'task': 'notifications.tasks.send_product_spotlight',
-        'schedule': crontab(minute=0),   # fires every hour
-    },
 }
 
 # ============================================================
@@ -184,18 +188,79 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'core.throttles.WriteRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': os.environ.get('THROTTLE_ANON', '60/min'),
+        'user': os.environ.get('THROTTLE_USER', '600/min'),
+        'write': os.environ.get('THROTTLE_WRITE', '60/min'),
+        'auth': os.environ.get('THROTTLE_AUTH', '10/min'),
+        'ws_ticket': os.environ.get('THROTTLE_WS_TICKET', '30/min'),
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Andromeda API',
+    'DESCRIPTION': 'REST API for the Andromeda social platform.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Schema and docs require authentication outside DEBUG.
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny' if DEBUG
+                          else 'rest_framework.permissions.IsAdminUser'],
+}
+
+# Upload limits (the per-type caps live in core/validators.py).
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 200
+DATA_UPLOAD_MAX_NUMBER_FILES = 10
 
 # ============================================================
 # JWT
 # ============================================================
+# Access tokens live in browser memory only. The refresh token is an
+# HttpOnly, SameSite=Strict cookie scoped to the auth endpoints, so script
+# injection can't read it and other sites can't send it.
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+REFRESH_COOKIE_NAME = 'andromeda_refresh'
+REFRESH_COOKIE_PATH = '/api/auth/'
+REFRESH_COOKIE_SECURE = not DEBUG
+
+# ============================================================
+# Security headers & cookies
+# ============================================================
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+X_FRAME_OPTIONS = 'DENY'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_SAMESITE = 'Strict'
+CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if o]
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Set SECURE_SSL_REDIRECT / HSTS once TLS terminates in front of the app.
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False') == 'True'
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+    SECURE_HSTS_PRELOAD = False
+
+ADMIN_URL = os.environ.get('ADMIN_URL', 'admin/')
+PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 
 # ============================================================
 # CORS
@@ -218,7 +283,8 @@ AUTH_USER_MODEL = 'users.User'
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+     'OPTIONS': {'min_length': 10}},
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
@@ -233,9 +299,16 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # ── MinIO / S3 Object Storage ──────────────────────────────────
+# Only keys under ``public/`` are anonymously readable (bucket policy in
+# docker-compose). Chat attachments live under ``private/`` and are streamed
+# through an authenticated endpoint after a membership check.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
 _MINIO_ENDPOINT = os.environ.get('MINIO_ENDPOINT', '')
 if _MINIO_ENDPOINT:
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    STORAGES['default'] = {'BACKEND': 'storages.backends.s3.S3Storage'}
     AWS_S3_ENDPOINT_URL = _MINIO_ENDPOINT
     AWS_S3_URL_PROTOCOL = os.environ.get('AWS_S3_URL_PROTOCOL', 'http:')
     AWS_S3_USE_SSL = AWS_S3_URL_PROTOCOL == 'https:'
@@ -243,12 +316,13 @@ if _MINIO_ENDPOINT:
     AWS_ACCESS_KEY_ID = os.environ.get('MINIO_ACCESS_KEY', 'andromeda')
     AWS_SECRET_ACCESS_KEY = os.environ.get('MINIO_SECRET_KEY', 'andromeda_secret')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('MINIO_BUCKET', 'andromeda-media')
+    # Public URLs go through the nginx /media/ proxy; MinIO itself isn't exposed.
     AWS_S3_CUSTOM_DOMAIN = os.environ.get(
-        'MINIO_EXTERNAL_URL', 'http://localhost:9000'
-    ).replace('http://', '').replace('https://', '') + '/' + AWS_STORAGE_BUCKET_NAME
+        'MINIO_EXTERNAL_URL', 'http://localhost:4200/media'
+    ).replace('http://', '').replace('https://', '').rstrip('/')
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = 'public-read'
+    AWS_DEFAULT_ACL = None  # access is governed by the bucket's prefix policy
 
 # ============================================================
 # Email

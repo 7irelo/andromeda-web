@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from core.validators import RandomFilename
+
 
 class ChatRoom(models.Model):
     TYPE_DIRECT = 'direct'
@@ -9,7 +11,7 @@ class ChatRoom(models.Model):
 
     room_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default=TYPE_DIRECT)
     name = models.CharField(max_length=255, blank=True)
-    avatar = models.ImageField(upload_to='chat_avatars/', null=True, blank=True)
+    avatar = models.ImageField(upload_to=RandomFilename('public/chat_avatars'), null=True, blank=True)
     members = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name='chat_rooms', through='ChatMember'
     )
@@ -65,7 +67,7 @@ class Message(models.Model):
     )
     content = models.TextField(blank=True)
     message_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default=TYPE_TEXT)
-    file = models.FileField(upload_to='chat_files/%Y/%m/', null=True, blank=True)
+    file = models.FileField(upload_to=RandomFilename('private/chat_files'), null=True, blank=True)
     reply_to = models.ForeignKey(
         'self', null=True, blank=True, related_name='replies', on_delete=models.SET_NULL
     )

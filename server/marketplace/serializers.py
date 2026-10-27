@@ -34,6 +34,11 @@ class ListingSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['seller', 'views_count', 'likes_count']
 
+    def validate_price(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError('Price cannot be negative.')
+        return value
+
     def get_is_liked(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -47,4 +52,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ['id', 'listing', 'reviewer', 'rating', 'comment', 'created_at']
-        read_only_fields = ['reviewer']
+        read_only_fields = ['listing', 'reviewer']
+
+    def validate_rating(self, value):
+        if not 1 <= value <= 5:
+            raise serializers.ValidationError('Rating must be between 1 and 5.')
+        return value

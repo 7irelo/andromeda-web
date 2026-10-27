@@ -8,7 +8,11 @@ Key differences from production settings:
   - Celery runs tasks eagerly in-process — no RabbitMQ needed
   - Password hashing uses MD5 — makes tests ~10× faster
 """
-from .settings import *  # noqa: F401, F403
+import os
+
+os.environ.setdefault("SECRET_KEY", "test-only-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz")
+
+from .settings import *  # noqa: F401, F403, E402
 
 # ── Database: in-memory SQLite ─────────────────────────────────────────────────
 DATABASES = {
@@ -21,6 +25,7 @@ DATABASES = {
 # ── Neo4j: disable – neomodel will not attempt to connect ─────────────────────
 NEOMODEL_NEO4J_BOLT_URL = "bolt://localhost:7687"  # never reached
 NEOMODEL_SIGNALS = False
+NEO4J_ENABLED = False
 
 # ── Cache: in-memory dummy backend ────────────────────────────────────────────
 CACHES = {
@@ -55,4 +60,16 @@ MEDIA_ROOT = tempfile.mkdtemp()
 
 # ── Misc ──────────────────────────────────────────────────────────────────────
 DEBUG = False
-SECRET_KEY = "test-secret-key-not-used-in-production"
+
+# ── Throttling: generous limits so the suite isn't rate-limited ───────────────
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,  # noqa: F405
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "10000/min", "user": "10000/min", "write": "10000/min",
+        "auth": "10000/min", "ws_ticket": "10000/min",
+    },
+}
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
