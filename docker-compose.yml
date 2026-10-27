@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     networks:
       - andromeda_network
     healthcheck:
@@ -37,8 +37,8 @@ services:
       - neo4j_import:/import
       - neo4j_plugins:/plugins
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
     networks:
       - andromeda_network
     healthcheck:
@@ -56,7 +56,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     networks:
       - andromeda_network
     healthcheck:
@@ -76,8 +76,8 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
     networks:
       - andromeda_network
     healthcheck:
@@ -98,8 +98,8 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     networks:
       - andromeda_network
     healthcheck:
@@ -118,7 +118,8 @@ services:
       /bin/sh -c "
       mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-andromeda} $${MINIO_ROOT_PASSWORD:-andromeda_secret};
       mc mb --ignore-existing myminio/andromeda-media;
-      mc anonymous set download myminio/andromeda-media;
+      mc anonymous set none myminio/andromeda-media;
+      mc anonymous set download myminio/andromeda-media/public;
       exit 0;
       "
     networks:
@@ -134,8 +135,7 @@ services:
     container_name: andromeda_django
     restart: unless-stopped
     command: >
-      sh -c "python manage.py makemigrations --noinput &&
-             python manage.py migrate --fake-initial --noinput &&
+      sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
              uvicorn andromeda.asgi:application --host 0.0.0.0 --port 8000 --workers 4 --ws websockets"
     env_file:
@@ -149,12 +149,12 @@ services:
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-andromeda}
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-andromeda_secret}
       - MINIO_BUCKET=andromeda-media
-      - MINIO_EXTERNAL_URL=http://localhost:9000
+      - MINIO_EXTERNAL_URL=${MINIO_EXTERNAL_URL:-http://localhost:4200/media}
     volumes:
       - media_data:/app/media
       - static_data:/app/staticfiles
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     networks:
       - andromeda_network
     depends_on:
@@ -175,7 +175,7 @@ services:
       dockerfile: Dockerfile
     container_name: andromeda_celery_worker
     restart: unless-stopped
-    command: celery -A andromeda worker --loglevel=info --concurrency=4 -Q notifications,messages,default
+    command: celery -A andromeda worker --loglevel=info --concurrency=4 -Q notifications,messages,emails,default
     env_file:
       - .env
     environment:
@@ -226,13 +226,13 @@ services:
       dockerfile: Dockerfile
     container_name: andromeda_flower
     restart: unless-stopped
-    command: celery -A andromeda flower --port=5555 --broker=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+    command: celery -A andromeda flower --port=5555 --basic-auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:?Set FLOWER_PASSWORD in .env} --broker=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
     env_file:
       - .env
     environment:
       - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     networks:
       - andromeda_network
     depends_on:
@@ -267,27 +267,27 @@ services:
   # Monitoring Exporters
   # ============================================================
   redis_exporter:
-    image: oliver006/redis_exporter:latest
+    image: oliver006/redis_exporter:v1.67.0
     container_name: andromeda_redis_exporter
     restart: unless-stopped
     environment:
       REDIS_ADDR: redis://redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secret}
     ports:
-      - "9121:9121"
+      - "127.0.0.1:9121:9121"
     networks:
       - andromeda_network
     depends_on:
       - redis
 
   postgres_exporter:
-    image: prometheuscommunity/postgres-exporter:latest
+    image: prometheuscommunity/postgres-exporter:v0.16.0
     container_name: andromeda_postgres_exporter
     restart: unless-stopped
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-andromeda}:${POSTGRES_PASSWORD:-andromeda_secret}@postgres:5432/${POSTGRES_DB:-andromeda}?sslmode=disable"
     ports:
-      - "9187:9187"
+      - "127.0.0.1:9187:9187"
     networks:
       - andromeda_network
     depends_on:
@@ -298,7 +298,7 @@ services:
   # Prometheus & Grafana
   # ============================================================
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.2.1
     container_name: andromeda_prometheus
     restart: unless-stopped
     command:
@@ -312,12 +312,12 @@ services:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     networks:
       - andromeda_network
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.5.2
     container_name: andromeda_grafana
     restart: unless-stopped
     environment:
@@ -331,7 +331,7 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     networks:
       - andromeda_network
     depends_on:
