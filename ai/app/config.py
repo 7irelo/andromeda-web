@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     provider_timeout_seconds: float = 25.0
 
     max_text_chars: int = 10_000
+    # Path to the distilled moderation model (JSON from ai/distill/train.py); unset disables it.
+    moderation_student_path: str | None = None
 
 
 @lru_cache

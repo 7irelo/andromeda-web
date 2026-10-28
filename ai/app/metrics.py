@@ -9,3 +9,4 @@ FALLBACKS = Counter('ai_fallbacks_total', 'Calls served by a fallback route', ['
 BUDGET_REJECTIONS = Counter('ai_budget_rejections_total', 'Requests refused by the per-user budget', ['job'])
 DECISIONS = Counter('ai_moderation_decisions_total', 'Moderation outcomes', ['decision'])
 ATTRIBUTION = Counter('ai_citations_total', 'Citations checked against the source set', ['valid'])
+INJECTION_DROPS = Counter('ai_injection_sources_dropped_total', 'Retrieved sources dropped as prompt-injection attempts')

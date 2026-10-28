@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 from .. import metrics
 from ..gateway import EMBEDDING_DIMS, Gateway
-from ..guardrails import UNTRUSTED_NOTICE, clean_text, strip_foreign_urls, untrusted
+from ..guardrails import UNTRUSTED_NOTICE, clean_text, looks_like_injection, redact_pii, strip_foreign_urls, untrusted
 
 ContentType = Literal['posts', 'listings', 'groups', 'pages', 'videos']
 MAX_EMBED_TEXTS = 64
@@ -202,11 +202,17 @@ async def ask(req: AskRequest, gateway: Gateway, user_id: int) -> AskResult:
     if not req.sources:
         return AskResult(answer=Answer(abstain=True, answer="I couldn't find anything you can see that answers that.",
                                        claims=[]), model='none', cost_usd=0.0, citations_dropped=0)
+    # Sources that try to instruct the model are dropped before it sees them.
+    sources = [s for s in req.sources if not looks_like_injection(s.text)]
+    metrics.INJECTION_DROPS.inc(len(req.sources) - len(sources))
+    if not sources:
+        return AskResult(answer=Answer(abstain=True, answer="I couldn't find anything you can see that answers that.",
+                                       claims=[]), model='none', cost_usd=0.0, citations_dropped=0)
     lines = [f'Member: {clean_text(req.viewer, 150)}', f'Question: {clean_text(req.question, 500)}', '', 'Sources:']
-    for s in req.sources:
-        lines.append(untrusted(s.text, 3000, id=s.id, kind=s.kind, title=s.title[:60], author=s.author,
+    for s in sources:
+        lines.append(untrusted(redact_pii(s.text), 3000, id=s.id, kind=s.kind, title=s.title[:60], author=s.author,
                                at=s.created_at))
     res = await gateway.structured('ask.answer', system=ASK_SYSTEM, user='\n'.join(lines), schema=Answer,
                                    user_id=user_id)
-    dropped = verify_answer(res.output, {s.id for s in req.sources}, '\n'.join(s.text for s in req.sources))
+    dropped = verify_answer(res.output, {s.id for s in sources}, '\n'.join(s.text for s in sources))
     return AskResult(answer=res.output, model=res.model, cost_usd=round(res.cost_usd, 6), citations_dropped=dropped)

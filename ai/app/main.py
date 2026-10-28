@@ -11,6 +11,7 @@ from .config import get_settings
 from .features.catchup import CatchUpRequest, CatchUpResult, catch_up
 from .features.listing import DraftRequest, DraftResult, draft
 from .features.chapters import ChaptersRequest, ChaptersResult, chapters
+from .features import distilled
 from .features.moderation import ModerationRequest, ModerationResult, moderate
 from .features.speech import (DeepgramClient, SpeakRequest, SpeechUnavailable, TranscribeRequest, TranscribeResult,
                               transcribe)
@@ -44,6 +45,7 @@ def build_speech() -> DeepgramClient | None:
 async def lifespan(app: FastAPI):
     app.state.gateway, app.state.moderation_stage0 = build_gateway()
     app.state.speech = build_speech()
+    app.state.moderation_student = distilled.load(get_settings().moderation_student_path)
     yield
 
 
@@ -63,7 +65,8 @@ def prometheus_metrics():
 
 @app.post('/v1/moderate', response_model=ModerationResult)
 async def moderate_endpoint(body: ModerationRequest, request: Request, user: ActingUser = Depends(acting_user)):
-    return await moderate(body, request.app.state.gateway, user.id, request.app.state.moderation_stage0)
+    return await moderate(body, request.app.state.gateway, user.id, request.app.state.moderation_stage0,
+                          request.app.state.moderation_student)
 
 
 async def _run(coro, refused_detail='The model declined this request'):

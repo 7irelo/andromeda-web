@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from .. import metrics
 from ..gateway import Gateway
-from ..guardrails import UNTRUSTED_NOTICE, clean_text, strip_foreign_urls, untrusted
+from ..guardrails import UNTRUSTED_NOTICE, clean_text, redact_pii, strip_foreign_urls, untrusted
 
 MAX_MESSAGES = 300
 MAX_MESSAGE_CHARS = 2000
@@ -68,7 +68,7 @@ Rules:
 def _render(req: CatchUpRequest) -> str:
     lines = [f'Viewer: {clean_text(req.viewer, 150)}', f'Chat: {clean_text(req.room_name, 255) or "direct message"}', '']
     for m in req.messages:
-        lines.append(untrusted(m.text, MAX_MESSAGE_CHARS, id=m.id, sender=m.sender, at=m.sent_at))
+        lines.append(untrusted(redact_pii(m.text), MAX_MESSAGE_CHARS, id=m.id, sender=m.sender, at=m.sent_at))
     return '\n'.join(lines)
 
 

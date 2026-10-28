@@ -2,6 +2,8 @@
 Content moderation as a deterministic workflow, not an agent.
 
     stage 0  OpenAI omni-moderation (free): generic harm signal
+    stage ½  distilled classifier (optional): a confident "allow" skips the LLM;
+             anything else, or anything stage 0 flagged, continues
     stage 1  Claude Haiku with Andromeda's policy rubric (structured output)
     stage 2  Claude Sonnet, only when stage 1 is unsure or the stages disagree
     fallback when every model is unavailable, fail closed for new accounts
@@ -115,7 +117,8 @@ def _merge(stage0: dict | None, verdict: Verdict, final: bool = False) -> tuple[
     return decision, cats
 
 
-async def moderate(req: ModerationRequest, gateway: Gateway, user_id: int, stage0_provider=None) -> ModerationResult:
+async def moderate(req: ModerationRequest, gateway: Gateway, user_id: int, stage0_provider=None,
+                   student=None) -> ModerationResult:
     text = req.text.strip()
     if not text:
         return ModerationResult(decision=Decision.ALLOW, categories=[], confidence=1.0,
@@ -130,8 +133,22 @@ async def moderate(req: ModerationRequest, gateway: Gateway, user_id: int, stage
         except ProviderError:
             logger.warning('Stage 0 moderation unavailable')
 
-    user_msg = untrusted(text, 10_000, kind=req.content_type)
     total_cost = 0.0
+    if student is not None and not (stage0 and stage0['flagged']):
+        try:
+            emb = await gateway.embed('search.embed', texts=[text[:8000]], user_id=user_id)
+            total_cost += emb.cost_usd
+            ok, p_allow = student.confident_allow(emb.vectors[0])
+            stages.append('distilled')
+            if ok:
+                metrics.DECISIONS.labels('allow').inc()
+                return ModerationResult(decision=Decision.ALLOW, categories=[], confidence=round(p_allow, 3),
+                                        reason='Distilled classifier: confidently within policy', stages=stages,
+                                        model='distilled-v1', cost_usd=round(total_cost, 6))
+        except (ProviderError, AllRoutesFailed, BudgetExceeded):
+            logger.warning('Distilled stage skipped: embeddings unavailable')
+
+    user_msg = untrusted(text, 10_000, kind=req.content_type)
     try:
         first = await gateway.structured('moderation.classify', system=POLICY, user=user_msg,
                                          schema=Verdict, user_id=user_id)
