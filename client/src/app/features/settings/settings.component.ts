@@ -13,6 +13,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { User } from '../../models/user.model';
+import { SecuritySettingsComponent } from './security-settings.component';
+import { NotificationSettingsComponent } from './notification-settings.component';
 
 @Component({
     selector: 'app-settings',
@@ -20,6 +22,7 @@ import { User } from '../../models/user.model';
         CommonModule, FormsModule, ReactiveFormsModule,
         MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
         MatSelectModule, MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
+        SecuritySettingsComponent, NotificationSettingsComponent,
     ],
     template: `
     <div class="settings-page">
@@ -169,6 +172,10 @@ import { User } from '../../models/user.model';
           <button mat-stroked-button (click)="logoutEverywhere()">Sign out all devices</button>
         </div>
       </section>
+
+      <app-notification-settings></app-notification-settings>
+
+      <app-security-settings></app-security-settings>
 
       <!-- Danger Zone -->
       <section class="settings-section card danger-zone">

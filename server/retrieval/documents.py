@@ -1,6 +1,9 @@
 """
 Turn content into the text that gets embedded and shown to the answer model.
 
+Content whose author opted out of AI features is never indexed, so it can't
+reach the embedding or answer models.
+
 Chunking follows the content's structure: a post plus its top comments is one
 document; listings are title, category, condition and description; long
 descriptions split on paragraph boundaries.
@@ -48,7 +51,7 @@ def load(kind, object_id):
     if kind == 'posts':
         from posts.models import Post
         p = Post.objects.select_related('author', 'group', 'page').filter(pk=object_id).first()
-        if p is None or p.moderation_status == 'removed':
+        if p is None or p.moderation_status == 'removed' or p.author.ai_opt_out:
             return None
         comments = p.comments.filter(parent__isnull=True).exclude(moderation_status='removed') \
             .select_related('author').order_by('-created_at')[:3]
@@ -66,7 +69,7 @@ def load(kind, object_id):
     if kind == 'listings':
         from marketplace.models import Listing
         x = Listing.objects.select_related('seller', 'category').filter(pk=object_id).first()
-        if x is None or x.moderation_status == 'removed':
+        if x is None or x.moderation_status == 'removed' or x.seller.ai_opt_out:
             return None
         cat = x.category.name if x.category_id else 'Uncategorised'
         text = (f'Listing for sale: {x.title}\nCategory: {cat}. Condition: {x.get_condition_display()}. '
@@ -89,7 +92,7 @@ def load(kind, object_id):
     if kind == 'videos':
         from watch.models import Video
         v = Video.objects.select_related('uploader').filter(pk=object_id).first()
-        if v is None:
+        if v is None or v.uploader.ai_opt_out:
             return None
         transcript = getattr(v, 'transcript', '') or ''
         text = f'Video: {v.title}\n{v.description}' + (f'\nTranscript: {transcript}' if transcript else '')

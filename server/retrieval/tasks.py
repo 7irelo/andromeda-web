@@ -63,3 +63,29 @@ def index_object(kind, object_id):
 @shared_task(name='retrieval.tasks.remove_object', queue='default')
 def remove_object(kind, object_id):
     Embedding.objects.filter(kind=kind, object_id=object_id).delete()
+
+
+def _owned(user_id):
+    from marketplace.models import Listing
+    from posts.models import Post
+    from watch.models import Video
+    return {
+        'posts': Post.objects.filter(author_id=user_id).values_list('pk', flat=True),
+        'listings': Listing.objects.filter(seller_id=user_id).values_list('pk', flat=True),
+        'videos': Video.objects.filter(uploader_id=user_id).values_list('pk', flat=True),
+    }
+
+
+@shared_task(name='retrieval.tasks.apply_ai_opt_out', queue='default')
+def apply_ai_opt_out(user_id):
+    """Drop (or restore) a member's content from the semantic index after they change their AI opt-out."""
+    from django.contrib.auth import get_user_model
+    user = get_user_model().objects.filter(pk=user_id).first()
+    if user is None:
+        return
+    for kind, ids in _owned(user_id).items():
+        if user.ai_opt_out:
+            Embedding.objects.filter(kind=kind, object_id__in=list(ids)).delete()
+        elif enabled():
+            for oid in ids:
+                index_object.delay(kind, oid)

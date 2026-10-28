@@ -49,9 +49,11 @@ class Hit:
     sources: list[str]
 
 
-def plan_query(q, user_id, rewrite=True):
+def plan_query(q, user_id, rewrite=None, opted_out=False):
     """Ask the AI service for a query plan and embedding. Falls back to lexical-only on any failure."""
-    if not (settings.AI_SEARCH_ENABLED and ai_client.enabled()):
+    if rewrite is None:
+        rewrite = settings.AI_SEARCH_REWRITE
+    if opted_out or not (settings.AI_SEARCH_ENABLED and ai_client.enabled()):
         return Plan(query=q)
     # Plans depend only on the query text, never on the viewer, so they're safe to share.
     key = 'search-plan:' + hashlib.sha256(f'{int(rewrite)}:{q}'.encode()).hexdigest()
@@ -133,7 +135,8 @@ def _rerank(q, hits, user_id):
 def search(user, q, kinds, *, mode='hybrid', plan=None, rerank=None, limit=20):
     """Ranked hits across content types, all drawn from what `user` may see."""
     if plan is None:
-        plan = plan_query(q, user.id) if mode != 'lexical' else Plan(query=q)
+        opted_out = getattr(user, 'ai_opt_out', False)
+        plan = Plan(query=q) if mode == 'lexical' else plan_query(q, user.id, opted_out=opted_out)
     if plan.types:
         narrowed = [k for k in kinds if k in plan.types]
         kinds = narrowed or kinds

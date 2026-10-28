@@ -40,11 +40,18 @@ class Notification(models.Model):
     body = models.TextField(blank=True)
     is_read = models.BooleanField(default=False)
     extra = models.JSONField(default=dict, blank=True)
+    # Repeats of the same event on the same thing fold into one notification.
+    group_key = models.CharField(max_length=120, blank=True, db_index=True)
+    # False when the recipient only wants this category by email or push.
+    in_app = models.BooleanField(default=True)
+    emailed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'notifications'
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
+        indexes = [models.Index(fields=['recipient', 'is_read', '-updated_at'])]
 
     def __str__(self):
         return f'{self.notification_type} → {self.recipient.username}'
@@ -52,3 +59,30 @@ class Notification(models.Model):
     def mark_read(self):
         self.is_read = True
         self.save(update_fields=['is_read'])
+
+
+class NotificationPreference(models.Model):
+    """Per-category channel choices, e.g. {"likes": {"in_app": true, "push": false, "email": false}}."""
+
+    DIGEST_OFF = 'off'
+    DIGEST_DAILY = 'daily'
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='notification_preference',
+                                on_delete=models.CASCADE)
+    channels = models.JSONField(default=dict, blank=True)
+    email_digest = models.CharField(max_length=10, default=DIGEST_DAILY,
+                                    choices=[(DIGEST_OFF, 'Off'), (DIGEST_DAILY, 'Daily')])
+    # Opt-in weekly email of new listings near the user (replaces the old hourly spotlight).
+    listing_digest = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class PushSubscription(models.Model):
+    """A browser's Web Push endpoint. Keys are the browser's public keys, not secrets of ours."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='push_subscriptions', on_delete=models.CASCADE)
+    endpoint = models.URLField(max_length=1000, unique=True)
+    p256dh = models.CharField(max_length=200)
+    auth = models.CharField(max_length=100)
+    user_agent = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)

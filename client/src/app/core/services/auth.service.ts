@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, switchMap, tap } from 'rxjs';
-import { User, SessionResponse } from '../../models/user.model';
+import { DeviceSession, MfaChallenge, MfaSetup, MfaStatus, User, SessionResponse } from '../../models/user.model';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -46,10 +46,56 @@ export class AuthService {
       .pipe(tap((res) => this.startSession(res)));
   }
 
-  login(credentials: { username: string; password: string }): Observable<SessionResponse> {
+  /** Resolves to a session, or to a challenge when the account has two-factor sign-in on. */
+  login(credentials: { username: string; password: string }): Observable<SessionResponse | MfaChallenge> {
     return this.http
-      .post<SessionResponse>(`${this.API}/auth/login/`, credentials, { withCredentials: true })
+      .post<SessionResponse | MfaChallenge>(`${this.API}/auth/login/`, credentials, { withCredentials: true })
+      .pipe(tap((res) => {
+        if (!('mfa_required' in res)) {
+          this.startSession(res);
+        }
+      }));
+  }
+
+  completeMfaLogin(mfa_token: string, code: string): Observable<SessionResponse> {
+    return this.http
+      .post<SessionResponse>(`${this.API}/auth/login/mfa/`, { mfa_token, code }, { withCredentials: true })
       .pipe(tap((res) => this.startSession(res)));
+  }
+
+  // ── Devices, two-factor and email verification ─────────────────────────
+
+  getSessions(): Observable<DeviceSession[]> {
+    return this.http.get<DeviceSession[]>(`${this.API}/auth/sessions/`, { withCredentials: true });
+  }
+
+  revokeSession(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API}/auth/sessions/${encodeURIComponent(id)}/`);
+  }
+
+  getMfaStatus(): Observable<MfaStatus> {
+    return this.http.get<MfaStatus>(`${this.API}/auth/mfa/`);
+  }
+
+  startMfaSetup(password: string): Observable<MfaSetup> {
+    return this.http.post<MfaSetup>(`${this.API}/auth/mfa/setup/`, { password });
+  }
+
+  enableMfa(code: string): Observable<{ enabled: boolean; recovery_codes: string[] }> {
+    return this.http.post<{ enabled: boolean; recovery_codes: string[] }>(
+      `${this.API}/auth/mfa/enable/`, { code }, { withCredentials: true });
+  }
+
+  disableMfa(password: string, code: string): Observable<{ enabled: boolean }> {
+    return this.http.post<{ enabled: boolean }>(`${this.API}/auth/mfa/disable/`, { password, code });
+  }
+
+  verifyEmail(token: string): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${this.API}/auth/email/verify/`, { token });
+  }
+
+  resendVerification(): Observable<unknown> {
+    return this.http.post(`${this.API}/auth/email/resend/`, {});
   }
 
   /** Called once at startup: silently resume a session from the refresh cookie. */

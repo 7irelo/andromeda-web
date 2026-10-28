@@ -1,9 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    DeleteAccountView, FriendRequestViewSet, LoginView, LogoutAllView, LogoutView, MeView,
-    PasswordChangeView, PasswordResetConfirmView, PasswordResetRequestView, RefreshView,
-    RegisterView, UserViewSet, WebSocketTicketView,
+    DeleteAccountView, EmailResendView, EmailVerifyView, FriendRequestViewSet, LoginMFAView, LoginView,
+    LogoutAllView, LogoutView, MeView, MFADisableView, MFAEnableView, MFASetupView, MFAStatusView,
+    PasswordChangeView, PasswordResetConfirmView, PasswordResetRequestView, RefreshView, RegisterView,
+    SessionListView, SessionRevokeView, UserViewSet, WebSocketTicketView,
 )
 
 router = DefaultRouter()
@@ -13,6 +14,15 @@ router.register('friend-requests', FriendRequestViewSet, basename='friend-reques
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
+    path('login/mfa/', LoginMFAView.as_view(), name='login-mfa'),
+    path('sessions/', SessionListView.as_view(), name='sessions'),
+    path('sessions/<uuid:session_id>/', SessionRevokeView.as_view(), name='session-revoke'),
+    path('mfa/', MFAStatusView.as_view(), name='mfa-status'),
+    path('mfa/setup/', MFASetupView.as_view(), name='mfa-setup'),
+    path('mfa/enable/', MFAEnableView.as_view(), name='mfa-enable'),
+    path('mfa/disable/', MFADisableView.as_view(), name='mfa-disable'),
+    path('email/verify/', EmailVerifyView.as_view(), name='email-verify'),
+    path('email/resend/', EmailResendView.as_view(), name='email-resend'),
     path('token/refresh/', RefreshView.as_view(), name='token-refresh'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('logout-all/', LogoutAllView.as_view(), name='logout-all'),

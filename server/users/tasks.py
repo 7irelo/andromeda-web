@@ -52,3 +52,27 @@ def send_password_reset_email(user_id):
         )
     except Exception as e:
         logger.error(f'send_password_reset_email error: {e}')
+
+
+@shared_task(name='users.tasks.send_verification_email', queue='emails')
+def send_verification_email(user_id):
+    # Minted here, like the reset token, so the link never sits in the broker.
+    try:
+        from django.contrib.auth import get_user_model
+        from django.core.mail import send_mail
+        from django.conf import settings
+        from .security import email_token
+        user = get_user_model().objects.get(id=user_id, is_active=True)
+        if user.email_verified:
+            return
+        link = f'{settings.FRONTEND_URL}/verify-email?token={email_token(user)}'
+        send_mail(
+            subject='Confirm your email for Andromeda',
+            message=f'Hi {user.first_name or user.username},\n\nConfirm your email address:\n{link}\n\n'
+                    'The link expires in 3 days. If you did not create an account, ignore this email.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+    except Exception as e:
+        logger.error(f'send_verification_email error: {e}')

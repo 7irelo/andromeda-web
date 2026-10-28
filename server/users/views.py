@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import generics, mixins, permissions, status, viewsets
@@ -23,7 +24,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core import visibility, ws_tickets
 from core.throttles import AuthRateThrottle
-from .models import Block, FriendRequest
+from . import security
+from .models import Block, FriendRequest, UserSession
 from .serializers import (
     AndromedaTokenSerializer, FriendRequestSerializer, MeSerializer,
     PasswordChangeSerializer, PasswordResetConfirmSerializer,
@@ -52,7 +54,9 @@ def _clear_refresh_cookie(response):
 
 
 def _session_response(user, request, status_code=status.HTTP_200_OK):
+    session = security.start_session(user, request)
     refresh = RefreshToken.for_user(user)
+    refresh['sid'] = str(session.pk)  # survives rotation; checked on every refresh
     response = Response({
         'access': str(refresh.access_token),
         'user': MeSerializer(user, context={'request': request}).data,
@@ -61,8 +65,18 @@ def _session_response(user, request, status_code=status.HTTP_200_OK):
 
 
 def _revoke_all_sessions(user):
-    for token in OutstandingToken.objects.filter(user=user):
+    security.revoke_sessions(user)
+    for token in OutstandingToken.objects.filter(user=user, blacklistedtoken__isnull=True):
         BlacklistedToken.objects.get_or_create(token=token)
+
+
+def _refresh_sid(raw):
+    if not raw:
+        return None
+    try:
+        return RefreshToken(raw, verify=False).get('sid')
+    except TokenError:
+        return None
 
 
 # ── Authentication ────────────────────────────────────────────────────────────
@@ -76,6 +90,7 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        _send_verification(user)
         return _session_response(user, request, status.HTTP_201_CREATED)
 
 
@@ -87,7 +102,33 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        if security.mfa_enabled(serializer.user):
+            # Password alone isn't enough: hand back a short-lived challenge, not a session.
+            return Response({'mfa_required': True, 'mfa_token': security.issue_challenge(serializer.user)})
         return _session_response(serializer.user, request)
+
+
+class LoginMFAView(APIView):
+    """Second sign-in step: exchange the challenge plus a TOTP or recovery code for a session."""
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+    throttle_classes = [AuthRateThrottle]
+
+    def post(self, request):
+        token, code = str(request.data.get('mfa_token', '')), str(request.data.get('code', ''))
+        invalid = Response({'detail': 'That code is invalid or the sign-in expired. Start again.'},
+                           status=status.HTTP_400_BAD_REQUEST)
+        redeemed = security.redeem_challenge(token)
+        if redeemed is None:
+            return invalid
+        uid, key = redeemed
+        user = User.objects.filter(pk=uid, is_active=True).first()
+        device = getattr(user, 'mfa', None) if user else None
+        if device is None or not device.enabled or not security.verify_code(device, code):
+            return invalid
+        security.spend_challenge(key)
+        return _session_response(user, request)
 
 
 class RefreshView(APIView):
@@ -101,6 +142,11 @@ class RefreshView(APIView):
         raw = request.COOKIES.get(settings.REFRESH_COOKIE_NAME)
         if not raw:
             return Response({'detail': 'Not authenticated.'}, status=status.HTTP_401_UNAUTHORIZED)
+        sid = _refresh_sid(raw)
+        if sid is not None and not security.touch_session(sid):
+            return _clear_refresh_cookie(
+                Response({'detail': 'Session expired.'}, status=status.HTTP_401_UNAUTHORIZED)
+            )
         serializer = TokenRefreshSerializer(data={'refresh': raw})
         try:
             serializer.is_valid(raise_exception=True)
@@ -122,8 +168,12 @@ class LogoutView(APIView):
         raw = request.COOKIES.get(settings.REFRESH_COOKIE_NAME)
         if raw:
             try:
-                RefreshToken(raw).blacklist()
-            except TokenError:
+                token = RefreshToken(raw)
+                if token.get('sid'):
+                    UserSession.objects.filter(pk=token['sid'], user_id=token.get('user_id'),
+                                               revoked_at__isnull=True).update(revoked_at=timezone.now())
+                token.blacklist()
+            except (TokenError, ValueError, DjangoValidationError):
                 pass
         return _clear_refresh_cookie(Response(status=status.HTTP_204_NO_CONTENT))
 
@@ -210,6 +260,13 @@ class MeView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+    def perform_update(self, serializer):
+        was_opted_out = self.request.user.ai_opt_out
+        user = serializer.save()
+        if user.ai_opt_out != was_opted_out:
+            from retrieval.tasks import apply_ai_opt_out
+            transaction.on_commit(lambda: apply_ai_opt_out.delay(user.id))
+
 
 class DeleteAccountView(APIView):
     """Account deletion requires re-entering the password."""
@@ -222,6 +279,111 @@ class DeleteAccountView(APIView):
         _revoke_all_sessions(user)
         user.delete()
         return _clear_refresh_cookie(Response(status=status.HTTP_204_NO_CONTENT))
+
+
+# ── Devices, two-factor and email verification ────────────────────────────────
+
+def _send_verification(user):
+    def dispatch():
+        try:
+            from .tasks import send_verification_email
+            send_verification_email.delay(user.id)
+        except Exception:
+            logger.warning('Background dispatch failed', exc_info=True)
+    transaction.on_commit(dispatch)
+
+
+class SessionListView(APIView):
+    """The devices signed in to this account."""
+
+    def get(self, request):
+        current = _refresh_sid(request.COOKIES.get(settings.REFRESH_COOKIE_NAME))
+        rows = UserSession.objects.filter(user=request.user, revoked_at__isnull=True)[:50]
+        return Response([{
+            'id': str(s.pk), 'user_agent': s.user_agent, 'network': s.ip_prefix,
+            'created_at': s.created_at, 'last_seen_at': s.last_seen_at, 'current': str(s.pk) == current,
+        } for s in rows])
+
+
+class SessionRevokeView(APIView):
+    def delete(self, request, session_id):
+        updated = UserSession.objects.filter(
+            pk=session_id, user=request.user, revoked_at__isnull=True).update(revoked_at=timezone.now())
+        if not updated:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MFAStatusView(APIView):
+    def get(self, request):
+        device = getattr(request.user, 'mfa', None)
+        on = bool(device and device.enabled)
+        return Response({'enabled': on, 'recovery_codes_left': len(device.recovery_codes) if on else 0})
+
+
+class MFASetupView(APIView):
+    """Start (or restart) TOTP setup. Requires the password; refused while 2FA is on."""
+
+    throttle_classes = [AuthRateThrottle]
+
+    def post(self, request):
+        ReauthSerializer(data=request.data, context={'request': request}).is_valid(raise_exception=True)
+        if security.mfa_enabled(request.user):
+            raise ValidationError({'detail': 'Two-factor sign-in is already on. Turn it off first.'})
+        secret, uri = security.begin_setup(request.user)
+        return Response({'secret': secret, 'otpauth_uri': uri, 'qr_png': security.qr_data_uri(uri)})
+
+
+class MFAEnableView(APIView):
+    throttle_classes = [AuthRateThrottle]
+
+    def post(self, request):
+        device = getattr(request.user, 'mfa', None)
+        codes = security.enable(device, str(request.data.get('code', ''))) if device else None
+        if codes is None:
+            raise ValidationError({'code': 'That code is not valid. Check your authenticator app and try again.'})
+        # Devices that signed in with only a password are signed out.
+        security.revoke_sessions(request.user, exclude=_refresh_sid(request.COOKIES.get(settings.REFRESH_COOKIE_NAME)))
+        return Response({'enabled': True, 'recovery_codes': codes})
+
+
+class MFADisableView(APIView):
+    throttle_classes = [AuthRateThrottle]
+
+    def post(self, request):
+        ReauthSerializer(data=request.data, context={'request': request}).is_valid(raise_exception=True)
+        device = getattr(request.user, 'mfa', None)
+        if not device or not device.enabled:
+            return Response({'enabled': False})
+        if not security.verify_code(device, str(request.data.get('code', ''))):
+            raise ValidationError({'code': 'That code is not valid.'})
+        device.delete()
+        return Response({'enabled': False})
+
+
+class EmailVerifyView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+    throttle_classes = [AuthRateThrottle]
+
+    def post(self, request):
+        user = security.verify_email_token(str(request.data.get('token', '')))
+        if user is None:
+            raise ValidationError({'detail': 'This verification link is invalid or has expired.'})
+        if not user.email_verified:
+            user.email_verified = True
+            user.save(update_fields=['email_verified'])
+        return Response({'detail': 'Email address verified.'})
+
+
+class EmailResendView(APIView):
+    throttle_classes = [AuthRateThrottle]
+
+    def post(self, request):
+        if not request.user.email_verified:
+            _send_verification(request.user)
+        return Response({'detail': 'If your email still needs verifying, a new link is on its way.'},
+                        status=status.HTTP_202_ACCEPTED)
 
 
 # ── Users, friends and blocking ───────────────────────────────────────────────

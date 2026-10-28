@@ -28,6 +28,12 @@ export const routes: Routes = [
   },
   {
     // Reachable signed in or out: the link arrives by email.
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./features/auth/verify-email/verify-email.component').then((m) => m.VerifyEmailComponent),
+  },
+  {
+    // Reachable signed in or out: the link arrives by email.
     path: 'reset-password',
     loadComponent: () =>
       import('./features/auth/password-reset/reset-password.component').then((m) => m.ResetPasswordComponent),

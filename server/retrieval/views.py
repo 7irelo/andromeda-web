@@ -80,9 +80,12 @@ class AskView(APIView):
         body = AskSerializer(data=request.data)
         body.is_valid(raise_exception=True)
         question = body.validated_data['question']
+        if request.user.ai_opt_out:
+            return Response({'detail': 'You have turned off AI features in your settings.'}, status=403)
         if not ai_client.enabled():
             return Response({'detail': 'Ask Andromeda is not available right now.'}, status=503)
-        _, hits = hybrid.search(request.user, question, KINDS, limit=ASK_SOURCES)
+        plan = hybrid.plan_query(question, request.user.id, rewrite=True)
+        _, hits = hybrid.search(request.user, question, KINDS, plan=plan, limit=ASK_SOURCES)
         sources, meta = [], {}
         for h in hits:
             doc = documents.load(h.kind, h.id)

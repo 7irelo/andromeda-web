@@ -23,9 +23,12 @@ export class LoginComponent {
     username: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
+  codeForm = this.fb.group({ code: ['', [Validators.required, Validators.maxLength(12)]] });
   loading = false;
   error = '';
   hidePassword = true;
+  /** Set once the password is accepted and a second factor is needed. */
+  mfaToken: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -39,11 +42,38 @@ export class LoginComponent {
     this.error = '';
 
     this.authService.login(this.form.value as { username: string; password: string }).subscribe({
-      next: () => this.router.navigate(['/feed']),
+      next: (res) => {
+        if ('mfa_required' in res) {
+          this.mfaToken = res.mfa_token;
+          this.loading = false;
+          return;
+        }
+        this.router.navigate(['/feed']);
+      },
       error: (err) => {
         this.error = err.error?.detail || 'Invalid credentials. Please try again.';
         this.loading = false;
       },
     });
+  }
+
+  submitCode(): void {
+    if (this.codeForm.invalid || !this.mfaToken) return;
+    this.loading = true;
+    this.error = '';
+    this.authService.completeMfaLogin(this.mfaToken, (this.codeForm.value.code ?? '').trim()).subscribe({
+      next: () => this.router.navigate(['/feed']),
+      error: (err) => {
+        this.error = err.error?.detail || 'That code did not work. Try again.';
+        this.loading = false;
+      },
+    });
+  }
+
+  startOver(): void {
+    this.mfaToken = null;
+    this.codeForm.reset();
+    this.form.get('password')?.reset();
+    this.error = '';
   }
 }

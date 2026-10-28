@@ -172,6 +172,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.cleanup_old_notifications',
         'schedule': crontab(hour=3, minute=0),
     },
+    'daily-notification-digest': {
+        'task': 'notifications.tasks.send_daily_digests',
+        'schedule': crontab(hour=17, minute=0),
+    },
+    'weekly-listing-digest': {
+        'task': 'notifications.tasks.send_listing_digests',
+        'schedule': crontab(day_of_week='sat', hour=8, minute=0),
+    },
 }
 
 # ============================================================
@@ -266,13 +274,26 @@ if not DEBUG:
 ADMIN_URL = os.environ.get('ADMIN_URL', 'admin/')
 
 # ── AI service (internal; holds every model/provider key) ─────
+# Web Push (VAPID). Generate a key pair with `python manage.py vapid_keys`;
+# push stays off until both keys are set.
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:security@andromeda.local')
+# The server POSTs to subscription endpoints, so only known push services are accepted.
+WEB_PUSH_ALLOWED_HOSTS = ['fcm.googleapis.com', 'updates.push.services.mozilla.com', 'push.services.mozilla.com',
+                          'push.apple.com', 'notify.windows.com']
+
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', '')
 AI_SERVICE_SECRET = os.environ.get('AI_SERVICE_SECRET', '')
 AI_MODERATION_ENABLED = os.environ.get('AI_MODERATION_ENABLED', 'True') == 'True'
 AI_SEARCH_ENABLED = os.environ.get('AI_SEARCH_ENABLED', 'True') == 'True'
-# Listwise LLM rerank of the fused top results. Off by default: see the
-# retrieval ablation in retrieval/evals for when it pays for itself.
+# Listwise LLM rerank of the fused top results. Off by default: in the
+# retrieval ablation (manage.py eval_retrieval) it added +0.01 recall@10 for
+# ~2 s of latency.
 AI_SEARCH_RERANK = os.environ.get('AI_SEARCH_RERANK', 'False') == 'True'
+# LLM query rewrite for the search box. Off by default for the same reason;
+# Ask Andromeda always rewrites, since it's making a model call anyway.
+AI_SEARCH_REWRITE = os.environ.get('AI_SEARCH_REWRITE', 'False') == 'True'
 if AI_SERVICE_SECRET and len(AI_SERVICE_SECRET) < 32:
     raise ImproperlyConfigured('AI_SERVICE_SECRET must be at least 32 characters.')
 PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour

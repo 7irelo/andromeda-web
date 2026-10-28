@@ -70,11 +70,10 @@ def moderate_content(content_type, object_id):
 def _notify_author(author, content_type, object_id):
     try:
         from notifications.models import Notification
-        Notification.objects.create(
-            recipient=author, notification_type=Notification.TYPE_SYSTEM,
-            title=f'Your {content_type} was removed for breaking the community guidelines. '
-                  'A moderator will review it if you appeal.',
-            extra={'content_type': content_type, 'object_id': object_id},
-        )
+        from notifications.service import notify
+        notify(author, Notification.TYPE_SYSTEM,
+               f'Your {content_type} was removed for breaking the community guidelines. '
+               'A moderator will review it if you appeal.',
+               extra={'kind': 'moderation', 'content_type': content_type, 'object_id': object_id})
     except Exception:
         logger.warning('Could not notify author about removal', exc_info=True)

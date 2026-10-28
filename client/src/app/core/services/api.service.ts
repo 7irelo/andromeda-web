@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { Post, Comment } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
 import { CatchUp, ChatRoom, Message } from '../../models/chat.model';
-import { Notification } from '../../models/notification.model';
+import { Notification, NotificationPreferences } from '../../models/notification.model';
 import { Listing, ListingCategory } from '../../models/listing.model';
 import { Group, GroupJoinRequest, GroupMember } from '../../models/group.model';
 import { AskResponse, SearchResponse, SearchType, SemanticSearchResponse, SemanticType } from '../../models/search.model';
@@ -142,6 +142,30 @@ export class ApiService {
 
   markNotificationRead(id: number): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(`${this.API}/notifications/${id}/read/`, {});
+  }
+
+  getNotificationPreferences(): Observable<NotificationPreferences> {
+    return this.http.get<NotificationPreferences>(`${this.API}/notifications/preferences/`);
+  }
+
+  updateNotificationPreferences(data: {
+    categories?: Record<string, Partial<{ in_app: boolean; push: boolean; email: boolean }>>;
+    email_digest?: 'off' | 'daily';
+    listing_digest?: boolean;
+  }): Observable<NotificationPreferences> {
+    return this.http.patch<NotificationPreferences>(`${this.API}/notifications/preferences/`, data);
+  }
+
+  getPushPublicKey(): Observable<{ public_key: string | null }> {
+    return this.http.get<{ public_key: string | null }>(`${this.API}/notifications/push/`);
+  }
+
+  savePushSubscription(sub: PushSubscriptionJSON): Observable<unknown> {
+    return this.http.post(`${this.API}/notifications/push/`, sub);
+  }
+
+  deletePushSubscription(endpoint: string): Observable<unknown> {
+    return this.http.delete(`${this.API}/notifications/push/`, { body: { endpoint } });
   }
 
   markAllNotificationsRead(): Observable<{ status: string }> {

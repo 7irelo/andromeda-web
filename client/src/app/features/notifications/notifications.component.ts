@@ -1,6 +1,5 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,7 +10,7 @@ import { Notification } from '../../models/notification.model';
 
 @Component({
     selector: 'app-notifications',
-    imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+    imports: [CommonModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
     templateUrl: './notifications.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./notifications.component.scss']
@@ -29,7 +28,10 @@ export class NotificationsComponent implements OnInit {
   ngOnInit(): void {
     this.load();
     this.wsService.notification$.subscribe((n) => {
-      this.notifications.unshift(n);
+      // Other real-time events (e.g. feed updates) share this socket.
+      if (!n || typeof n.id !== 'number' || String(n.type ?? '').includes('.')) return;
+      // Grouped notifications ("Thandi and 3 others...") arrive again with the same id.
+      this.notifications = [n, ...this.notifications.filter((x) => x.id !== n.id)];
     });
     this.wsService.unreadCount$.next(0);
   }
@@ -54,6 +56,19 @@ export class NotificationsComponent implements OnInit {
   }
 
   getNavLink(n: Notification): string | null {
+    const extra = n.extra ?? {};
+    const id = (key: string) => (typeof extra[key] === 'number' ? extra[key] : null);
+    if (id('post_id') !== null && ['like', 'comment', 'mention', 'post_share'].includes(n.notification_type)) {
+      return `/posts/${id('post_id')}`;
+    }
+    if (n.notification_type === 'system') {
+      switch (extra['kind']) {
+        case 'price_drop': return id('listing_id') !== null ? `/marketplace/${id('listing_id')}` : '/marketplace';
+        case 'listing_digest': return '/marketplace';
+        case 'new_video': return id('video_id') !== null ? `/watch/${id('video_id')}` : '/watch';
+        default: return id('listing_id') !== null ? `/marketplace/${id('listing_id')}` : null;
+      }
+    }
     switch (n.notification_type) {
       case 'friend_request': return '/friends';
       case 'friend_accepted':
@@ -71,8 +86,12 @@ export class NotificationsComponent implements OnInit {
   }
 
   getIcon(type: string, extra?: Record<string, unknown>): string {
-    // Product spotlight notifications carry a listing_id in extra
-    if (type === 'system' && extra?.['listing_id']) return 'storefront';
+    if (type === 'system') {
+      const kind = extra?.['kind'];
+      if (kind === 'price_drop' || kind === 'listing_digest' || extra?.['listing_id']) return 'storefront';
+      if (kind === 'new_video') return 'smart_display';
+      if (kind === 'moderation') return 'gpp_maybe';
+    }
     const map: Record<string, string> = {
       like: 'thumb_up', comment: 'comment', friend_request: 'person_add',
       friend_accepted: 'people', follow: 'person_add_alt', message: 'chat',

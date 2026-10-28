@@ -17,7 +17,11 @@ class User(AbstractUser):
     location = models.CharField(max_length=120, blank=True)
     website = models.URLField(blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    is_verified = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)  # the staff-granted verified badge
+    email_verified = models.BooleanField(default=False)
+    # Opt out of AI features: content isn't indexed for semantic search or
+    # used for training, and AI features are switched off for this account.
+    ai_opt_out = models.BooleanField(default=False)
 
     # Denormalised counters (updated by signals)
     friends_count = models.PositiveIntegerField(default=0)
@@ -117,3 +121,37 @@ class Block(models.Model):
     class Meta:
         db_table = 'blocks'
         unique_together = ('blocker', 'blocked')
+
+
+class UserSession(models.Model):
+    """
+    One signed-in device. The id travels as the `sid` claim in the refresh
+    token and survives rotation, so a device keeps one row however often it
+    refreshes, and revoking the row ends that device's session.
+    """
+
+    id = models.UUIDField(primary_key=True)
+    user = models.ForeignKey(User, related_name='sessions', on_delete=models.CASCADE)
+    user_agent = models.CharField(max_length=200, blank=True)
+    # Only a coarse network prefix is kept, never the full address.
+    ip_prefix = models.CharField(max_length=64, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now_add=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-last_seen_at']
+        indexes = [models.Index(fields=['user', 'revoked_at'])]
+
+
+class MFADevice(models.Model):
+    """TOTP second factor. The secret is encrypted at rest; recovery codes are stored hashed."""
+
+    user = models.OneToOneField(User, related_name='mfa', on_delete=models.CASCADE)
+    secret_encrypted = models.TextField()
+    enabled = models.BooleanField(default=False)
+    # The last accepted time step, so a code can't be replayed inside its window.
+    last_step = models.BigIntegerField(default=0)
+    recovery_codes = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+    enabled_at = models.DateTimeField(null=True, blank=True)
