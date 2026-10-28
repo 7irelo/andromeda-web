@@ -178,6 +178,54 @@ class TestPostVisibility:
         r = client_for(alice).post(reverse('post-list'), {'content': 'x', 'link_url': 'javascript:alert(1)'})
         assert r.status_code == 400
 
+    def test_invisible_post_actions_404(self, alice, bob, mallory):
+        """Revisions, save and hide behave like the post doesn't exist for strangers and blocked users."""
+        befriend(alice, bob)
+        post = Post.objects.create(author=alice, content='f', privacy='friends')
+        Block.objects.create(blocker=alice, blocked=bob)
+        for user in (mallory, bob):
+            c = client_for(user)
+            for name in ('post-revisions', 'post-bookmark', 'post-hide'):
+                method = c.get if name == 'post-revisions' else c.post
+                assert method(reverse(name, kwargs={'pk': post.pk})).status_code == 404
+        anon = APIClient()
+        assert anon.get(reverse('post-revisions', kwargs={'pk': post.pk})).status_code == 401
+        assert anon.get(reverse('post-saved')).status_code == 401
+
+    def test_comment_edit_and_delete_rules(self, alice, bob, mallory):
+        from posts.models import Comment
+        post = Post.objects.create(author=alice, content='public')
+        comment = Comment.objects.create(post=post, author=bob, content='mine')
+        c = client_for(mallory)
+        url = reverse('comment-detail', kwargs={'pk': comment.pk})
+        assert c.patch(url, {'content': 'pwned'}, format='json').status_code == 403
+        assert c.delete(url).status_code == 403
+        # The post's author may delete it but never rewrite it.
+        assert client_for(alice).patch(url, {'content': 'x'}, format='json').status_code == 403
+        comment.refresh_from_db()
+        assert comment.content == 'mine'
+        assert client_for(alice).delete(url).status_code == 204
+
+    def test_comments_on_invisible_posts_unreachable(self, alice, mallory):
+        from posts.models import Comment
+        post = Post.objects.create(author=alice, content='p', privacy='private')
+        comment = Comment.objects.create(post=post, author=alice, content='c')
+        c = client_for(mallory)
+        assert c.get(reverse('comment-detail', kwargs={'pk': comment.pk})).status_code == 404
+        assert c.post(reverse('comment-like', kwargs={'pk': comment.pk})).status_code == 404
+        assert c.delete(reverse('comment-detail', kwargs={'pk': comment.pk})).status_code == 404
+
+    def test_feed_hides_strangers_and_blocked(self, alice, bob, mallory):
+        befriend(alice, bob)
+        Post.objects.create(author=mallory, content='stranger')
+        friend_post = Post.objects.create(author=bob, content='friend', privacy='friends')
+        for sort in ('top', 'latest'):
+            r = client_for(alice).get(reverse('post-list') + f'?feed=true&sort={sort}')
+            assert [p['id'] for p in r.data['results']] == [friend_post.id]
+        Block.objects.create(blocker=bob, blocked=alice)
+        r = client_for(alice).get(reverse('post-list') + '?feed=true')
+        assert r.data['results'] == []
+
 
 # ── Groups ───────────────────────────────────────────────────────────────────
 

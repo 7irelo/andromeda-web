@@ -1,16 +1,20 @@
 import logging
-from django.db.models import Q
-from rest_framework import viewsets
+from django.db.models import OuterRef, Prefetch, Q, Subquery
+from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from core import visibility
 from core.permissions import IsOwnerOrReadOnly
-from .models import Post, Like, Comment
-from .serializers import PostSerializer, CommentSerializer
+from . import feed
+from .models import Post, Like, Comment, CommentLike, HiddenPost, PostRevision, SavedPost
+from .serializers import (
+    CommentSerializer, PostRevisionSerializer, PostSerializer,
+    can_moderate_comments, viewer_state, visible_comments,
+)
 from moderation.tasks import queue_moderation
-from .tasks import process_post
+from .tasks import process_post, queue_new_post_event
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +26,17 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [IsOwnerOrReadOnly]
     owner_field = 'author'
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+    # Numeric ids only, so /posts/comments/ and /posts/saved/ never resolve as a post.
+    lookup_value_regex = r'\d+'
+
+    def _base_queryset(self):
+        return visibility.visible_posts(self.request.user).select_related(
+            'author', 'group', 'page',
+            'shared_post__author', 'shared_post__group', 'shared_post__page',
+        ).prefetch_related('media', 'tags', 'shared_post__media', 'shared_post__tags')
 
     def get_queryset(self):
-        user = self.request.user
-        qs = visibility.visible_posts(user).select_related(
-            'author', 'shared_post__author', 'group'
-        ).prefetch_related('media', 'tags')
-
-        if self.request.query_params.get('feed') == 'true':
-            qs = qs.filter(Q(author_id__in=visibility.friend_ids(user)) | Q(author=user))
+        qs = self._base_queryset()
 
         author_id = self.request.query_params.get('author')
         if author_id and author_id.isdigit():
@@ -58,11 +64,48 @@ class PostViewSet(viewsets.ModelViewSet):
 
         return qs.order_by('-created_at')
 
+    def _serialize(self, posts, reasons=None):
+        posts = list(posts)
+        context = {**self.get_serializer_context(), 'viewer_state': viewer_state(self.request.user, posts),
+                   'reasons': reasons or {}}
+        return PostSerializer(posts, many=True, context=context).data
+
+    def list(self, request, *args, **kwargs):
+        if request.query_params.get('feed') == 'true':
+            return self._feed(request)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        return self.get_paginated_response(self._serialize(page))
+
+    def _feed(self, request):
+        """Home feed: ranked (``sort=top``, default) or chronological (``sort=latest``), cursor-paginated."""
+        sort = request.query_params.get('sort', feed.SORT_TOP)
+        if sort not in (feed.SORT_TOP, feed.SORT_LATEST):
+            raise ValidationError({'sort': 'Use "top" or "latest".'})
+        posts, cursor, reasons = feed.feed_page(
+            request.user, self._base_queryset(), sort, request.query_params.get('cursor', ''))
+        next_url = None
+        if cursor:
+            next_url = request.build_absolute_uri(
+                f'{request.path}?feed=true&sort={sort}&cursor={cursor}')
+        return Response({
+            'next': next_url, 'next_cursor': cursor, 'previous': None,
+            'results': self._serialize(posts, reasons),
+        })
+
     def perform_create(self, serializer):
-        process_post(serializer.save(author=self.request.user), created=True)
+        post = serializer.save(author=self.request.user)
+        process_post(post, created=True)
+        queue_new_post_event(post)
 
     def perform_update(self, serializer):
-        process_post(serializer.save(is_edited=True), created=False)
+        post = serializer.instance
+        previous = post.content
+        changed = 'content' in serializer.validated_data and serializer.validated_data['content'] != previous
+        media_changed = 'images' in serializer.validated_data or 'media_order' in serializer.validated_data
+        if changed:
+            PostRevision.objects.create(post=post, content=previous)
+        post = serializer.save(is_edited=post.is_edited or changed or media_changed)
+        process_post(post, created=False)
 
     @action(detail=True, methods=['post'])
     def react(self, request, pk=None):
@@ -108,45 +151,117 @@ class PostViewSet(viewsets.ModelViewSet):
         Post.objects.filter(pk=original.pk).update(
             shares_count=Post.objects.filter(shared_post=original).count()
         )
+        process_post(shared, created=True)
+        queue_new_post_event(shared)
         return Response(PostSerializer(shared, context={'request': request}).data, status=201)
 
     @action(detail=True, methods=['get', 'post'])
     def comments(self, request, pk=None):
         post = self.get_object()
+        user = request.user
         if request.method == 'GET':
-            comments = post.comments.filter(parent=None).exclude(
-                author_id__in=visibility.blocked_ids(request.user)
-            ).exclude(Q(moderation_status='removed') & ~Q(author=request.user)).select_related('author').prefetch_related('replies__author')[:200]
-            return Response(CommentSerializer(comments, many=True, context={'request': request}).data)
+            replies = visible_comments(user, Comment.objects.select_related('author'))
+            comments = list(
+                visible_comments(user, post.comments.filter(parent=None)).select_related('author')
+                .prefetch_related(Prefetch('replies', queryset=replies, to_attr='visible_replies'))[:200]
+            )
+            ids = [c.id for c in comments] + [r.id for c in comments for r in c.visible_replies]
+            context = {
+                'request': request,
+                'liked_comments': set(CommentLike.objects.filter(user=user, comment_id__in=ids)
+                                      .values_list('comment_id', flat=True)),
+                'moderates_post': can_moderate_comments(user, post),
+            }
+            return Response(CommentSerializer(comments, many=True, context=context).data)
         serializer = CommentSerializer(data=request.data, context={'request': request, 'post': post})
         serializer.is_valid(raise_exception=True)
-        comment = serializer.save(author=request.user, post=post)
+        comment = serializer.save(author=user, post=post)
         queue_moderation('comment', comment.id)
-        if post.author_id != request.user.id:
+        if post.author_id != user.id:
             try:
                 from notifications.tasks import send_comment_notification
                 send_comment_notification.apply_async(
-                    args=[request.user.id, post.author_id, post.id, comment.id],
+                    args=[user.id, post.author_id, post.id, comment.id],
                     queue='notifications',
                 )
             except Exception:
                 logger.warning('Background dispatch failed', exc_info=True)
         return Response(CommentSerializer(comment, context={'request': request}).data, status=201)
 
+    @action(detail=True, methods=['get'])
+    def revisions(self, request, pk=None):
+        """Earlier versions of the post's text, newest first. Visible to anyone who can see the post."""
+        post = self.get_object()
+        return Response(PostRevisionSerializer(post.revisions.all()[:50], many=True).data)
 
-class CommentViewSet(viewsets.ModelViewSet):
-    """Edit or delete a comment. Authors can edit; authors and the post's author can delete."""
+    @action(detail=True, methods=['post', 'delete'], url_path='save')
+    def bookmark(self, request, pk=None):
+        post = self.get_object()
+        if request.method == 'DELETE':
+            SavedPost.objects.filter(user=request.user, post=post).delete()
+            return Response({'saved': False})
+        SavedPost.objects.get_or_create(user=request.user, post=post)
+        return Response({'saved': True})
+
+    @action(detail=True, methods=['post', 'delete'])
+    def hide(self, request, pk=None):
+        """Hide a post from your own feed. Nobody else is affected."""
+        post = self.get_object()
+        if request.method == 'DELETE':
+            HiddenPost.objects.filter(user=request.user, post=post).delete()
+            return Response({'hidden': False})
+        HiddenPost.objects.get_or_create(user=request.user, post=post)
+        return Response({'hidden': True})
+
+    @action(detail=False, methods=['get'])
+    def saved(self, request):
+        """Your saved posts, most recently saved first. Posts you can no longer see drop out."""
+        mine = SavedPost.objects.filter(user=request.user)
+        qs = self._base_queryset().filter(id__in=mine.values('post_id')).annotate(
+            saved_at=Subquery(mine.filter(post=OuterRef('pk')).values('created_at')[:1])
+        ).order_by('-saved_at', '-id')
+        page = self.paginate_queryset(qs)
+        return self.get_paginated_response(self._serialize(page))
+
+
+class CommentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
+                     viewsets.GenericViewSet):
+    """
+    A single comment. Anyone who can see it can read and like it; only its
+    author can edit it; its author, the post's author, the page's admins and
+    the group's admins and moderators can delete it.
+    """
 
     serializer_class = CommentSerializer
-    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         user = self.request.user
-        return Comment.objects.filter(
+        return visible_comments(user, Comment.objects.filter(
             post__in=visibility.visible_posts(user)
-        ).filter(Q(author=user) | Q(post__author=user)).select_related('post')
+        )).select_related('post', 'post__group', 'post__page', 'author')
 
     def perform_update(self, serializer):
         if serializer.instance.author_id != self.request.user.id:
             raise PermissionDenied('You can only edit your own comments.')
-        serializer.save()
+        changed = serializer.validated_data.get('content', serializer.instance.content) != serializer.instance.content
+        comment = serializer.save(is_edited=serializer.instance.is_edited or changed)
+        if changed:
+            queue_moderation('comment', comment.id)
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        if instance.author_id != user.id and not can_moderate_comments(user, instance.post):
+            raise PermissionDenied('You can only delete your own comments or comments on your posts.')
+        instance.delete()
+
+    @action(detail=True, methods=['post'])
+    def like(self, request, pk=None):
+        """Toggle your like on a comment."""
+        comment = self.get_object()
+        like, created = CommentLike.objects.get_or_create(user=request.user, comment=comment)
+        if not created:
+            like.delete()
+        count = CommentLike.objects.filter(comment=comment).count()
+        Comment.objects.filter(pk=comment.pk).update(likes_count=count)
+        return Response({'liked': created, 'likes_count': count})

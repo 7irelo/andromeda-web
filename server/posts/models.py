@@ -124,6 +124,7 @@ class Comment(models.Model):
     moderation_status = models.CharField(max_length=10, default='ok', db_index=True,
                                          choices=[('ok', 'OK'), ('review', 'In review'), ('removed', 'Removed')])
     likes_count = models.PositiveIntegerField(default=0)
+    is_edited = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -142,3 +143,48 @@ class PostTag(models.Model):
     class Meta:
         db_table = 'post_tags'
         unique_together = ('post', 'name')
+
+
+class PostRevision(models.Model):
+    """The content a post had before an edit. Visible to whoever can see the post."""
+
+    post = models.ForeignKey(Post, related_name='revisions', on_delete=models.CASCADE)
+    content = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'post_revisions'
+        ordering = ['-created_at', '-id']
+
+
+class CommentLike(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='comment_likes', on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, related_name='likes', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'comment_likes'
+        unique_together = ('user', 'comment')
+
+
+class SavedPost(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='saved_posts', on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, related_name='saved_by', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'saved_posts'
+        unique_together = ('user', 'post')
+        ordering = ['-created_at']
+
+
+class HiddenPost(models.Model):
+    """A post the user asked not to see in their feed again."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='hidden_posts', on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, related_name='hidden_by', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'hidden_posts'
+        unique_together = ('user', 'post')

@@ -1,5 +1,5 @@
 """
-Post side effects: link previews, hashtags and @mentions.
+Post side effects: link previews, hashtags, @mentions and the "new posts" feed event.
 """
 import logging
 import re
@@ -104,3 +104,55 @@ def send_mention_notifications(post_id, usernames, created=True):
             'sender': post.author.username, 'post_id': post_id,
             'created_at': notif.created_at.isoformat(),
         })
+
+
+def queue_new_post_event(post):
+    """After the post commits, tell the author's friends' open feeds that something new exists."""
+    from django.db import transaction
+
+    post_id = post.id
+    transaction.on_commit(lambda: _dispatch(push_new_post, post_id))
+
+
+def _dispatch(task, *args):
+    try:
+        task.delay(*args)
+    except Exception:
+        logger.warning('Background dispatch failed', exc_info=True)
+
+
+def new_post_recipients(post):
+    """
+    Friends of the author who can see ``post``. Mirrors ``core.visibility.visible_posts``
+    for a viewer who is the author's friend: no "only me" or removed posts,
+    blocks in either direction excluded, non-public groups limited to members.
+    """
+    from core import visibility
+    from groups.models import GroupMember
+    from .models import Post
+
+    if post.privacy == Post.PRIVACY_PRIVATE or post.moderation_status == 'removed':
+        return set()
+    recipients = visibility.friend_ids(post.author) - visibility.blocked_ids(post.author)
+    if post.group_id and post.group.privacy != 'public':
+        recipients &= set(GroupMember.objects.filter(
+            group_id=post.group_id, user_id__in=recipients).values_list('user_id', flat=True))
+    return recipients
+
+
+@shared_task(name='posts.tasks.push_new_post', queue='notifications')
+def push_new_post(post_id):
+    """Send ``{type: 'feed.new_post', post_id}`` to each recipient's notification socket. Ids only, never content."""
+    from asgiref.sync import async_to_sync
+    from channels.layers import get_channel_layer
+    from .models import Post
+
+    post = Post.objects.select_related('author', 'group').filter(pk=post_id).first()
+    layer = get_channel_layer()
+    if post is None or layer is None:
+        return
+    for user_id in new_post_recipients(post):
+        try:
+            async_to_sync(layer.group_send)(f'notifications_{user_id}', {'type': 'feed.new_post', 'post_id': post.id})
+        except Exception:
+            logger.warning('Feed event push failed for user %s', user_id, exc_info=True)
