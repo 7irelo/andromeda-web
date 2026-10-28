@@ -20,6 +20,9 @@ import { Page, PageRole, PageTeamMember } from '../../models/page.model';
 import {
   DataExportEntry, ModerationActionKind, ModerationCase, MyCase, ReportableType, ReportReason,
 } from '../../models/moderation.model';
+import {
+  ComposeAssistRequest, ComposeAssistResult, ReplyFeedbackAction, ReplySuggestions,
+} from '../../models/assist.model';
 
 export interface PaginatedResponse<T> {
   count: number;
@@ -125,6 +128,11 @@ export class ApiService {
     return this.http.post<Post>(`${this.API}/posts/${postId}/share/`, { content });
   }
 
+  /** "Help me write": a rewritten or translated draft to accept or discard. Nothing is saved. */
+  composeAssist(body: ComposeAssistRequest): Observable<ComposeAssistResult> {
+    return this.http.post<ComposeAssistResult>(`${this.API}/posts/compose-assist/`, body);
+  }
+
   // ── Users ────────────────────────────────────────────────────────────
   getUser(username: string): Observable<User> {
     return this.http.get<User>(`${this.API}/auth/users/${username}/`);
@@ -183,6 +191,15 @@ export class ApiService {
 
   catchUp(roomId: number): Observable<CatchUp> {
     return this.http.post<CatchUp>(`${this.API}/chats/rooms/${roomId}/catch_up/`, {});
+  }
+
+  suggestReplies(roomId: number): Observable<ReplySuggestions> {
+    return this.http.post<ReplySuggestions>(`${this.API}/chats/rooms/${roomId}/suggest_replies/`, {});
+  }
+
+  sendReplyFeedback(roomId: number, action: ReplyFeedbackAction, suggestionIds: string[]): Observable<{ recorded: number }> {
+    return this.http.post<{ recorded: number }>(`${this.API}/chats/rooms/${roomId}/reply_feedback/`,
+      { action, suggestion_ids: suggestionIds });
   }
 
   markRoomRead(roomId: number): Observable<{ status: string }> {

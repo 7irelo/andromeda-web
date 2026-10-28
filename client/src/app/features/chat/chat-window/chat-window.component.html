@@ -160,6 +160,10 @@
     <button mat-icon-button (click)="replyingTo = null; cancelEdit()" aria-label="Cancel"><mat-icon>close</mat-icon></button>
   </div>
 
+  <!-- Smart replies: chips fill the input, never send -->
+  <app-smart-replies *ngIf="!removed && !editing && !recording" [roomId]="id" [draft]="messageText"
+                     [incomingTick]="incomingTick" (pick)="useSuggestion($event)"></app-smart-replies>
+
   <!-- Input -->
   <div class="message-input-area" *ngIf="!removed">
     <ng-container *ngIf="!recording; else recordingBar">

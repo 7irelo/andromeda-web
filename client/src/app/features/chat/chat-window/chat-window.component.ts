@@ -19,6 +19,7 @@ import { CatchUp, Message, ChatRoom, REACTIONS, ReactionKey } from '../../../mod
 import { User } from '../../../models/user.model';
 import { VoiceNoteComponent } from './voice-note.component';
 import { GroupSettingsComponent } from './group-settings.component';
+import { SmartRepliesComponent } from './smart-replies.component';
 
 const MAX_VOICE_SECONDS = 300;
 // Preferred first: Chrome/Firefox record WebM/Opus, Firefox also Ogg, Safari only MP4.
@@ -28,7 +29,7 @@ const VOICE_EXT: Record<string, string> = { 'audio/webm': 'webm', 'audio/ogg': '
 @Component({
     selector: 'app-chat-window',
     imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule,
-        VoiceNoteComponent, GroupSettingsComponent],
+        VoiceNoteComponent, GroupSettingsComponent, SmartRepliesComponent],
     templateUrl: './chat-window.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./chat-window.component.scss']
@@ -36,6 +37,7 @@ const VOICE_EXT: Record<string, string> = { 'audio/webm': 'webm', 'audio/ogg': '
 export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @Input() roomId!: string;
   @ViewChild('messagesEnd') messagesEnd!: ElementRef;
+  @ViewChild(SmartRepliesComponent) smartReplies?: SmartRepliesComponent;
 
   readonly reactions = REACTIONS;
   room: ChatRoom | null = null;
@@ -66,6 +68,9 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
 
   showSettings = false;
 
+  /** Bumped on each new incoming message, so smart replies can offer suggestions. */
+  incomingTick = 0;
+
   recording = false;
   recordSeconds = 0;
   uploadingVoice = false;
@@ -85,7 +90,7 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
     openReportDialog(this.dialog, { type: 'message', id: msg.id, label: 'message' });
   }
 
-  private get id(): number {
+  get id(): number {
     return parseInt(this.roomId, 10);
   }
 
@@ -134,6 +139,7 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
       if (!this.isMyMessage(m)) {
         this.wsService.markMessageRead(m.id);
         this.markRead();
+        if (!m.is_deleted) this.incomingTick++;
       }
     }));
     this.subs.add(this.wsService.messageUpdated$.subscribe((m) => {
@@ -273,6 +279,11 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
     this.messageText = '';
     this.replyingTo = null;
     this.wsService.sendTyping(false);
+    this.smartReplies?.noteSent(text);
+  }
+
+  useSuggestion(text: string): void {
+    this.messageText = text;
   }
 
   onTyping(): void {
