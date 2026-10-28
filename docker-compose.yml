@@ -195,6 +195,49 @@ services:
       - NEO4J_BOLT_URL=bolt://neo4j:${NEO4J_PASSWORD:-andromeda_secret}@neo4j:7687
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
       - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+      # Caption, visibility-move and clean-up tasks for videos read and write MinIO.
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-andromeda}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-andromeda_secret}
+      - MINIO_BUCKET=andromeda-media
+      - MINIO_EXTERNAL_URL=${MINIO_EXTERNAL_URL:-http://localhost:4200/media}
+    volumes:
+      - media_data:/app/media
+    networks:
+      - andromeda_network
+    depends_on:
+      - django
+    healthcheck:
+      test: ["CMD-SHELL", "grep -qa celery /proc/1/cmdline || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Video transcoding (ffmpeg). One task at a time so a long upload can't
+  # starve the other queues; it reads and writes media through MinIO.
+  celery_video:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: andromeda_celery_video
+    restart: unless-stopped
+    command: celery -A andromeda worker --loglevel=info --concurrency=1 --prefetch-multiplier=1 --task-events -Q video -n video@%h
+    env_file:
+      - .env
+    environment:
+      - AI_SERVICE_URL=http://ai:8100
+      - ANTHROPIC_API_KEY=
+      - OPENAI_API_KEY=
+      - DEEPGRAM_API_KEY=
+      - POSTGRES_HOST=postgres
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-andromeda}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-andromeda_secret}
+      - MINIO_BUCKET=andromeda-media
+      - MINIO_EXTERNAL_URL=${MINIO_EXTERNAL_URL:-http://localhost:4200/media}
     volumes:
       - media_data:/app/media
     networks:

@@ -476,6 +476,152 @@ class TestUploads:
             validate_attachment(SimpleUploadedFile('page.html', b'<script>'))
 
 
+# ── Watch ────────────────────────────────────────────────────────────────────
+
+def _processed_video(owner, is_public=True, **extra):
+    """A ready video with real files in storage, as the pipeline leaves it."""
+    from django.core.files.base import ContentFile
+    from django.core.files.storage import default_storage
+    from watch.access import asset_key
+
+    video = Video.objects.create(uploader=owner, title='clip', video_file='private/watch/originals/x.mp4',
+                                 status='ready', is_public=is_public, asset_root='public' if is_public else 'private',
+                                 asset_id=f'{owner.id:04d}{Video.objects.count():028d}', duration=60,
+                                 asset_files=['master.m3u8', 'thumb.jpg', '360p/index.m3u8', '360p/seg_00000.ts'],
+                                 captions_vtt='WEBVTT\n\n', transcript='secret words', **extra)
+    for rel in video.asset_files:
+        default_storage.save(asset_key(video, rel), ContentFile(b'#EXTM3U\n'))
+    return video
+
+
+def _stream_url(video, user, path='master.m3u8'):
+    from watch.access import stream_token
+    return reverse('watch-stream', kwargs={'token': stream_token(video.pk, user.pk), 'path': path})
+
+
+class TestWatch:
+    """Private videos: owner only. Blocks: both ways. Anonymous: nothing."""
+
+    READ_ROUTES = ['video-detail', 'video-captions', 'video-transcript', 'video-progress', 'video-comments']
+
+    def test_private_video_is_owner_only(self, alice, mallory):
+        video = _processed_video(alice, is_public=False)
+        for name in self.READ_ROUTES:
+            url = reverse(name, kwargs={'pk': video.pk})
+            assert client_for(alice).get(url).status_code == 200, name
+            assert client_for(mallory).get(url).status_code == 404, name
+            assert APIClient().get(url).status_code == 401, name
+        c = client_for(mallory)
+        assert c.post(reverse('video-like', kwargs={'pk': video.pk})).status_code == 404
+        assert c.post(reverse('video-progress', kwargs={'pk': video.pk}), {'position_s': 1},
+                      format='json').status_code == 404
+        assert c.post(reverse('video-comments', kwargs={'pk': video.pk}), {'content': 'hi'},
+                      format='json').status_code == 404
+        assert video.pk not in [v['id'] for v in c.get(reverse('video-list')).data['results']]
+
+    def test_processing_and_failed_videos_are_owner_only(self, alice, mallory):
+        for state in ('processing', 'failed'):
+            video = Video.objects.create(uploader=alice, title=state, video_file='private/x.mp4', status=state,
+                                         failure_reason='Videos can be at most 20 minutes long.')
+            assert client_for(mallory).get(reverse('video-detail', kwargs={'pk': video.pk})).status_code == 404
+            assert client_for(mallory).post(reverse('video-retry', kwargs={'pk': video.pk})).status_code == 404
+
+    def test_stranger_cannot_retry_public_video(self, alice, mallory):
+        video = _processed_video(alice)
+        assert client_for(mallory).post(reverse('video-retry', kwargs={'pk': video.pk})).status_code == 403
+
+    def test_original_upload_is_never_exposed(self, alice, bob):
+        video = _processed_video(alice)
+        body = client_for(bob).get(reverse('video-detail', kwargs={'pk': video.pk})).data
+        assert 'video_file' not in body and 'originals' not in str(body)
+        assert body['failure_reason'] == ''
+
+    def test_blocked_users_cannot_see_videos_or_channels(self, alice, mallory):
+        video = _processed_video(alice)
+        url = _stream_url(video, mallory)  # issued before the block
+        Block.objects.create(blocker=alice, blocked=mallory)
+        c = client_for(mallory)
+        for name in self.READ_ROUTES:
+            assert c.get(reverse(name, kwargs={'pk': video.pk})).status_code == 404, name
+        assert c.get(url).status_code == 404
+        assert c.get(reverse('channel-detail', kwargs={'pk': alice.pk})).status_code == 404
+        assert c.post(reverse('channel-subscribe', kwargs={'pk': alice.pk})).status_code == 404
+        assert c.get(reverse('video-list'), {'uploader': alice.pk}).data['results'] == []
+        # And the other way round.
+        mine = _processed_video(mallory)
+        assert client_for(alice).get(reverse('video-detail', kwargs={'pk': mine.pk})).status_code == 404
+
+    def test_history_hides_videos_that_became_invisible(self, alice, bob):
+        from watch.models import WatchProgress
+        video = _processed_video(alice)
+        WatchProgress.objects.create(user=bob, video=video, position_s=10)
+        assert len(client_for(bob).get(reverse('watch-history-list')).data['results']) == 1
+        Video.objects.filter(pk=video.pk).update(is_public=False)
+        assert client_for(bob).get(reverse('watch-history-list')).data['results'] == []
+
+    def test_history_is_per_user(self, alice, bob, mallory):
+        from watch.models import WatchProgress
+        video = _processed_video(alice)
+        WatchProgress.objects.create(user=bob, video=video, position_s=10)
+        c = client_for(mallory)
+        assert c.get(reverse('watch-history-list')).data['results'] == []
+        c.delete(reverse('watch-history-detail', kwargs={'video_id': video.pk}))
+        c.delete(reverse('watch-history-clear'))
+        assert WatchProgress.objects.filter(user=bob).exists()
+
+    def test_anonymous_gets_nothing(self, alice):
+        anon = APIClient()
+        for url in (reverse('video-list'), reverse('watch-history-list'), reverse('channel-list'),
+                    reverse('channel-detail', kwargs={'pk': alice.pk})):
+            assert anon.get(url).status_code == 401, url
+        assert anon.post(reverse('channel-subscribe', kwargs={'pk': alice.pk})).status_code == 401
+
+    def test_stream_link_is_bound_to_viewer_and_video(self, alice, bob, mallory):
+        private = _processed_video(alice, is_public=False)
+        anon = APIClient()
+        r = anon.get(_stream_url(private, alice))  # the link is the credential, re-checked for alice
+        assert r.status_code == 200 and r['Cache-Control'] == 'private, no-store'
+        assert r['Content-Security-Policy'] == "default-src 'none'; sandbox"
+        assert anon.get(_stream_url(private, mallory)).status_code == 404
+        # Revoked as soon as the video stops being visible to the link's owner.
+        public = _processed_video(alice)
+        url = _stream_url(public, bob)
+        assert anon.get(url).status_code == 200
+        Video.objects.filter(pk=public.pk).update(is_public=False)
+        assert anon.get(url).status_code == 404
+
+    def test_stream_link_tampering(self, alice, settings):
+        from watch.access import stream_token
+        video = _processed_video(alice, is_public=False)
+        token = stream_token(video.pk, alice.pk)
+        anon = APIClient()
+        assert anon.get(f'/api/watch/stream/{token[:-3]}abc/master.m3u8').status_code == 404
+        other = _processed_video(alice, is_public=False)
+        swapped = stream_token(other.pk, alice.pk).split(':')[0] + ':' + token.split(':', 1)[1]
+        assert anon.get(f'/api/watch/stream/{swapped}/master.m3u8').status_code == 404
+        for path in ('../../../etc/passwd', '..%2F..%2Fsecret', '360p/../../x', 'source', 'audio.webm',
+                     '1080p/index.m3u8'):
+            assert anon.get(f'/api/watch/stream/{token}/{path}').status_code == 404, path
+        assert anon.post(f'/api/watch/stream/{token}/master.m3u8').status_code == 405
+        settings.WATCH_STREAM_TOKEN_MAX_AGE = -1
+        assert anon.get(f'/api/watch/stream/{token}/master.m3u8').status_code == 404
+
+    def test_stream_link_for_deactivated_user(self, alice):
+        video = _processed_video(alice, is_public=False)
+        url = _stream_url(video, alice)
+        User.objects.filter(pk=alice.pk).update(is_active=False)
+        assert APIClient().get(url).status_code == 404
+
+    def test_cannot_edit_others_video_visibility(self, alice, mallory):
+        video = _processed_video(alice, is_public=False)
+        url = reverse('video-detail', kwargs={'pk': video.pk})
+        assert client_for(mallory).patch(url, {'is_public': True}, format='json').status_code == 404
+        public = _processed_video(alice)
+        r = client_for(mallory).patch(reverse('video-detail', kwargs={'pk': public.pk}), {'is_public': False},
+                                      format='json')
+        assert r.status_code == 403
+
+
 def test_seed_command_builds_a_graph(db, settings):
     from django.core.management import call_command
     settings.DEBUG = True
