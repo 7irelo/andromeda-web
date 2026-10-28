@@ -67,7 +67,8 @@
             [type]="hidePassword ? 'password' : 'text'"
             autocomplete="current-password"
           />
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
+                  [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'" [attr.aria-pressed]="!hidePassword">
             <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
           <mat-error *ngIf="form.get('password')?.invalid">At least 6 characters</mat-error>
