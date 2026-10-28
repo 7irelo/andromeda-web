@@ -1,0 +1,70 @@
+{
+  "trained_at": "2026-10-28T10:55:25Z",
+  "embedding_model": "text-embedding-3-small",
+  "train_items": 508,
+  "validation_items": 128,
+  "teacher": "claude-opus-5-5",
+  "temperature": 0.75,
+  "allow_threshold": 0.8,
+  "validation_vs_teacher": {
+    "accuracy": 0.75,
+    "ece": 0.069
+  },
+  "moderation_v2.jsonl": {
+    "items": 60,
+    "accuracy": 0.767,
+    "macro_f1": 0.744,
+    "per_class": {
+      "allow": {
+        "precision": 0.852,
+        "recall": 0.92,
+        "f1": 0.885
+      },
+      "review": {
+        "precision": 0.769,
+        "recall": 0.526,
+        "f1": 0.625
+      },
+      "remove": {
+        "precision": 0.65,
+        "recall": 0.812,
+        "f1": 0.722
+      }
+    },
+    "ece": 0.068,
+    "coverage_at_threshold": 0.3,
+    "unsafe_passed_at_threshold": [
+      "mod-029"
+    ],
+    "embedding_latency_ms_per_item_batched": 16.3
+  },
+  "moderation_holdout_v1.jsonl": {
+    "items": 24,
+    "accuracy": 0.625,
+    "macro_f1": 0.616,
+    "per_class": {
+      "allow": {
+        "precision": 0.7,
+        "recall": 0.875,
+        "f1": 0.778
+      },
+      "review": {
+        "precision": 1.0,
+        "recall": 0.333,
+        "f1": 0.5
+      },
+      "remove": {
+        "precision": 0.4,
+        "recall": 1.0,
+        "f1": 0.571
+      }
+    },
+    "ece": 0.222,
+    "coverage_at_threshold": 0.208,
+    "unsafe_passed_at_threshold": [
+      "hold-004"
+    ],
+    "embedding_latency_ms_per_item_batched": 38.8
+  },
+  "cost_usd_per_1m_items": 1.2
+}

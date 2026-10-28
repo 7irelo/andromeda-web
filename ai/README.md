@@ -98,3 +98,28 @@ remove (an offer asking for ID and bank details was removed rather than reviewed
 
 The first baseline (35 items, 2026-10-27) reported review F1 0.29. It had only four review items, so that
 figure was mostly small-sample noise; the larger sets above replace it.
+
+### Distilled first pass (optional, off by default)
+
+[`distill/`](distill/) trains a small classifier from a frontier teacher: 636 synthetic posts
+([`generate.py`](distill/generate.py)) labelled by Claude Opus through the Batch API
+([`label.py`](distill/label.py), about $2.08), then text-embedding-3-small vectors into a
+temperature-calibrated logistic regression ([`train.py`](distill/train.py)). The model is plain JSON:
+coefficients and a threshold, nothing that executes on load. The student may only answer "allow", and only
+above a threshold chosen so that at most 1% of the validation items it waves through were review or remove.
+Everything else still goes through the LLM pipeline. It is scored on the human-labelled sets, never on its
+own training data.
+
+| | Frontier pipeline (v2) | Distilled student |
+|---|---|---|
+| Held-out macro-F1 | **0.948** | 0.616 |
+| Dev macro-F1 | **0.965** | 0.744 |
+| Traffic it decides alone (dev / held-out) | n/a | 30% / 21% |
+| Non-allow items waved through (dev / held-out) | 0 / 0 | 1 / 1 |
+| Cost per 1,000 items | ~$0.8 | ~$0.001 |
+| Latency per item | 4–5 s p95 | ~20–40 ms |
+
+The two items it let through were borderline "review" cases, a veiled threat about shutting a town down and
+a put-down aimed at a group, not severe harm. That still misses the bar, so the stage stays off.
+`MODERATION_STUDENT_PATH` turns it on once a retrained student meets that bar on the held-out set. More teacher
+labels on borderline content are the obvious next step.
