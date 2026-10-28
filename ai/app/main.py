@@ -9,6 +9,7 @@ from .auth import ActingUser, acting_user
 from .budget import Budget
 from .config import get_settings
 from .features.catchup import CatchUpRequest, CatchUpResult, catch_up
+from .features.listing import DraftRequest, DraftResult, draft
 from .features.moderation import ModerationRequest, ModerationResult, moderate
 from .features.speech import (DeepgramClient, SpeakRequest, SpeechUnavailable, TranscribeRequest, TranscribeResult,
                               transcribe)
@@ -99,6 +100,11 @@ async def rerank_endpoint(body: RerankRequest, request: Request, user: ActingUse
 @app.post('/v1/ask', response_model=AskResult)
 async def ask_endpoint(body: AskRequest, request: Request, user: ActingUser = Depends(acting_user)):
     return await _run(ask(body, request.app.state.gateway, user.id), 'The model declined to answer that')
+
+
+@app.post('/v1/listing/draft', response_model=DraftResult)
+async def listing_draft_endpoint(body: DraftRequest, request: Request, user: ActingUser = Depends(acting_user)):
+    return await _run(draft(body, request.app.state.gateway, user.id), 'The model declined to describe these photos')
 
 
 @app.post('/v1/transcribe', response_model=TranscribeResult)
