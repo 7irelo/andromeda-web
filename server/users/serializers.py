@@ -5,10 +5,12 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from core import visibility
 from core.validators import sanitize_image
+from imaging import variants
 from .models import User, FriendRequest
 
 # Visible to anyone who can see the user at all (search results, post authors).
-BASIC_FIELDS = ['id', 'username', 'first_name', 'last_name', 'full_name', 'avatar_url', 'is_verified']
+BASIC_FIELDS = ['id', 'username', 'first_name', 'last_name', 'full_name', 'avatar_url', 'avatar_variants',
+                'is_verified']
 # Visible when the viewer passes the user's profile-privacy setting.
 PROFILE_FIELDS = BASIC_FIELDS + [
     'bio', 'cover_photo_url', 'location', 'website', 'friends_count', 'posts_count', 'created_at',
@@ -37,6 +39,8 @@ class UserSerializer(serializers.ModelSerializer):
     """
 
     avatar_url = serializers.SerializerMethodField()
+    # {'thumb', 'medium', 'srcset'}: WebP variants for <img srcset>, or null.
+    avatar_variants = serializers.SerializerMethodField()
     cover_photo_url = serializers.SerializerMethodField()
     is_friend = serializers.SerializerMethodField()
     friend_request_sent = serializers.SerializerMethodField()
@@ -62,6 +66,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_avatar_url(self, obj):
         return _absolute(self.context.get('request'), obj.avatar)
+
+    def get_avatar_variants(self, obj):
+        return variants.urls(obj.avatar, variants.AVATAR_WIDTHS, self.context.get('request'))
 
     def get_cover_photo_url(self, obj):
         return _absolute(self.context.get('request'), obj.cover_photo)

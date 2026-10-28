@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'pages.apps.PagesConfig',
     'outbox.apps.OutboxConfig',
     'feedcache.apps.FeedcacheConfig',
+    'imaging.apps.ImagingConfig',
 ]
 
 MIDDLEWARE = [

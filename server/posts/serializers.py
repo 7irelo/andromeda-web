@@ -4,6 +4,7 @@ from rest_framework import serializers
 from core import visibility
 from core.permissions import is_page_admin
 from core.validators import sanitize_image, validate_video
+from imaging import variants
 from users.serializers import BASIC_FIELDS, UserSerializer
 from .models import Post, Like, Comment, PostMedia, PostRevision, PostTag, SavedPost
 
@@ -51,9 +52,17 @@ class PostTagSerializer(serializers.ModelSerializer):
 
 
 class PostMediaSerializer(serializers.ModelSerializer):
+    # {'thumb', 'medium', 'srcset'}: WebP variants for <img srcset>, or null.
+    variants = serializers.SerializerMethodField()
+
     class Meta:
         model = PostMedia
-        fields = ['id', 'file', 'media_type', 'order']
+        fields = ['id', 'file', 'variants', 'media_type', 'order']
+
+    def get_variants(self, obj):
+        if obj.media_type != 'image':
+            return None
+        return variants.urls(obj.file, variants.POST_WIDTHS, self.context.get('request'))
 
 
 class PostRevisionSerializer(serializers.ModelSerializer):
@@ -160,6 +169,7 @@ class PostSerializer(serializers.ModelSerializer):
         child=serializers.IntegerField(), write_only=True, required=False, max_length=MAX_IMAGES,
         help_text='On edit: the ids of the media to keep, in display order. Others are removed.',
     )
+    image_variants = serializers.SerializerMethodField()
     my_reaction = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
     reason = serializers.SerializerMethodField()
@@ -172,7 +182,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = [
             'id', 'author', 'content', 'post_type', 'privacy',
-            'image', 'video', 'link_url', 'link_title', 'link_description', 'link_image',
+            'image', 'image_variants', 'video', 'link_url', 'link_title', 'link_description', 'link_image',
             'group', 'page', 'group_data', 'page_data',
             'likes_count', 'comments_count', 'shares_count',
             'shared_post', 'shared_post_data',
@@ -265,6 +275,9 @@ class PostSerializer(serializers.ModelSerializer):
                 PostMedia.objects.filter(post=post, id=media_id).update(order=position)
         _add_images(post, images, start=post.media.count())
         return post
+
+    def get_image_variants(self, obj):
+        return variants.urls(obj.image, variants.POST_WIDTHS, self.context.get('request'))
 
     def get_my_reaction(self, obj):
         reactions = self._state('reactions')
