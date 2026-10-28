@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'watch.apps.WatchConfig',
     'pages.apps.PagesConfig',
     'outbox.apps.OutboxConfig',
+    'feedcache.apps.FeedcacheConfig',
 ]
 
 MIDDLEWARE = [
@@ -218,6 +219,13 @@ OUTBOX_BACKOFF_MAX_SECONDS = 3600
 OUTBOX_RETENTION_DAYS = 7
 GRAPH_RECONCILE_BATCH = int(os.environ.get('GRAPH_RECONCILE_BATCH', 1000))
 
+# ── Feed candidate cache (Redis lists; an accelerator, never an authority) ──
+FEEDCACHE_ENABLED = os.environ.get('FEEDCACHE_ENABLED', 'True') == 'True'
+# Authors, Pages and groups with more followers/friends/members than this are
+# merged in when the feed is read instead of being pushed to every inbox.
+FEEDCACHE_FANOUT_THRESHOLD = int(os.environ.get('FEEDCACHE_FANOUT_THRESHOLD', 1000))
+FEEDCACHE_MAX_ITEMS = int(os.environ.get('FEEDCACHE_MAX_ITEMS', 500))
+FEEDCACHE_TTL_SECONDS = int(os.environ.get('FEEDCACHE_TTL_SECONDS', 3 * 24 * 60 * 60))
 
 # ============================================================
 # REST Framework
