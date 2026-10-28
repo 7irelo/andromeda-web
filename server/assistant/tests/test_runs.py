@@ -295,3 +295,21 @@ def test_events_are_pushed_to_the_owners_socket_group(fake_ai, ask, thandi, monk
     ask(thandi, 'groups?')
     assert {o for o, _ in pushed} == {thandi.id}
     assert [e for _, e in pushed][-1] == 'assistant.done' and ('assistant.step' in [e for _, e in pushed])
+
+
+def test_a_decision_made_before_the_run_pauses_is_not_lost(fake_ai, ask, thandi, monkeypatch):
+    """The member approves while the worker is still finishing the step: the run must carry on, not hang."""
+    from assistant import events, proposals
+
+    real_push = events.push
+
+    def approve_immediately(run, event, **extra):
+        if event == 'assistant.proposal':
+            proposals.decide(extra['proposal_id'], thandi, True)
+        real_push(run, event, **extra)
+
+    monkeypatch.setattr(events, 'push', approve_immediately)
+    fake_ai(steps=[{'calls': [call('create_post', text='Quick one')]}, {'text': 'Posted it.'}])
+    run = ask(thandi, 'post quick one')
+    run.refresh_from_db()
+    assert run.status == 'done' and run.answer == 'Posted it.' and Post.objects.get().content == 'Quick one'

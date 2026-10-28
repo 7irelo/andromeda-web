@@ -10,7 +10,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from . import runner, tools
-from .models import AIWriteAudit, AssistantStep, Proposal
+from .models import AIWriteAudit, AssistantRun, AssistantStep, Proposal
 
 
 class DecisionError(Exception):
@@ -42,6 +42,9 @@ def decide(proposal_id, user, approve):
             raise DecisionError('Not found.', 404)
         if proposal.status != Proposal.STATUS_PENDING:
             raise DecisionError(f'This proposal was already {proposal.status}.', 409)
+        if proposal.run_id:
+            # Serialise with the runner pausing the run (see runner._await).
+            AssistantRun.objects.select_for_update().filter(pk=proposal.run_id).first()
         now = timezone.now()
         if proposal.is_expired:
             proposal.status, proposal.decided_at = Proposal.STATUS_EXPIRED, now

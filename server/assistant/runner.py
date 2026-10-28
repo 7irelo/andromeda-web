@@ -257,12 +257,23 @@ def fail(run, reason):
 
 
 def _await(run, interim=''):
-    run.status = AssistantRun.STATUS_AWAITING
-    if interim:
-        run.answer = strip_links(interim, run.request_text)[:8000]
-    run.locked_until = None
-    run.save(update_fields=['status', 'answer', 'locked_until', 'updated_at'])
+    """
+    Pause for the member. Returns False if every proposal was decided in the
+    meantime, so the caller carries on instead. The run row is locked, as it is
+    when a proposal is decided, so a decision can't slip in between the check
+    and the pause and leave the run waiting for nothing.
+    """
+    with transaction.atomic():
+        AssistantRun.objects.select_for_update().filter(pk=run.pk).first()
+        if not run.proposals.filter(status=Proposal.STATUS_PENDING).exists():
+            return False
+        run.status = AssistantRun.STATUS_AWAITING
+        if interim:
+            run.answer = strip_links(interim, run.request_text)[:8000]
+        run.locked_until = None
+        run.save(update_fields=['status', 'answer', 'locked_until', 'updated_at'])
     events.push(run, 'assistant.awaiting_approval')
+    return True
 
 
 # ── Paths ────────────────────────────────────────────────────────────────────
@@ -388,9 +399,12 @@ def _after_proposal(run, call_id):
     if result is None:
         proposal = Proposal.objects.filter(run=run, call_id=call_id).first()
         if proposal is not None and _write_call(run, call_id, proposal.tool, proposal.arguments):
-            what = 'post' if proposal.tool == 'create_post' else 'message'
-            return _await(run, f"Here's a draft {what}. Check it and approve it to {'post' if what == 'post' else 'send'}"
-                               ' it.')
+            verb = 'post' if proposal.tool == 'create_post' else 'send'
+            noun = 'post' if verb == 'post' else 'message'
+            if _await(run, f"Here's a draft {noun}. Check it and approve it to {verb} it."):
+                return None
+            proposal.refresh_from_db()
+            record_decision(proposal)
         result = _step(run, f'tool:{call_id}')
     decision = (result.output or {}).get('decision') if result else None
     if decision == Proposal.STATUS_APPROVED:
@@ -422,8 +436,10 @@ def _agent(run):
                     waiting = _write_call(run, call_id, name, arguments) or waiting
                 else:
                     _tool_call(run, call_id, name, arguments)
+            if waiting and _await(run, last.output.get('text', '') or 'I need your approval before I continue.'):
+                return None
             if waiting:
-                return _await(run, last.output.get('text', '') or 'I need your approval before I continue.')
+                continue  # decided while we were working: pick the results up on the next pass
         if len(model_steps) >= MAX_AGENT_STEPS:
             return finish(run, f"I stopped after {MAX_AGENT_STEPS} steps without finishing. "
                                'Try asking for something more specific.')
