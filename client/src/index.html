@@ -4,17 +4,32 @@
   <meta charset="utf-8">
   <title>Andromeda</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Andromeda – Connect with the universe around you">
+  <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons&amp;display=block" rel="stylesheet">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#3f51b5">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+  <meta name="theme-color" content="#4f46e5">
+  <style>
+    /* Boot shell: painted before the app script runs (and if it never does). */
+    .boot { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 12px; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; color: #475569; }
+    .boot-mark { width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+    .boot-name { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -.5px; }
+    @media (prefers-color-scheme: dark) { body { background: #0f172a; } .boot { color: #a3b1c6; } .boot-name { color: #f1f5f9; } }
+  </style>
 </head>
 <body class="mat-typography">
-  <app-root></app-root>
-  <noscript>Please enable JavaScript to continue using this application.</noscript>
+  <app-root>
+    <div class="boot" aria-hidden="true">
+      <div class="boot-mark"></div>
+      <div class="boot-name">Andromeda</div>
+    </div>
+  </app-root>
+  <noscript>Andromeda needs JavaScript. Please enable it to continue.</noscript>
 </body>
 </html>

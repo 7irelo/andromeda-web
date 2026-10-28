@@ -13,12 +13,15 @@
   gap: 12px;
   box-shadow: var(--shadow-sm);
   backdrop-filter: blur(8px);
+
+  @media (max-width: 600px) { padding: 0 12px; gap: 8px; }
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: var(--touch-target);
   font-size: 20px;
   font-weight: 800;
   background: var(--gradient-primary);
@@ -31,10 +34,10 @@
 
   .brand-icon {
     font-size: 28px;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    width: 28px;
+    height: 28px;
+    color: var(--primary);
+    -webkit-text-fill-color: currentColor;
   }
 
   .brand-name { display: none; @media (min-width: 768px) { display: block; } }
@@ -44,13 +47,14 @@
   display: flex;
   align-items: center;
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 24px;
-  padding: 0 14px;
-  height: 38px;
-  gap: 8px;
+  padding: 0 14px 0 4px;
+  height: 40px;
+  gap: 4px;
   flex: 0 0 240px;
-  transition: border-color .2s, box-shadow .2s;
+  min-width: 0;
+  transition: border-color .2s, box-shadow .2s, flex-basis .2s;
 
   &:focus-within {
     border-color: var(--primary);
@@ -58,26 +62,42 @@
     background: var(--surface);
   }
 
-  .search-icon { font-size: 18px; color: var(--text-secondary); }
+  .search-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    cursor: text;
+  }
+
+  .search-icon { font-size: 20px; width: 20px; height: 20px; color: var(--text-secondary); }
 
   .search-input {
     border: none;
     background: transparent;
-    outline: none;
+    font: inherit;
     font-size: 14px;
-    width: 170px;
+    width: 100%;
+    min-width: 0;
     color: var(--text-primary);
 
+    // The box shows the focus ring; the input inside doesn't need its own.
+    &:focus-visible { outline: none; }
     &::placeholder { color: var(--text-muted); }
   }
 
+  // Collapsed to an icon on phones; tapping the icon (a <label>) focuses the input and expands it.
   @media (max-width: 600px) {
-    flex: 0 0 42px;
-    padding: 0 10px;
-    .search-input { display: none; }
+    flex: 0 0 var(--touch-target);
+    height: var(--touch-target);
+    padding: 0 4px;
+    border-radius: var(--radius-full);
+    .search-input { width: 0; }
     &:focus-within {
-      flex: 1;
-      .search-input { display: block; }
+      flex: 1 1 auto;
+      .search-input { width: 100%; }
     }
   }
 }
@@ -89,7 +109,8 @@
   background: none;
   cursor: pointer;
   color: var(--text-primary);
-  padding: 4px;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
   border-radius: 8px;
   transition: background .15s;
 
@@ -100,6 +121,7 @@
     align-items: center;
     justify-content: center;
   }
+  @media (max-width: 600px) { display: none; }
 }
 
 // ── Nav links ──────────────────────────────────────────────────
@@ -143,7 +165,15 @@
 
   mat-icon { font-size: 24px; }
 
-  .nav-label { display: none; }
+  .nav-label {
+    // Visible in the mobile menu; for screen readers everywhere.
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 
   &:hover {
     background: var(--primary-light);
@@ -173,7 +203,7 @@
     padding: 0 16px;
     gap: 12px;
 
-    .nav-label { display: inline; font-weight: 500; font-size: 15px; }
+    .nav-label { position: static; width: auto; height: auto; clip: auto; font-weight: 500; font-size: 15px; }
 
     &.active::after { display: none; }
     &.active {
@@ -187,14 +217,16 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .action-btn {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -203,27 +235,88 @@
   cursor: pointer;
   transition: background .15s, border-color .15s, transform .1s;
 
-  &:hover {
+  &:hover, &.active {
     background: var(--primary-light);
     border-color: var(--primary);
     color: var(--primary);
     text-decoration: none;
-    transform: scale(1.05);
   }
-}
-
-.avatar-btn {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0;
-  border-radius: 50%;
-  transition: transform .1s;
 
   &:hover { transform: scale(1.05); }
 
-  .avatar {
-    border: 2.5px solid var(--primary);
-    box-shadow: 0 0 0 2px var(--primary-light);
+  @media (pointer: coarse), (max-width: 768px) { width: var(--touch-target); height: var(--touch-target); }
+  @media (max-width: 600px) { &.top-only { display: none; } }
+}
+
+.count-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: #b91c1c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+
+  .avatar { border: 2.5px solid var(--primary); }
+}
+
+// ── Bottom navigation ──────────────────────────────────────────
+.bottom-nav {
+  display: none;
+
+  @media (max-width: 600px) {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, .06);
   }
+}
+
+.bottom-item {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--touch-target);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+
+  span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  &:hover { text-decoration: none; color: var(--primary); }
+  &.active { color: var(--primary); }
+
+  .icon-wrap { position: relative; display: flex; overflow: visible; }
+  .count-badge { top: -6px; right: -12px; }
 }

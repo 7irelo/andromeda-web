@@ -39,9 +39,10 @@
   font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--text-primary);
+  margin: 0;
 }
 
-.state-message { font-size: var(--font-size-sm); max-width: 340px; }
+.state-message { font-size: var(--font-size-sm); max-width: 340px; margin: 0; }
 
 .state-actions {
   display: flex;

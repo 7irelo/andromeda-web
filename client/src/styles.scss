@@ -198,6 +198,19 @@ html, body {
   transition: background-color .3s, color .3s;
 }
 
+// Base type scale on <body class="mat-typography">. The old prebuilt M2 theme
+// shipped these rules; the M3 theme doesn't, so they live here (in our font).
+.mat-typography {
+  font: 400 14px / 20px var(--font-family);
+  letter-spacing: .0178571429em;
+
+  h1 { font: 400 24px / 32px var(--font-family); margin: 0 0 16px; }
+  h2 { font: 500 20px / 32px var(--font-family); letter-spacing: .0125em; margin: 0 0 16px; }
+  h3 { font: 400 16px / 28px var(--font-family); letter-spacing: .009375em; margin: 0 0 16px; }
+  h4 { font: 400 16px / 24px var(--font-family); letter-spacing: .03125em; margin: 0 0 16px; }
+  p { margin: 0 0 12px; }
+}
+
 // ── Accessibility ─────────────────────────────────────────────────────────────
 // Visible keyboard focus everywhere (mouse clicks don't show it).
 :focus-visible {

@@ -1,95 +1,122 @@
 <header class="navbar">
   <!-- Brand -->
-  <a class="brand" routerLink="/feed">
-    <mat-icon class="brand-icon">hub</mat-icon>
-    <span class="brand-name">Andromeda</span>
+  <a class="brand" routerLink="/feed" aria-label="Andromeda home" i18n-aria-label="@@nav.home">
+    <mat-icon class="brand-icon" aria-hidden="true">hub</mat-icon>
+    <span class="brand-name" aria-hidden="true">Andromeda</span>
   </a>
 
   <!-- Search -->
-  <div class="search-box">
-    <mat-icon class="search-icon">search</mat-icon>
+  <form class="search-box" role="search" (submit)="search($event, searchInput)">
+    <label for="nav-search" class="search-label">
+      <mat-icon class="search-icon" aria-hidden="true">search</mat-icon>
+      <span class="visually-hidden" i18n="@@nav.searchLabel">Search Andromeda</span>
+    </label>
     <input
-      type="text"
+      #searchInput
+      id="nav-search"
+      type="search"
       placeholder="Search Andromeda..."
-      [(ngModel)]="searchQuery"
-      (keyup.enter)="search()"
+      i18n-placeholder="@@nav.searchPlaceholder"
       class="search-input"
+      autocomplete="off"
+      enterkeyhint="search"
     />
-  </div>
+  </form>
 
-  <!-- Mobile Hamburger -->
-  <button class="hamburger-btn" (click)="toggleMobileMenu()">
-    <mat-icon>{{ mobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
+  <!-- Mobile Hamburger (768px and below; the bottom bar takes over at 600px) -->
+  <button
+    type="button"
+    class="hamburger-btn"
+    (click)="toggleMobileMenu()"
+    aria-controls="main-nav"
+    [attr.aria-expanded]="mobileMenuOpen"
+    [attr.aria-label]="mobileMenuOpen ? closeMenuLabel : openMenuLabel"
+  >
+    <mat-icon aria-hidden="true">{{ mobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
   </button>
 
   <!-- Nav Icons -->
-  <nav class="nav-links" [class.mobile-open]="mobileMenuOpen">
-    <a
-      *ngFor="let item of navItems"
-      [routerLink]="item.route"
-      routerLinkActive="active"
-      class="nav-item"
-      [matTooltip]="item.label"
-      matTooltipPosition="below"
-      (click)="mobileMenuOpen = false"
-    >
-      <mat-icon>{{ item.icon }}</mat-icon>
-      <span class="nav-label">{{ item.label }}</span>
-    </a>
+  <nav id="main-nav" class="nav-links" [class.mobile-open]="mobileMenuOpen" aria-label="Main" i18n-aria-label="@@nav.main">
+    @for (item of navItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        class="nav-item"
+        [title]="item.label"
+        (click)="mobileMenuOpen = false"
+      >
+        <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
+    }
   </nav>
 
   <!-- Right Actions -->
   <div class="right-actions">
-    <!-- Chat -->
-    <a routerLink="/chat" class="action-btn" matTooltip="Messenger" matTooltipPosition="below">
-      <mat-icon
-        [matBadge]="unreadChats || null"
-        matBadgeColor="warn"
-        matBadgeSize="small"
-        [attr.aria-label]="unreadChats ? unreadChats + ' unread conversations' : null"
-      >chat</mat-icon>
+    <a routerLink="/chat" routerLinkActive="active" class="action-btn top-only" [title]="messengerLabel"
+       [attr.aria-label]="chatAriaLabel()">
+      <mat-icon aria-hidden="true">chat</mat-icon>
+      @if (unreadChats) {
+        <span class="count-badge" aria-hidden="true">{{ badge(unreadChats) }}</span>
+      }
     </a>
 
-    <!-- Notifications -->
-    <a routerLink="/notifications" class="action-btn" matTooltip="Notifications" matTooltipPosition="below">
-      <mat-icon
-        [matBadge]="unreadNotifications || null"
-        matBadgeColor="warn"
-        matBadgeSize="small"
-      >notifications</mat-icon>
+    <a routerLink="/notifications" routerLinkActive="active" class="action-btn top-only" [title]="notificationsLabel"
+       [attr.aria-label]="notificationsAriaLabel()">
+      <mat-icon aria-hidden="true">notifications</mat-icon>
+      @if (unreadNotifications) {
+        <span class="count-badge" aria-hidden="true">{{ badge(unreadNotifications) }}</span>
+      }
     </a>
 
-    <!-- Profile Menu -->
-    <button class="avatar-btn" [matMenuTriggerFor]="profileMenu">
-      <img
-        [src]="currentUser?.avatar_url || 'assets/default-avatar.png'"
-        [alt]="$safeNavigationMigration(currentUser?.username)"
-        class="avatar sm"
-      />
-    </button>
-
-    <mat-menu #profileMenu="matMenu">
-      <a mat-menu-item [routerLink]="'/profile/' + $safeNavigationMigration(currentUser?.username)">
-        <mat-icon>person</mat-icon>
-        <span>My Profile</span>
-      </a>
-      <a mat-menu-item routerLink="/settings">
-        <mat-icon>settings</mat-icon>
-        <span>Settings</span>
-      </a>
-      <a mat-menu-item routerLink="/moderation" *ngIf="currentUser?.is_staff">
-        <mat-icon>gavel</mat-icon>
-        <span>Moderation</span>
-      </a>
-      <a mat-menu-item routerLink="/marketplace">
-        <mat-icon>storefront</mat-icon>
-        <span>My Listings</span>
-      </a>
-      <mat-divider></mat-divider>
-      <button mat-menu-item (click)="logout()">
-        <mat-icon>logout</mat-icon>
-        <span>Log Out</span>
-      </button>
-    </mat-menu>
+    <!-- The menu (MatMenu + overlay) loads once the browser is idle, outside the initial bundle. -->
+    @defer (on idle) {
+      <app-profile-menu [user]="currentUser"></app-profile-menu>
+    } @placeholder {
+      <span class="avatar-placeholder">
+        <img [src]="currentUser?.avatar_url || 'assets/default-avatar.png'" alt="" class="avatar sm" width="32" height="32" />
+      </span>
+    }
   </div>
 </header>
+
+<!-- Bottom navigation, 600px and below -->
+<nav class="bottom-nav" aria-label="Sections" i18n-aria-label="@@nav.sections">
+  <a routerLink="/feed" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item">
+    <mat-icon aria-hidden="true">home</mat-icon>
+    <span>{{ navItems[0].label }}</span>
+  </a>
+  <a routerLink="/friends" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item">
+    <mat-icon aria-hidden="true">people</mat-icon>
+    <span>{{ navItems[1].label }}</span>
+  </a>
+  <a routerLink="/chat" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item"
+     [attr.aria-label]="chatAriaLabel()">
+    <span class="icon-wrap">
+      <mat-icon aria-hidden="true">chat</mat-icon>
+      @if (unreadChats) {
+        <span class="count-badge" aria-hidden="true">{{ badge(unreadChats) }}</span>
+      }
+    </span>
+    <span aria-hidden="true">{{ chatsLabel }}</span>
+  </a>
+  <a routerLink="/notifications" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item"
+     [attr.aria-label]="notificationsAriaLabel()">
+    <span class="icon-wrap">
+      <mat-icon aria-hidden="true">notifications</mat-icon>
+      @if (unreadNotifications) {
+        <span class="count-badge" aria-hidden="true">{{ badge(unreadNotifications) }}</span>
+      }
+    </span>
+    <span aria-hidden="true">{{ alertsLabel }}</span>
+  </a>
+  <button type="button" class="bottom-item" (click)="toggleMobileMenu()" aria-controls="main-nav"
+          [attr.aria-expanded]="mobileMenuOpen">
+    <mat-icon aria-hidden="true">{{ mobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
+    <span i18n="@@nav.more">More</span>
+  </button>
+</nav>
+
+<!-- Screen-reader announcements for real-time notifications -->
+<div class="visually-hidden" aria-live="polite" aria-atomic="true">{{ announcement }}</div>
