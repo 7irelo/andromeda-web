@@ -324,10 +324,14 @@ class ChatRoomViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     def catch_up(self, request, pk=None):
         """AI summary of what the user missed. Membership is enforced by get_object()."""
         room = self.get_object()
+        if request.user.ai_opt_out:
+            return Response({'detail': 'You have turned off AI features in your settings.'},
+                            status=status.HTTP_403_FORBIDDEN)
         member = ChatMember.objects.get(room=room, user=request.user)
+        # Members who turned AI off never have their messages sent to a model.
         msgs = room.messages.filter(is_deleted=False).exclude(
             sender_id__in=visibility.blocked_ids(request.user)
-        ).select_related('sender').order_by('-created_at')
+        ).exclude(sender__ai_opt_out=True).select_related('sender').order_by('-created_at')
         unread = msgs.filter(created_at__gt=member.last_read_at) if member.last_read_at else msgs
         batch = list(unread[:CATCH_UP_MAX_MESSAGES])
         if len(batch) < 3:

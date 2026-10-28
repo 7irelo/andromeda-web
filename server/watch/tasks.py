@@ -276,10 +276,10 @@ def _chapters(video, utterances):
 
 @shared_task(name='watch.tasks.caption_video', bind=True, queue='default', max_retries=3)
 def caption_video(self, video_id):
-    video = Video.objects.filter(pk=video_id, status=Video.STATUS_READY).first()
+    video = Video.objects.select_related('uploader').filter(pk=video_id, status=Video.STATUS_READY).first()
     if video is None or video.captions_status != Video.CAPTIONS_PENDING:
         return 'skipped'
-    if not ai_client.enabled():
+    if not ai_client.enabled() or video.uploader.ai_opt_out:
         _captions_done(video, Video.CAPTIONS_UNAVAILABLE)
         return 'unavailable'
     key = audio_key(video)

@@ -70,7 +70,7 @@ def transcribe_voice_note(self, message_id):
     from chats.audio import MIMETYPE_BY_EXT
     from chats.models import Message
 
-    msg = Message.objects.filter(id=message_id).first()
+    msg = Message.objects.select_related('sender').filter(id=message_id).first()
     if (msg is None or msg.is_deleted or msg.message_type != Message.TYPE_VOICE or not msg.file
             or msg.transcript_status == Message.TRANSCRIPT_DONE):
         return None
@@ -83,7 +83,7 @@ def transcribe_voice_note(self, message_id):
             services.broadcast(fresh.room_id, {'type': 'message_updated', 'message': services.payload(fresh)})
         return status
 
-    if not ai_client.enabled():
+    if not ai_client.enabled() or (msg.sender and msg.sender.ai_opt_out):
         return finish(Message.TRANSCRIPT_FAILED)
 
     mimetype = MIMETYPE_BY_EXT.get(os.path.splitext(msg.file.name)[1].lower())
