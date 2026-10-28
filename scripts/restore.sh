@@ -52,7 +52,7 @@ case "$kind" in
     ;;
   neo4j)
     echo "restoring $src into neo4j (the graph is stopped meanwhile)"
-    compose stop neo4j
+    compose stop -t 120 neo4j
     fetch | compose run --rm -T --no-deps --entrypoint neo4j-admin neo4j \
       database load neo4j --from-stdin --overwrite-destination=true
     compose start neo4j

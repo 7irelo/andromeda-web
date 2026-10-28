@@ -103,7 +103,7 @@ docker exec ${P}-pg-src pg_dump -U andromeda -d andromeda -Fc --no-owner \
 
 if [ "$NEO" = 1 ]; then
 step "backup Neo4j (stopped): neo4j-admin dump | age | mc pipe"
-docker stop ${P}-neo-src >/dev/null
+docker stop -t 120 ${P}-neo-src >/dev/null   # clean shutdown: dump refuses an active log
 docker run --rm -v ${P}-neo-src:/data --entrypoint neo4j-admin $NEO4J_IMAGE database dump neo4j --to-stdout 2>/dev/null \
   | tools $TOOLS sh -c 'age -r "$BACKUP_AGE_RECIPIENT" | mc pipe --quiet "backup/andromeda-backups/drill/neo4j/'"$STAMP"'.dump.age"'
 fi

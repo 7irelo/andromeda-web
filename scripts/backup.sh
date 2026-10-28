@@ -50,7 +50,7 @@ compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -F
 # (the app degrades to relational fallbacks and the outbox queues writes), so a
 # short stop is safe; reconciliation can also rebuild it from Postgres.
 log "neo4j -> $PREFIX/neo4j/$STAMP.dump.age (graph stopped meanwhile)"
-compose stop neo4j
+compose stop -t 120 neo4j   # a clean shutdown; dump refuses a database with an active log
 trap 'compose start neo4j >/dev/null' EXIT
 compose run --rm -T --no-deps --entrypoint neo4j-admin neo4j database dump neo4j --to-stdout \
   | upload "backup/$BUCKET/$PREFIX/neo4j/$STAMP.dump.age"

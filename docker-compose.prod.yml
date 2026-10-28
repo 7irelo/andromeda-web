@@ -205,6 +205,8 @@ services:
     environment:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD}
       NEO4J_server_memory_heap_max__size: 1G
+    # Room to checkpoint on stop; an unclean stop leaves a log that dumps refuse.
+    stop_grace_period: 2m
     deploy:
       resources:
         limits: {cpus: "2", memory: 2G}

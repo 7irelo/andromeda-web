@@ -299,6 +299,15 @@ Grafana ships with the **Andromeda Overview** dashboard:
 
 `/metrics` is only reachable inside the Docker network.
 
+A second dashboard, **Andromeda – SLOs & Alerts**, tracks API p95 latency and
+5xx ratio, Celery queue depth, WebSocket disconnects, AI spend, outbox lag and
+graph drift; the matching rules in `monitoring/prometheus/rules/` route through
+Alertmanager. Request ids, JSON logs, OpenTelemetry tracing (Jaeger under the
+`observability` compose profile) and Sentry are described in
+[docs/OPERATIONS.md](docs/OPERATIONS.md), along with the production overlay
+(`docker-compose.prod.yml`, Caddy TLS), releases, and encrypted backups with a
+restore drill. Load tests (k6) are in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+
 ---
 
 ## Project structure
