@@ -1,8 +1,13 @@
 """Provider adapters over the official Anthropic and OpenAI SDKs."""
+import json
+
 import anthropic
 import openai
 
-from .gateway import ProviderError, Refused, Route, T, Usage, UserContent
+from .gateway import ProviderError, Refused, Route, StepOutput, T, ToolCall, Turn, Usage, UserContent
+
+# Content block types replayed from an earlier Anthropic turn; anything else is dropped.
+_REPLAY_BLOCKS = {'text', 'thinking', 'redacted_thinking', 'tool_use'}
 
 _TRANSIENT_ANTHROPIC = (anthropic.RateLimitError, anthropic.InternalServerError, anthropic.APIConnectionError,
                         anthropic.APITimeoutError)
@@ -33,6 +38,47 @@ def _openai_input(user: UserContent):
         else:
             content.append({'type': 'input_text', 'text': part['text']})
     return [{'role': 'user', 'content': content}]
+
+
+def _anthropic_turns(turns: list[Turn]) -> list[dict]:
+    """Neutral turns to Messages API messages. Earlier Anthropic output is replayed unchanged."""
+    out = []
+    for t in turns:
+        if t['role'] == 'user':
+            out.append({'role': 'user', 'content': t['text']})
+        elif t['role'] == 'assistant':
+            native = t.get('native') or {}
+            if native.get('provider') == 'anthropic' and native.get('content'):
+                # Thinking blocks must come back exactly as they were produced.
+                content = [b for b in native['content'] if isinstance(b, dict) and b.get('type') in _REPLAY_BLOCKS]
+            else:
+                content = ([{'type': 'text', 'text': t['text']}] if t.get('text') else []) + [
+                    {'type': 'tool_use', 'id': c['id'], 'name': c['name'], 'input': c['arguments']}
+                    for c in t.get('tool_calls', [])]
+            out.append({'role': 'assistant', 'content': content or [{'type': 'text', 'text': '(no reply)'}]})
+        else:
+            out.append({'role': 'user', 'content': [
+                {'type': 'tool_result', 'tool_use_id': r['call_id'], 'content': r['content'],
+                 **({'is_error': True} if r.get('is_error') else {})} for r in t['results']]})
+    return out
+
+
+def _openai_turns(turns: list[Turn]) -> list[dict]:
+    """Neutral turns to Responses API input items (function_call / function_call_output)."""
+    items = []
+    for t in turns:
+        if t['role'] == 'user':
+            items.append({'role': 'user', 'content': t['text']})
+        elif t['role'] == 'assistant':
+            if t.get('text'):
+                items.append({'role': 'assistant', 'content': t['text']})
+            for c in t.get('tool_calls', []):
+                items.append({'type': 'function_call', 'call_id': c['id'], 'name': c['name'],
+                              'arguments': json.dumps(c['arguments'])})
+        else:
+            for r in t['results']:
+                items.append({'type': 'function_call_output', 'call_id': r['call_id'], 'output': r['content']})
+    return items
 
 
 class AnthropicProvider:
@@ -71,6 +117,47 @@ class AnthropicProvider:
                                         u.output_tokens, u.cache_read_input_tokens or 0)
 
 
+    async def step(self, route: Route, system: str, turns: list[Turn], tools: list[dict]) -> tuple[StepOutput, Usage]:
+        kwargs = {}
+        if route.effort:
+            kwargs['output_config'] = {'effort': route.effort}
+        if tools:
+            kwargs['tools'] = [{'name': t['name'], 'description': t['description'], 'input_schema': t['input_schema']}
+                               for t in tools]
+        if route.timeout_s:
+            kwargs['timeout'] = route.timeout_s
+        try:
+            msg = await self.client.messages.create(
+                model=route.model,
+                max_tokens=route.max_tokens,
+                # Tools and the system prompt are static per job, so they're a cached prefix;
+                # the top-level breakpoint also caches the growing conversation between steps.
+                system=[{'type': 'text', 'text': system, 'cache_control': {'type': 'ephemeral'}}],
+                messages=_anthropic_turns(turns),
+                cache_control={'type': 'ephemeral'},
+                **kwargs,
+            )
+        except _TRANSIENT_ANTHROPIC as exc:
+            raise ProviderError(type(exc).__name__) from exc
+        except anthropic.APIStatusError as exc:
+            if exc.status_code >= 500 or exc.status_code == 529:
+                raise ProviderError(f'HTTP {exc.status_code}') from exc
+            raise
+        if msg.stop_reason == 'refusal':
+            raise Refused(getattr(msg.stop_details, 'category', None) or 'refusal')
+        if msg.stop_reason == 'max_tokens':
+            raise ProviderError('Incomplete output (max_tokens)')
+        # Read blocks by type: a response can start with (empty) thinking blocks.
+        text = ''.join(b.text for b in msg.content if b.type == 'text')
+        calls = [ToolCall(b.id, b.name, dict(b.input or {})) for b in msg.content if b.type == 'tool_use']
+        native = {'provider': 'anthropic', 'model': route.model,
+                  'content': [b.to_dict(mode='json') for b in msg.content]}
+        u = msg.usage
+        usage = Usage(u.input_tokens + (u.cache_read_input_tokens or 0) + (u.cache_creation_input_tokens or 0),
+                      u.output_tokens, u.cache_read_input_tokens or 0)
+        return StepOutput(text, calls, native, 'tool_use' if calls else 'end'), usage
+
+
 class OpenAIProvider:
     name = 'openai'
 
@@ -95,6 +182,42 @@ class OpenAIProvider:
         u = resp.usage
         cached = getattr(getattr(u, 'input_tokens_details', None), 'cached_tokens', 0) or 0
         return parsed, Usage(u.input_tokens, u.output_tokens, cached)
+
+    async def step(self, route: Route, system: str, turns: list[Turn], tools: list[dict]) -> tuple[StepOutput, Usage]:
+        kwargs = {}
+        if tools:
+            kwargs['tools'] = [{'type': 'function', 'name': t['name'], 'description': t['description'],
+                                'parameters': t['input_schema'], 'strict': False} for t in tools]
+        if route.timeout_s:
+            kwargs['timeout'] = route.timeout_s
+        try:
+            resp = await self.client.responses.create(
+                model=route.model,
+                instructions=system,
+                input=_openai_turns(turns),
+                max_output_tokens=route.max_tokens,
+                store=False,
+                **kwargs,
+            )
+        except _TRANSIENT_OPENAI as exc:
+            raise ProviderError(type(exc).__name__) from exc
+        calls, text = [], []
+        for item in resp.output or []:
+            if item.type == 'function_call':
+                try:
+                    args = json.loads(item.arguments or '{}')
+                except ValueError:
+                    args = None
+                # Unparseable arguments reach Django as an invalid call, which returns a readable error.
+                calls.append(ToolCall(item.call_id, item.name, args if isinstance(args, dict) else {'_invalid': True}))
+            elif item.type == 'message':
+                text.extend(part.text for part in item.content if getattr(part, 'type', '') == 'output_text')
+        if getattr(resp, 'status', None) == 'incomplete' and not calls:
+            raise ProviderError('Incomplete output')
+        u = resp.usage
+        cached = getattr(getattr(u, 'input_tokens_details', None), 'cached_tokens', 0) or 0
+        return StepOutput(''.join(text), calls, None, 'tool_use' if calls else 'end'), Usage(
+            u.input_tokens, u.output_tokens, cached)
 
     async def embed(self, route: Route, texts: list[str]) -> tuple[list[list[float]], Usage]:
         try:
