@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, ApplicationConfig, isDevMode } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, ErrorHandler, isDevMode } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
@@ -6,11 +6,13 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { provideServiceWorker } from '@angular/service-worker';
+import { ReportingErrorHandler } from './core/error-reporting';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withComponentInputBinding()),
     provideAnimations(),
+    { provide: ErrorHandler, useClass: ReportingErrorHandler },
     provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
     {
       // Resume the session from the HttpOnly refresh cookie before the first route guard runs.
