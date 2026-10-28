@@ -47,7 +47,7 @@
 | **Watch** | Video upload and playback, likes, comments, one view counted per viewer |
 | **Pages** | Business and community pages, follow/unfollow, posting as a page for its admins and editors |
 | **Search** | One search across people, posts, groups, pages, listings and videos (Postgres full-text ranking) |
-| **AI** | Automatic moderation of posts, comments and listings with a staff review queue; "Catch me up" chat summaries with verified citations |
+| **AI** | Automatic moderation of posts, comments and listings with a staff review queue; "Catch me up" chat summaries with verified citations; smart replies and "Help me write" |
 | **Operations** | Prometheus metrics, a pre-built Grafana dashboard, OpenAPI docs, a demo-data seeder |
 
 ---
@@ -114,6 +114,8 @@ short-lived signed service tokens.
 |---|---|
 | **Moderation** | New posts, comments and listings are checked within seconds. OpenAI's free moderation endpoint runs first, then Claude Haiku 5.5 applies the community policy, and Claude Sonnet 5.5 is called only when Haiku is unsure. Clear violations are hidden (the author is notified), and borderline cases go to a staff queue at `/api/moderation/cases/` where every action is audit-logged. |
 | **Catch me up** | One click in a chat summarises what you missed: topics, decisions and questions for you. Every point cites real message ids, links that weren't in the chat are removed, and blocked users' messages are never sent to the model. |
+| **Smart replies** | Three short reply chips above the chat composer, on request or after a new message. Tapping fills the input, never sends. Only the open chat's latest messages are used, blocked users' messages never are, and only a keyed hash of each suggestion is logged for acceptance metrics and a sticky A/B test between models. |
+| **Help me write** | Rewrite a post or listing draft to be friendlier, more formal or shorter, fix its grammar, or translate it into English, isiZulu, Afrikaans, Sesotho or isiXhosa. The suggestion appears next to your draft with Accept / Discard. |
 
 Guardrails include per-user daily token budgets, a cross-provider fallback,
 circuit breakers, prompt-injection delimiting and graceful degradation when

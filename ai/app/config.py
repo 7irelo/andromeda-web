@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr | None = None
     openai_api_key: SecretStr | None = None
     deepgram_api_key: SecretStr | None = None
+    # Optional self-hosted model server (OpenAI-compatible, e.g. http://vllm:8000/v1) for LoRA variants.
+    vllm_base_url: str | None = None
+    vllm_api_key: SecretStr | None = None
 
     # Shared with Django to verify short-lived service tokens.
     ai_service_secret: SecretStr = Field(...)

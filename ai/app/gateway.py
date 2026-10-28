@@ -24,7 +24,7 @@ T = TypeVar('T', bound=BaseModel)
 
 @dataclass(frozen=True)
 class Route:
-    provider: str          # 'anthropic' | 'openai'
+    provider: str          # 'anthropic' | 'openai' | 'vllm' (optional, self-hosted)
     model: str
     max_tokens: int = 1024
     effort: str | None = 'low'
@@ -52,6 +52,18 @@ ROUTES: dict[str, list[Route]] = {
                        Route('openai', 'gpt-6-luna', 1024, None)],
     # Anthropic has no embeddings model, so this job has no cross-provider fallback.
     'search.embed': [Route('openai', 'text-embedding-3-small', 0, None)],
+    # Smart replies: latency-bound, so small outputs and low effort. One job per A/B variant
+    # (the variant picks the primary); see features/replies.py for the allow-list.
+    'replies.suggest': [Route('anthropic', 'claude-haiku-5-5', 256),
+                        Route('openai', 'gpt-6-luna', 256, None)],
+    'replies.suggest.luna': [Route('openai', 'gpt-6-luna', 256, None),
+                             Route('anthropic', 'claude-haiku-5-5', 256)],
+    # Self-hosted LoRA on vLLM (only routed when VLLM_BASE_URL is set; otherwise skipped).
+    'replies.suggest.lora': [Route('vllm', 'andromeda-replies-lora', 256, None),
+                             Route('anthropic', 'claude-haiku-5-5', 256),
+                             Route('openai', 'gpt-6-luna', 256, None)],
+    'compose.rewrite': [Route('anthropic', 'claude-haiku-5-5', 4096),
+                        Route('openai', 'gpt-6-luna', 4096, None)],
 }
 
 EMBEDDING_DIMS = 1536
@@ -64,6 +76,7 @@ PRICES = {
     'gpt-6-luna': (0.10, 0.50),
     'gpt-6.1-terra': (1.00, 5.00),
     'text-embedding-3-small': (0.02, 0.0),
+    'andromeda-replies-lora': (0.0, 0.0),  # self-hosted: GPU time isn't metered per token
 }
 
 

@@ -1,0 +1,10 @@
+# Offline fine-tuning only (GPU box). Never installed into the AI service image.
+-r ../requirements.txt
+torch~=2.8
+transformers~=4.56
+peft~=0.17
+trl~=0.23
+datasets~=4.1
+accelerate~=1.10
+bitsandbytes~=0.47
+safetensors~=0.6

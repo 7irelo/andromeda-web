@@ -134,3 +134,50 @@ class MessageReaction(models.Model):
     class Meta:
         db_table = 'message_reactions'
         unique_together = ('message', 'user')
+
+
+class ReplySuggestionEvent(models.Model):
+    """
+    Implicit feedback on smart replies, for acceptance rates and preference data.
+
+    Only a keyed hash of the suggestion is stored, never its text. ``shown``
+    rows are written when suggestions are served; the other actions must refer
+    to a hash that was shown to the same user in the same room.
+    """
+
+    ACTION_SHOWN = 'shown'
+    ACTION_ACCEPTED = 'accepted'   # sent verbatim
+    ACTION_EDITED = 'edited'       # tapped, changed, then sent
+    ACTION_DISMISSED = 'dismissed'
+    ACTION_CHOICES = [(ACTION_SHOWN, 'Shown'), (ACTION_ACCEPTED, 'Accepted'), (ACTION_EDITED, 'Edited'),
+                      (ACTION_DISMISSED, 'Dismissed')]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+', on_delete=models.CASCADE)
+    room = models.ForeignKey(ChatRoom, related_name='+', on_delete=models.CASCADE)
+    suggestion_hash = models.CharField(max_length=64)
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    variant = models.CharField(max_length=20)
+    # The newest message the suggestions answered, so one set of suggestions can be grouped.
+    anchor_message_id = models.PositiveBigIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'reply_suggestion_events'
+        indexes = [models.Index(fields=['user', 'room', 'suggestion_hash']),
+                   models.Index(fields=['variant', 'action'])]
+
+
+class SeedReplySuggestion(models.Model):
+    """
+    Suggestion text for synthetic (seed) conversations only, so offline
+    preference pairs can be built from them. Written only when
+    REPLY_SFT_CAPTURE_SEED_TEXT is on and every member of the room is a seed
+    account; real users' suggestion text is never stored.
+    """
+
+    suggestion_hash = models.CharField(max_length=64, unique=True)
+    text = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'seed_reply_suggestions'

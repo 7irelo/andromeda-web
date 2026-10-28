@@ -33,7 +33,7 @@ def _rows(qs, fields):
 
 def collect(user):
     """Everything about `user`, as JSON-able dicts, plus the files to include."""
-    from chats.models import Message
+    from chats.models import Message, ReplySuggestionEvent
     from groups.models import GroupMember
     from marketplace.models import Listing, ListingImage, Review
     from moderation.models import ModerationCase, Report
@@ -67,6 +67,8 @@ def collect(user):
         'pages_followed': list(PageFollow.objects.filter(user=user).values_list('page_id', flat=True)),
         'notifications': _rows(Notification.objects.filter(recipient=user)[:5000],
                                ['notification_type', 'title', 'body', 'is_read', 'created_at']),
+        'smart_reply_feedback': _rows(ReplySuggestionEvent.objects.filter(user=user),
+                                      ['room_id', 'action', 'variant', 'created_at']),
         'consents': _rows(ConsentRecord.objects.filter(user=user), ['kind', 'version', 'granted', 'created_at']),
         'sign_in_devices': _rows(UserSession.objects.filter(user=user),
                                  ['user_agent', 'ip_prefix', 'created_at', 'last_seen_at', 'revoked_at']),

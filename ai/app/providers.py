@@ -1,6 +1,8 @@
-"""Provider adapters over the official Anthropic and OpenAI SDKs."""
+"""Provider adapters over the official Anthropic and OpenAI SDKs, plus an optional self-hosted vLLM."""
 import anthropic
+import httpx
 import openai
+from pydantic import ValidationError
 
 from .gateway import ProviderError, Refused, Route, T, Usage, UserContent
 
@@ -114,3 +116,59 @@ class OpenAIProvider:
         scores = r.category_scores.model_dump()
         return {'flagged': r.flagged, 'top_category': max(scores, key=scores.get), 'top_score': max(scores.values()),
                 'categories': [k for k, v in r.categories.model_dump().items() if v]}
+
+
+class VLLMProvider:
+    """
+    A self-hosted open model behind vLLM's OpenAI-compatible server (multi-LoRA:
+    ``route.model`` names the adapter). Enabled only when VLLM_BASE_URL is set.
+
+    Structured output uses ``response_format: json_schema`` (vLLM's guided
+    decoding), and the result is validated again here: a malformed or
+    truncated answer is a transient failure, so the gateway falls back to the
+    hosted models. Text-only: image input also falls through to the next route.
+    """
+
+    name = 'vllm'
+
+    def __init__(self, base_url: str, timeout: float, api_key: str | None = None,
+                 transport: httpx.AsyncBaseTransport | None = None):
+        headers = {'Authorization': f'Bearer {api_key}'} if api_key else {}
+        # base_url follows the OpenAI convention and includes /v1, e.g. http://vllm:8000/v1
+        self.client = httpx.AsyncClient(base_url=base_url.rstrip('/'), timeout=timeout, headers=headers,
+                                        transport=transport, follow_redirects=False)
+
+    async def structured(self, route: Route, system: str, user: UserContent, schema: type[T]) -> tuple[T, Usage]:
+        if not isinstance(user, str):
+            raise ProviderError('vLLM route is text-only')
+        body = {
+            'model': route.model,
+            'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
+            'max_tokens': route.max_tokens,
+            'response_format': {'type': 'json_schema',
+                                'json_schema': {'name': schema.__name__, 'schema': schema.model_json_schema()}},
+        }
+        try:
+            resp = await self.client.post('/chat/completions', json=body)
+        except httpx.HTTPError as exc:
+            raise ProviderError(type(exc).__name__) from exc
+        # 404: the adapter isn't loaded on this server; treat like an outage and fall back.
+        if resp.status_code in (404, 408, 429) or resp.status_code >= 500:
+            raise ProviderError(f'HTTP {resp.status_code}')
+        if resp.status_code >= 400:
+            raise ValueError(f'vLLM rejected the request (HTTP {resp.status_code})')
+        try:
+            data = resp.json()
+            choice = data['choices'][0]
+            content = choice['message']['content'] or ''
+            u = data.get('usage') or {}
+        except (ValueError, KeyError, IndexError, TypeError) as exc:
+            raise ProviderError('Malformed response') from exc
+        if choice.get('finish_reason') == 'length':
+            raise ProviderError('Incomplete output (length)')
+        try:
+            parsed = schema.model_validate_json(content)
+        except ValidationError as exc:
+            raise ProviderError('Output did not match the schema') from exc
+        cached = (u.get('prompt_tokens_details') or {}).get('cached_tokens') or 0
+        return parsed, Usage(int(u.get('prompt_tokens') or 0), int(u.get('completion_tokens') or 0), int(cached))

@@ -14,6 +14,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../../core/services/api.service';
+import { ComposeAssistComponent } from '../../../shared/components/compose-assist/compose-assist.component';
 import {
   City, LISTING_CONDITIONS, Listing, ListingCategory, ListingStatus, PriceSuggestion,
 } from '../../../models/listing.model';
@@ -44,7 +45,7 @@ export function apiError(err: HttpErrorResponse, fallback: string): string {
     selector: 'app-listing-form',
     imports: [
         CommonModule, ReactiveFormsModule, MatIconModule, MatButtonModule, MatInputModule, MatFormFieldModule,
-        MatSelectModule, MatCheckboxModule, MatProgressSpinnerModule, MatSnackBarModule,
+        MatSelectModule, MatCheckboxModule, MatProgressSpinnerModule, MatSnackBarModule, ComposeAssistComponent,
     ],
     template: `
     <div class="edit-overlay" (click)="close()"></div>
@@ -100,6 +101,8 @@ export function apiError(err: HttpErrorResponse, fallback: string): string {
           <textarea matInput formControlName="description" rows="4" placeholder="Describe your item..."></textarea>
           <mat-hint *ngIf="aiFields.has('description')" class="ai-chip">AI-suggested</mat-hint>
         </mat-form-field>
+        <app-compose-assist [text]="form.value.description" kind="listing"
+                            (accepted)="form.patchValue({ description: $event })"></app-compose-assist>
 
         <div class="edit-row">
           <mat-form-field appearance="outline" class="w-full">

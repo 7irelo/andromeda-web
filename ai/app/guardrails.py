@@ -93,3 +93,39 @@ _INJECTION_RE = re.compile(
 
 def looks_like_injection(text: str) -> bool:
     return bool(_INJECTION_RE.search(text or ''))
+
+
+_PHONE_RE = re.compile(r'(?<![\w.])\+?\(?\d[\d\s().-]{6,18}\d(?![\w.])')
+_CONTACT_EMAIL_RE = re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+')
+
+
+def strip_foreign_contacts(text: str, sources: str) -> tuple[str, int]:
+    """
+    Remove links, phone numbers and email addresses that aren't in the source
+    text. Returns the cleaned text and how many were removed.
+    """
+    sources = sources or ''
+    source_digits = re.sub(r'\D', '', sources)
+    removed = 0
+
+    def phone(m: re.Match) -> str:
+        nonlocal removed
+        digits = re.sub(r'\D', '', m.group(0))
+        if not 9 <= len(digits) <= 15 or digits in source_digits:
+            return m.group(0)
+        removed += 1
+        return '[number removed]'
+
+    def email(m: re.Match) -> str:
+        nonlocal removed
+        if m.group(0) in sources:
+            return m.group(0)
+        removed += 1
+        return '[email removed]'
+
+    before = (text or '').count('[link removed]')
+    text = strip_foreign_urls(text, sources)
+    removed += text.count('[link removed]') - before
+    text = _CONTACT_EMAIL_RE.sub(email, text)
+    text = _PHONE_RE.sub(phone, text)
+    return text, removed

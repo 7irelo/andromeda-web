@@ -11,6 +11,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { Post } from '../../../models/post.model';
 import { User } from '../../../models/user.model';
 import { ImageCropperComponent, ImageCropperResult } from '../image-cropper/image-cropper.component';
+import { ComposeAssistComponent } from '../compose-assist/compose-assist.component';
 
 const MAX_IMAGES = 10;
 // The "@partial" right before the caret. Mirrors the server's mention syntax.
@@ -34,7 +35,8 @@ interface DraftImage {
 
 @Component({
     selector: 'app-create-post',
-    imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDialogModule],
+    imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDialogModule,
+        ComposeAssistComponent],
     template: `
     <div class="create-post card">
       <div class="create-top">
@@ -104,6 +106,8 @@ interface DraftImage {
       </div>
 
       <p class="error" *ngIf="error" role="alert">{{ error }}</p>
+
+      <app-compose-assist *ngIf="expanded" [text]="content" kind="post" (accepted)="content = $event"></app-compose-assist>
 
       <div class="create-actions" *ngIf="expanded">
         <div class="media-btns">
