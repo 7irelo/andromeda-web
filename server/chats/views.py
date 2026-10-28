@@ -15,11 +15,12 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.throttling import ScopedRateThrottle
 
 from core import ai_client, visibility
 from core.validators import sanitize_image, validate_attachment
-from . import services
+from . import services, smart_replies
 from .audio import MIMETYPE_BY_EXT, validate_voice
 from .models import ChatMember, ChatRoom, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
@@ -114,7 +115,7 @@ class ChatRoomViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     """Rooms are created through ``create`` and managed through explicit actions only."""
 
     serializer_class = ChatRoomSerializer
-    throttle_scope = 'ai'  # only used by catch_up, which opts into ScopedRateThrottle
+    throttle_scope = 'ai'  # only used by catch_up and suggest_replies, which opt into ScopedRateThrottle
 
     def get_queryset(self):
         return rooms_for(self.request.user)
@@ -348,6 +349,43 @@ class ChatRoomViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
         except ai_client.AIUnavailable:
             return Response({'detail': 'Summaries are unavailable right now.'}, status=503)
         return Response({**result['summary'], 'message_count': len(payload['messages'])})
+
+    @action(detail=True, methods=['post'],
+            throttle_classes=[*api_settings.DEFAULT_THROTTLE_CLASSES, ScopedRateThrottle])
+    def suggest_replies(self, request, pk=None):
+        """Three short AI reply suggestions for this room. Members only (get_object)."""
+        room = self.get_object()
+        if request.user.ai_opt_out:
+            return Response({'detail': 'You have turned off AI features in your settings.'}, status=403)
+        if not services.can_send(room, request.user):
+            return Response({'suggestions': [], 'variant': None, 'anchor_id': None})
+        try:
+            return Response(smart_replies.suggest(room, request.user))
+        except ai_client.AIRejected as exc:
+            return Response({'detail': exc.detail}, status=exc.status)
+        except ai_client.AIUnavailable:
+            return Response({'detail': 'Suggestions are unavailable right now.'}, status=503)
+
+    @action(detail=True, methods=['post'])
+    def reply_feedback(self, request, pk=None):
+        """Log that shown suggestions were accepted, edited before sending, or dismissed."""
+        room = self.get_object()
+        if request.user.ai_opt_out:
+            return Response({'detail': 'You have turned off AI features in your settings.'}, status=403)
+        action_name = request.data.get('action')
+        ids = request.data.get('suggestion_ids')
+        if action_name not in smart_replies.FEEDBACK_ACTIONS:
+            raise ValidationError({'action': 'Must be accepted, edited or dismissed.'})
+        if (not isinstance(ids, list) or not 1 <= len(ids) <= 3
+                or not all(isinstance(i, str) and len(i) == 64 and all(c in '0123456789abcdef' for c in i)
+                           for i in ids)):
+            raise ValidationError({'suggestion_ids': 'Provide one to three suggestion ids.'})
+        if action_name != 'dismissed' and len(ids) != 1:
+            raise ValidationError({'suggestion_ids': 'Only one suggestion can be sent at a time.'})
+        recorded = smart_replies.record_feedback(request.user, room, ids, action_name)
+        if recorded is None:
+            raise ValidationError({'suggestion_ids': 'Unknown or expired suggestion.'})
+        return Response({'recorded': recorded})
 
 
 class MessageViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,

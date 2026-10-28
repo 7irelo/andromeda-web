@@ -37,3 +37,39 @@ def strip_foreign_urls(text: str, sources: str) -> str:
     """Remove any URL from model output that isn't present in the source text."""
     allowed = set(_URL_RE.findall(sources or ''))
     return _URL_RE.sub(lambda m: m.group(0) if m.group(0) in allowed else '[link removed]', text or '')
+
+
+_PHONE_RE = re.compile(r'(?<![\w.])\+?\(?\d[\d\s().-]{6,18}\d(?![\w.])')
+_EMAIL_RE = re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+')
+
+
+def strip_foreign_contacts(text: str, sources: str) -> tuple[str, int]:
+    """
+    Remove links, phone numbers and email addresses that aren't in the source
+    text. Returns the cleaned text and how many were removed.
+    """
+    sources = sources or ''
+    source_digits = re.sub(r'\D', '', sources)
+    removed = 0
+
+    def phone(m: re.Match) -> str:
+        nonlocal removed
+        digits = re.sub(r'\D', '', m.group(0))
+        if not 9 <= len(digits) <= 15 or digits in source_digits:
+            return m.group(0)
+        removed += 1
+        return '[number removed]'
+
+    def email(m: re.Match) -> str:
+        nonlocal removed
+        if m.group(0) in sources:
+            return m.group(0)
+        removed += 1
+        return '[email removed]'
+
+    before = (text or '').count('[link removed]')
+    text = strip_foreign_urls(text, sources)
+    removed += text.count('[link removed]') - before
+    text = _EMAIL_RE.sub(email, text)
+    text = _PHONE_RE.sub(phone, text)
+    return text, removed

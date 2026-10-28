@@ -11,13 +11,15 @@ from .config import get_settings
 from .features.catchup import CatchUpRequest, CatchUpResult, catch_up
 from .features.listing import DraftRequest, DraftResult, draft
 from .features.chapters import ChaptersRequest, ChaptersResult, chapters
+from .features.compose import ComposeRequest, ComposeResult, rewrite
 from .features.moderation import ModerationRequest, ModerationResult, moderate
+from .features.replies import RepliesRequest, RepliesResult, suggest
 from .features.speech import (DeepgramClient, SpeakRequest, SpeechUnavailable, TranscribeRequest, TranscribeResult,
                               transcribe)
 from .features.retrieval import (AskRequest, AskResult, EmbedRequest, EmbedResult, QueryRequest, QueryResult,
                                  RerankRequest, RerankResult, ask, embed, plan_query, rerank)
 from .gateway import AllRoutesFailed, BudgetExceeded, Gateway, Refused
-from .providers import AnthropicProvider, OpenAIProvider
+from .providers import AnthropicProvider, OpenAIProvider, VLLMProvider
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s %(name)s %(message)s')
 
@@ -31,6 +33,9 @@ def build_gateway() -> tuple[Gateway, OpenAIProvider | None]:
     if s.openai_api_key:
         openai_provider = OpenAIProvider(s.openai_api_key.get_secret_value(), s.provider_timeout_seconds)
         providers['openai'] = openai_provider
+    if s.vllm_base_url:
+        key = s.vllm_api_key.get_secret_value() if s.vllm_api_key else None
+        providers['vllm'] = VLLMProvider(s.vllm_base_url, s.provider_timeout_seconds, key)
     budget = Budget(s.daily_user_token_budget, s.redis_url, s.system_daily_token_budget, s.daily_user_audio_seconds)
     return Gateway(providers=providers, budget=budget), openai_provider
 
@@ -111,6 +116,17 @@ async def listing_draft_endpoint(body: DraftRequest, request: Request, user: Act
 @app.post('/v1/video/chapters', response_model=ChaptersResult)
 async def chapters_endpoint(body: ChaptersRequest, request: Request, user: ActingUser = Depends(acting_user)):
     return await _run(chapters(body, request.app.state.gateway, user.id), 'The model declined to chapter this video')
+
+
+@app.post('/v1/replies', response_model=RepliesResult)
+async def replies_endpoint(body: RepliesRequest, request: Request, user: ActingUser = Depends(acting_user)):
+    return await _run(suggest(body, request.app.state.gateway, user.id, request.app.state.moderation_stage0),
+                      'The model declined to suggest replies')
+
+
+@app.post('/v1/compose', response_model=ComposeResult)
+async def compose_endpoint(body: ComposeRequest, request: Request, user: ActingUser = Depends(acting_user)):
+    return await _run(rewrite(body, request.app.state.gateway, user.id), 'The model declined to rewrite this')
 
 
 @app.post('/v1/transcribe', response_model=TranscribeResult)

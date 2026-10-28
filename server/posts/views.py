@@ -1,11 +1,14 @@
 import logging
 from django.db.models import OuterRef, Prefetch, Q, Subquery
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
+from rest_framework.throttling import ScopedRateThrottle
 
-from core import visibility
+from core import ai_client, visibility
 from core.permissions import IsOwnerOrReadOnly
 from . import feed
 from .models import Post, Like, Comment, CommentLike, HiddenPost, PostRevision, SavedPost
@@ -19,12 +22,28 @@ from .tasks import process_post, queue_new_post_event
 logger = logging.getLogger(__name__)
 
 VALID_REACTIONS = {choice for choice, _ in Like.REACTION_CHOICES}
+COMPOSE_MAX_CHARS = 5000
+
+
+class ComposeAssistSerializer(serializers.Serializer):
+    text = serializers.CharField(max_length=COMPOSE_MAX_CHARS, trim_whitespace=True)
+    action = serializers.ChoiceField(choices=['friendlier', 'formal', 'shorter', 'grammar', 'translate'])
+    language = serializers.ChoiceField(choices=['en', 'zu', 'af', 'st', 'xh'], required=False, allow_null=True)
+    kind = serializers.ChoiceField(choices=['post', 'listing'], default='post')
+
+    def validate(self, attrs):
+        if attrs['action'] == 'translate' and not attrs.get('language'):
+            raise serializers.ValidationError({'language': 'Choose a language to translate into.'})
+        if attrs['action'] != 'translate':
+            attrs['language'] = None
+        return attrs
 
 
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [IsOwnerOrReadOnly]
     owner_field = 'author'
+    throttle_scope = None  # set per action (compose_assist uses 'ai')
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     # Numeric ids only, so /posts/comments/ and /posts/saved/ never resolve as a post.
     lookup_value_regex = r'\d+'
@@ -227,6 +246,30 @@ class PostViewSet(viewsets.ModelViewSet):
         ).order_by('-saved_at', '-id')
         page = self.paginate_queryset(qs)
         return self.get_paginated_response(self._serialize(page))
+
+    @action(detail=False, methods=['post'], url_path='compose-assist', permission_classes=[IsAuthenticated],
+            throttle_classes=[*api_settings.DEFAULT_THROTTLE_CLASSES, ScopedRateThrottle], throttle_scope='ai')
+    def compose_assist(self, request):
+        """
+        "Help me write": a rewritten draft (tone, grammar, shorter, or a
+        translation) for a post or listing. Nothing is saved or replaced: the
+        author accepts or discards the suggestion, and publishing still goes
+        through moderation as usual.
+        """
+        if request.user.ai_opt_out:
+            return Response({'detail': 'You have turned off AI features in your settings.'}, status=403)
+        body = ComposeAssistSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        try:
+            res = ai_client.call('/v1/compose', body.validated_data, user_id=request.user.id)
+        except ai_client.AIRejected as exc:
+            if exc.status == 429:
+                return Response({'detail': "You've used today's AI allowance. Try again tomorrow."}, status=429)
+            return Response({'detail': exc.detail}, status=exc.status)
+        except ai_client.AIUnavailable:
+            return Response({'detail': 'Writing help is not available right now.'}, status=503)
+        return Response({'text': str(res.get('text', ''))[:COMPOSE_MAX_CHARS * 2],
+                         'truncated': bool(res.get('truncated'))})
 
 
 class CommentViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
