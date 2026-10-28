@@ -145,3 +145,15 @@ class TestPushSubscriptions:
         c = APIClient()
         c.force_authenticate(people[0])
         assert c.get('/api/notifications/push/').json() == {'public_key': None}
+
+
+def test_websocket_event_keeps_the_consumer_handler_name(people, monkeypatch):
+    sent = []
+
+    class Layer:
+        async def group_send(self, group, event):
+            sent.append((group, event))
+    monkeypatch.setattr('notifications.service.get_channel_layer', lambda: Layer())
+    from .service import push_websocket
+    push_websocket(5, {'type': 'like', 'id': 1})
+    assert sent == [('notifications_5', {'type': 'send_notification', 'id': 1})]

@@ -135,7 +135,8 @@ def notify(recipient, notification_type, title, *, sender=None, body='', extra=N
             body=body, extra=extra, group_key=group_key[:120], in_app=prefs['in_app'],
         )
 
-    payload = {'id': notif.id, 'type': notification_type, 'title': notif.title, 'body': notif.body[:200],
+    payload = {'id': notif.id, 'notification_type': notification_type, 'title': notif.title,
+               'body': notif.body[:200], 'is_read': False, 'extra': notif.extra,
                'sender': sender_obj.username if sender_obj else None,
                'sender_avatar': sender_obj.avatar_url if sender_obj else None,
                'created_at': notif.created_at.isoformat(), **{k: v for k, v in extra.items() if k.endswith('_id')}}
@@ -149,9 +150,11 @@ def notify(recipient, notification_type, title, *, sender=None, body='', extra=N
 
 
 def push_websocket(user_id, payload):
+    # 'type' names the consumer handler, so it goes last: a payload key called
+    # 'type' must never be able to replace it.
     try:
         async_to_sync(get_channel_layer().group_send)(
-            f'notifications_{user_id}', {'type': 'send_notification', **payload})
+            f'notifications_{user_id}', {**payload, 'type': 'send_notification'})
     except Exception:
         logger.warning('WS push failed for user %s', user_id, exc_info=True)
 

@@ -1,12 +1,13 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
+import { safeReturnUrl } from '../../../core/guards/auth.guard';
 
 @Component({
     selector: 'app-login',
@@ -34,7 +35,12 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
   ) {}
+
+  private done(): void {
+    this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')));
+  }
 
   submit(): void {
     if (this.form.invalid) return;
@@ -48,7 +54,7 @@ export class LoginComponent {
           this.loading = false;
           return;
         }
-        this.router.navigate(['/feed']);
+        this.done();
       },
       error: (err) => {
         this.error = err.error?.detail || 'Invalid credentials. Please try again.';
@@ -62,7 +68,7 @@ export class LoginComponent {
     this.loading = true;
     this.error = '';
     this.authService.completeMfaLogin(this.mfaToken, (this.codeForm.value.code ?? '').trim()).subscribe({
-      next: () => this.router.navigate(['/feed']),
+      next: () => this.done(),
       error: (err) => {
         this.error = err.error?.detail || 'That code did not work. Try again.';
         this.loading = false;

@@ -82,7 +82,7 @@ def send_mention_notifications(post_id, usernames, created=True):
 
     from core import visibility
     from notifications.models import Notification
-    from notifications.tasks import _push_to_websocket
+    from notifications.service import notify
     from .models import Post
 
     post = Post.objects.select_related('author').filter(pk=post_id).first()
@@ -95,15 +95,8 @@ def send_mention_notifications(post_id, usernames, created=True):
         # Only notify people who can actually see the post.
         if user.id in already or not visibility.can_view_post(user, post):
             continue
-        notif = Notification.objects.create(
-            recipient=user, sender=post.author, notification_type=Notification.TYPE_MENTION,
-            title=f'{post.author.username} mentioned you in a post', extra={'post_id': post_id},
-        )
-        _push_to_websocket(user.id, {
-            'id': notif.id, 'type': 'mention', 'title': notif.title,
-            'sender': post.author.username, 'post_id': post_id,
-            'created_at': notif.created_at.isoformat(),
-        })
+        notify(user, Notification.TYPE_MENTION, f'{post.author.username} mentioned you in a post',
+               sender=post.author, extra={'post_id': post_id}, push_url=f'/posts/{post_id}')
 
 
 def queue_new_post_event(post):
