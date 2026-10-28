@@ -40,6 +40,7 @@ def collect(user):
     from notifications.models import Notification
     from pages.models import PageFollow
     from posts.models import Comment, Like, Post, PostMedia
+    from ranking.models import FeedImpression
 
     from .models import Block, ConsentRecord, FriendRequest, UserSession
 
@@ -69,6 +70,8 @@ def collect(user):
                                ['notification_type', 'title', 'body', 'is_read', 'created_at']),
         'smart_reply_feedback': _rows(ReplySuggestionEvent.objects.filter(user=user),
                                       ['room_id', 'action', 'variant', 'created_at']),
+        'feed_impressions': _rows(FeedImpression.objects.filter(viewer=user, synthetic=False)[:20000],
+                                  ['post_id', 'position', 'variant', 'ranker', 'served_at', 'engaged', 'dwell_ms']),
         'consents': _rows(ConsentRecord.objects.filter(user=user), ['kind', 'version', 'granted', 'created_at']),
         'sign_in_devices': _rows(UserSession.objects.filter(user=user),
                                  ['user_agent', 'ip_prefix', 'created_at', 'last_seen_at', 'revoked_at']),

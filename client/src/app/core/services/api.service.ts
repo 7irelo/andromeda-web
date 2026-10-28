@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Post, Comment, FeedPage, FeedSort, PostRevision } from '../../models/post.model';
+import { Post, Comment, FeedEvent, FeedPage, FeedSort, PostRevision } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
 import { CatchUp, ChatRoom, ChatUnread, Message, MessagesAfter } from '../../models/chat.model';
 import { Notification, NotificationPreferences } from '../../models/notification.model';
@@ -46,6 +46,11 @@ export class ApiService {
     let params = new HttpParams().set('feed', 'true').set('sort', sort);
     if (cursor) params = params.set('cursor', cursor);
     return this.http.get<FeedPage>(`${this.API}/posts/`, { params });
+  }
+
+  /** Dwell and opens for posts the feed showed (batched; the server ignores posts it didn't serve you). */
+  reportFeedEvents(events: FeedEvent[]): Observable<{ accepted: number }> {
+    return this.http.post<{ accepted: number }>(`${this.API}/ranking/events/`, { events });
   }
 
   getPost(id: number): Observable<Post> {

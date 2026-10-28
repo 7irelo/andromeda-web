@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/moderation/', include('moderation.urls')),
     path('api/assistant/', include('assistant.urls')),
     path('api/mcp/', MCPView.as_view(), name='mcp'),
+    path('api/ranking/', include('ranking.urls')),
 
     # OpenAPI schema + docs (admin-only outside DEBUG, see SPECTACULAR_SETTINGS)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

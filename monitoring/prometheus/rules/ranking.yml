@@ -1,0 +1,30 @@
+groups:
+  - name: feed-ranking
+    rules:
+      # PSI of a ranking feature, last day vs the live model's training data
+      # (ranking.tasks.compute_feature_psi, hourly). Above 0.2 the inputs have
+      # shifted enough that the model's predictions shouldn't be trusted
+      # until it is retrained (manage.py train_ranker).
+      - alert: RankingFeatureDrift
+        expr: max by (feature) (ranking_feature_psi) > 0.2
+        for: 2h
+        labels:
+          severity: warning
+          team: ranking
+        annotations:
+          summary: "Feed ranking feature {{ $labels.feature }} has drifted (PSI {{ $value | printf \"%.2f\" }})"
+          description: >-
+            The distribution of {{ $labels.feature }} in the last day of feed impressions differs from the
+            ranker's training data (PSI > 0.2). Check for a product or data change, then retrain with
+            `manage.py train_ranker`, or set RANKING_V2_ENABLED=False to serve v1.
+
+      # Ranker v2 keeps handing pages back to v1 (no model, or scoring errors).
+      - alert: RankingV2Fallbacks
+        expr: sum by (reason) (rate(ranking_v2_fallbacks_total{reason="error"}[15m])) > 0.05
+        for: 15m
+        labels:
+          severity: warning
+          team: ranking
+        annotations:
+          summary: "Ranker v2 is failing to score and falling back to v1"
+          description: "ranking_v2_fallbacks_total{reason=\"error\"} is increasing; see Django logs for 'Ranker v2 failed to score'."

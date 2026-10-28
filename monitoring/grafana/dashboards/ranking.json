@@ -1,0 +1,66 @@
+{
+  "title": "Andromeda – Feed Ranking",
+  "uid": "andromeda-ranking",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-7d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Feature drift (PSI, last day vs training data)",
+      "description": "Population Stability Index per ranking feature. Above 0.2 (red) the RankingFeatureDrift alert fires: retrain with manage.py train_ranker.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.1 },
+              { "color": "red", "value": 0.2 }
+            ]
+          },
+          "custom": { "thresholdsStyle": { "mode": "line+area" } }
+        },
+        "overrides": []
+      },
+      "targets": [
+        { "expr": "max by (feature) (ranking_feature_psi)", "legendFormat": "{{feature}}" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Serving-time feature means (ranker v2)",
+      "description": "Mean of each feature over the last candidate window ranker v2 scored, averaged across web processes.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 9 },
+      "targets": [
+        { "expr": "avg by (feature) (ranking_feature_mean)", "legendFormat": "{{feature}}" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Ranker v2 fallbacks to v1 (per minute)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 9, "w": 12, "h": 7 },
+      "targets": [
+        { "expr": "sum by (reason) (rate(ranking_v2_fallbacks_total[5m])) * 60", "legendFormat": "{{reason}}" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Ranker v2 scoring time p95 (ms)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 9, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(ranking_v2_score_seconds_bucket[5m]))) * 1000",
+          "legendFormat": "p95"
+        }
+      ]
+    }
+  ]
+}

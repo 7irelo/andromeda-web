@@ -1,4 +1,7 @@
-import { Component, OnInit, OnDestroy, HostListener, ChangeDetectionStrategy } from '@angular/core';
+import {
+  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, QueryList,
+  ViewChildren,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -14,8 +17,11 @@ import { User } from '../../models/user.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
 import { CreatePostComponent } from '../../shared/components/create-post/create-post.component';
 import { UserCardComponent } from '../../shared/components/user-card/user-card.component';
+import { DwellTracker } from './dwell-tracker';
 
 const SORT_KEY = 'andromeda.feedSort';
+/** How often seen/opened posts are reported to the ranker (and once more when the page is hidden). */
+const FLUSH_MS = 10_000;
 
 @Component({
     selector: 'app-feed',
@@ -27,7 +33,7 @@ const SORT_KEY = 'andromeda.feedSort';
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./feed.component.scss']
 })
-export class FeedComponent implements OnInit, OnDestroy {
+export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   posts: Post[] = [];
   suggestions: User[] = [];
   currentUser: User | null = null;
@@ -40,6 +46,14 @@ export class FeedComponent implements OnInit, OnDestroy {
   private cursor: string | null = null;
   private request?: Subscription;
   private wsSub?: Subscription;
+
+  // Dwell / open reporting: the ranker's training signal.
+  @ViewChildren(PostCardComponent, { read: ElementRef }) private cards?: QueryList<ElementRef<HTMLElement>>;
+  private readonly tracker = new DwellTracker();
+  private observer?: IntersectionObserver;
+  private observed = new Set<HTMLElement>();
+  private cardsSub?: Subscription;
+  private flushTimer?: ReturnType<typeof setInterval>;
 
   constructor(
     private apiService: ApiService,
@@ -64,9 +78,68 @@ export class FeedComponent implements OnInit, OnDestroy {
     });
   }
 
+  ngAfterViewInit(): void {
+    if (typeof IntersectionObserver === 'undefined' || !this.cards) return;
+    this.observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const id = Number((entry.target as HTMLElement).dataset['postId']);
+        if (id) this.tracker.visible(id, entry.isIntersecting && entry.intersectionRatio >= 0.5);
+      }
+    }, { threshold: [0, 0.5] });
+    this.observeCards();
+    this.cardsSub = this.cards.changes.subscribe(() => this.observeCards());
+    this.flushTimer = setInterval(() => this.flushEvents(), FLUSH_MS);
+  }
+
   ngOnDestroy(): void {
+    this.flushEvents();
+    this.observer?.disconnect();
+    this.cardsSub?.unsubscribe();
+    if (this.flushTimer) clearInterval(this.flushTimer);
     this.wsSub?.unsubscribe();
     this.request?.unsubscribe();
+  }
+
+  /** Start observing newly rendered post cards and stop observing removed ones. */
+  private observeCards(): void {
+    if (!this.observer || !this.cards) return;
+    const current = new Set(this.cards.map((ref) => ref.nativeElement));
+    for (const el of this.observed) {
+      if (!current.has(el)) {
+        this.observer.unobserve(el);
+        this.observed.delete(el);
+      }
+    }
+    for (const el of current) {
+      if (!this.observed.has(el)) {
+        this.observer.observe(el);
+        this.observed.add(el);
+      }
+    }
+  }
+
+  onCardClick(postId: number): void {
+    this.tracker.open(postId);
+  }
+
+  /**
+   * Send what changed since the last batch. A normal authenticated POST:
+   * sendBeacon can't carry the bearer token, so the hidden-page flush is a
+   * best effort like the rest.
+   */
+  private flushEvents(): void {
+    const events = this.tracker.drain();
+    if (events.length) this.apiService.reportFeedEvents(events).subscribe({ error: () => {} });
+  }
+
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    if (document.visibilityState === 'hidden') {
+      this.tracker.pause();
+      this.flushEvents();
+    } else {
+      this.tracker.resume();
+    }
   }
 
   loadFeed(): void {

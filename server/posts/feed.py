@@ -9,6 +9,12 @@ hid. Two orderings are offered:
 * ``top`` (default): ranking v1, a heuristic over the newest
   ``CANDIDATE_WINDOW`` candidates: recency decay x affinity x engagement.
   Once the window is exhausted the feed continues chronologically.
+  Viewers in the ``v2`` arm of the ``feed_ranker`` experiment get the same
+  window ordered by a LightGBM model instead (``ranking.serving``), with v1
+  as the fallback.
+
+Every page served is logged as impressions (``ranking.impressions``), the
+training signal for the model.
 
 Both are stable under new inserts: ``top`` pins the window to the time of the
 first page and ``latest`` pages below the last row it returned. Cursors are
@@ -20,6 +26,7 @@ import base64
 import binascii
 import json
 import math
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from django.db.models import Count, Q
@@ -36,6 +43,7 @@ INTERACTION_DAYS = 30
 OFTEN = 3            # interactions in INTERACTION_DAYS that count as "often"
 OFTEN_MESSAGES = 5
 POPULAR = 10         # likes + comments for "Popular in <group>"
+MAX_POSITION = 100_000
 
 SORT_TOP = 'top'
 SORT_LATEST = 'latest'
@@ -80,6 +88,10 @@ def decode_cursor(token):
         if 'o' in data:
             out['o'] = int(data['o'])
             if not 0 <= out['o'] <= CANDIDATE_WINDOW:
+                raise ValueError
+        if 'p' in data:  # feed position of the next row, for the impression log only
+            out['p'] = int(data['p'])
+            if not 0 <= out['p'] <= MAX_POSITION:
                 raise ValueError
         return out
     except (ValueError, TypeError, KeyError, binascii.Error, json.JSONDecodeError):
@@ -197,13 +209,31 @@ def recency(created_at, now):
 
 # ── Pages ────────────────────────────────────────────────────────────────────
 
+@dataclass
+class Served:
+    """One page of the feed, plus what the impression log needs to know about how it was made."""
+
+    posts: list
+    next_cursor: str | None
+    reasons: dict
+    first_position: int = 0
+    variant: str = ''
+    ranker: str = 'latest'
+    model_version: str = ''
+    features: dict = field(default_factory=dict)
+
+
 def _load(qs, ids):
     """Fetch full rows for ``ids`` and return them in that order."""
     by_id = {p.id: p for p in qs.filter(id__in=ids)}
     return [by_id[i] for i in ids if i in by_id]
 
 
-def latest_page(user, full_qs, cursor):
+def _reasons(signals, posts):
+    return {p.id: signals.reason(p) for p in posts}
+
+
+def latest_page(user, full_qs, cursor, variant=''):
     qs = feed_queryset(user)
     if 'c' in cursor:
         qs = qs.filter(_below(cursor['c'], cursor['i']))
@@ -211,42 +241,86 @@ def latest_page(user, full_qs, cursor):
     more = len(rows) > PAGE_SIZE
     rows = rows[:PAGE_SIZE]
     posts = _load(full_qs, [r[0] for r in rows])
-    nxt = encode_cursor({'c': rows[-1][1].isoformat(), 'i': rows[-1][0]}) if more and rows else None
-    return posts, nxt, Signals(user, {p.author_id for p in posts}, timezone.now())
+    position = cursor.get('p', 0)
+    nxt = encode_cursor({'c': rows[-1][1].isoformat(), 'i': rows[-1][0], 'p': position + len(rows)}) \
+        if more and rows else None
+    signals = Signals(user, {p.author_id for p in posts}, timezone.now())
+    return Served(posts, nxt, _reasons(signals, posts), first_position=position, variant=variant)
 
 
-def top_page(user, full_qs, cursor):
-    """Ranking v1 over a window pinned at the first page's timestamp, then a chronological tail."""
-    if 'c' in cursor:  # past the ranked window
-        return latest_page(user, full_qs, cursor)
+# Columns of a candidate row: v1 reads the first seven, ranking.features.Candidate the ones it names.
+WINDOW_FIELDS = ('id', 'author_id', 'group_id', 'page_id', 'created_at', 'likes_count', 'comments_count',
+                 'post_type', 'shared_post_id')
 
-    anchor = cursor.get('t') or timezone.now()
-    offset = cursor.get('o', 0)
-    rows = list(
+
+def candidate_window(user, anchor):
+    """The newest ``CANDIDATE_WINDOW`` posts the viewer may see, as of ``anchor``. Both rankers start here."""
+    return list(
         feed_queryset(user).filter(created_at__lte=anchor).order_by('-created_at', '-id')
-        .values_list('id', 'author_id', 'group_id', 'page_id', 'created_at', 'likes_count', 'comments_count')
-        [:CANDIDATE_WINDOW]
+        .values_list(*WINDOW_FIELDS)[:CANDIDATE_WINDOW]
     )
+
+
+def rank_v1(user, rows, anchor):
+    """Ranking v1: recency decay x affinity x engagement. Returns the rows in order and the signals behind them."""
     signals = Signals(user, {r[1] for r in rows}, anchor)
     scored = sorted(
         rows,
         key=lambda r: (recency(r[4], anchor) * signals.affinity(r[1], r[2], r[3]) * engagement(r[5], r[6]), r[0]),
         reverse=True,
     )
-    page = scored[offset:offset + PAGE_SIZE]
-    if offset + PAGE_SIZE < len(scored):
+    return scored, signals
+
+
+def as_candidates(rows):
+    from ranking.features import Candidate
+
+    return [Candidate(r[0], r[1], r[2], r[3], r[4], r[7], r[8]) for r in rows]
+
+
+def top_page(user, full_qs, cursor):
+    """
+    The ranked window pinned at the first page's timestamp, then a
+    chronological tail. Ranker v1 or v2 by the viewer's ``feed_ranker``
+    experiment arm; v2 falls back to v1 whenever it can't score.
+    """
+    from ranking import serving
+
+    variant = serving.assigned_variant(user)
+    if 'c' in cursor:  # past the ranked window
+        return latest_page(user, full_qs, cursor, variant=variant)
+
+    anchor = cursor.get('t') or timezone.now()
+    offset = cursor.get('o', 0)
+    rows = candidate_window(user, anchor)
+    ranked = serving.ranked_window(user, as_candidates(rows), anchor) if variant == 'v2' and rows else None
+    if ranked is not None:
+        order = ranked.ids
+    else:
+        scored, signals = rank_v1(user, rows, anchor)
+        order = [r[0] for r in scored]
+
+    page_ids = order[offset:offset + PAGE_SIZE]
+    if offset + PAGE_SIZE < len(order):
         nxt = encode_cursor({'t': anchor.isoformat(), 'o': offset + PAGE_SIZE})
     elif len(rows) == CANDIDATE_WINDOW:
         oldest = rows[-1]
-        nxt = encode_cursor({'c': oldest[4].isoformat(), 'i': oldest[0]})
+        nxt = encode_cursor({'c': oldest[4].isoformat(), 'i': oldest[0], 'p': len(rows)})
     else:
         nxt = None
-    return _load(full_qs, [r[0] for r in page]), nxt, signals
+    posts = _load(full_qs, page_ids)
+    if ranked is None:
+        return Served(posts, nxt, _reasons(signals, posts), first_position=offset, variant=variant, ranker='v1')
+    reasons = {p.id: serving.reason(p, ranked.features[p.id], ranked.drivers.get(p.id, []), anchor) for p in posts}
+    return Served(posts, nxt, reasons, first_position=offset, variant=variant, ranker='v2',
+                  model_version=ranked.model_version, features={p.id: ranked.features[p.id] for p in posts})
 
 
 def feed_page(user, full_qs, sort, cursor_token):
-    """Returns ``(posts, next_cursor, reasons)`` for one page of the feed."""
+    """Returns ``(posts, next_cursor, reasons)`` for one page of the feed, and logs what was served."""
+    from ranking import impressions
+
     cursor = decode_cursor(cursor_token)
-    pager = latest_page if sort == SORT_LATEST else top_page
-    posts, nxt, signals = pager(user, full_qs, cursor)
-    return posts, nxt, {p.id: signals.reason(p) for p in posts}
+    served = latest_page(user, full_qs, cursor) if sort == SORT_LATEST else top_page(user, full_qs, cursor)
+    impressions.log_served(user, served)
+    return served.posts, served.next_cursor, served.reasons
