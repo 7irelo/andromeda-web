@@ -1,0 +1,2015 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" target-language="zu" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="shell.skipToContent" datatype="html">
+        <source>Skip to content</source>
+        <target state="translated">Yeqa uye kokuqukethwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.ts</context>
+          <context context-type="linenumber">14,15</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="shell.offline" datatype="html">
+        <source>You&apos;re offline. Things you&apos;ve already opened still work; new content will load when you reconnect.</source>
+        <target state="translated">Awuxhunyiwe ku-inthanethi. Okuvulile kusasebenza; okusha kuzolayisha uma usuxhunyiwe futhi.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.ts</context>
+          <context context-type="linenumber">18,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="pwa.broken" datatype="html">
+        <source>This version of Andromeda can&apos;t continue. Reload to get the latest.</source>
+        <target state="translated">Le nguqulo ye-Andromeda ayikwazi ukuqhubeka. Layisha kabusha ukuze uthole entsha.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/services/pwa.service.ts</context>
+          <context context-type="linenumber">83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="pwa.updateAvailable" datatype="html">
+        <source>A new version of Andromeda is available.</source>
+        <target state="translated">Inguqulo entsha ye-Andromeda isilungile.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/services/pwa.service.ts</context>
+          <context context-type="linenumber">84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="pwa.reload" datatype="html">
+        <source>Reload</source>
+        <target state="translated">Layisha kabusha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/services/pwa.service.ts</context>
+          <context context-type="linenumber">86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.tagline" datatype="html">
+        <source>Connect with friends and the world around you.</source>
+        <target state="translated">Xhumana nabangane nomhlaba okuzungezile.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.featureConnections" datatype="html">
+        <source>Build meaningful connections</source>
+        <target state="translated">Yakha ubudlelwano obunenjongo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">12,14</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">12,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.featureMessaging" datatype="html">
+        <source>Real-time messaging</source>
+        <target state="translated">Imilayezo ngesikhathi sangempela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">16,18</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">16,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.featureCommunities" datatype="html">
+        <source>Join vibrant communities</source>
+        <target state="translated">Joyina imiphakathi ephilayo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">20,22</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">20,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.featureVideos" datatype="html">
+        <source>Share and discover videos</source>
+        <target state="translated">Yabelana ngamavidiyo futhi uthole amasha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">24,26</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">24,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.socialProof" datatype="html">
+        <source>Trusted by creators, communities, and friends everywhere.</source>
+        <target state="translated">Kwethenjwa ngabadali, imiphakathi nabangane yonke indawo.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">28,32</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">28,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.title" datatype="html">
+        <source>Welcome Back</source>
+        <target state="translated">Siyakwamukela futhi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">36,37</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.subtitle" datatype="html">
+        <source>Sign in to your account</source>
+        <target state="translated">Ngena ku-akhawunti yakho</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">37,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.mfaTitle" datatype="html">
+        <source>Two-factor sign-in</source>
+        <target state="translated">Ukungena ngezinyathelo ezimbili</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">41,42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.mfaHint" datatype="html">
+        <source>Enter the 6-digit code from your authenticator app, or one of your recovery codes.</source>
+        <target state="translated">Faka ikhodi enezinombolo ezi-6 evela ku-app yakho yokuqinisekisa, noma enye yamakhodi akho okubuyisela.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">42,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.code" datatype="html">
+        <source>Code</source>
+        <target state="translated">Ikhodi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.verify" datatype="html">
+        <source>Verify</source>
+        <target state="translated">Qinisekisa</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">50,52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.differentAccount" datatype="html">
+        <source>Use a different account</source>
+        <target state="translated">Sebenzisa enye i-akhawunti</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">52,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.username" datatype="html">
+        <source>Username or Email</source>
+        <target state="translated">Igama lomsebenzisi noma i-imeyili</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">57,58</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.required" datatype="html">
+        <source>Required</source>
+        <target state="translated">Kuyadingeka</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">59,60</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">74,75</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">68,69</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">73,74</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.password" datatype="html">
+        <source>Password</source>
+        <target state="translated">Iphasiwedi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">63,64</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">90,91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.submit" datatype="html">
+        <source>Log In</source>
+        <target state="translated">Ngena</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">87,90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.or" datatype="html">
+        <source>or</source>
+        <target state="translated">noma</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">90,92</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.forgot" datatype="html">
+        <source>Forgot your password?</source>
+        <target state="translated">Ukhohlwe iphasiwedi?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">93,95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.noAccount" datatype="html">
+        <source>Don&apos;t have an account?</source>
+        <target state="translated">Awunayo i-akhawunti?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">96</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.signUp" datatype="html">
+        <source>Sign Up</source>
+        <target state="translated">Bhalisa</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.html</context>
+          <context context-type="linenumber">96,98</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.showPassword" datatype="html">
+        <source>Show password</source>
+        <target state="translated">Bonisa iphasiwedi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.hidePassword" datatype="html">
+        <source>Hide password</source>
+        <target state="translated">Fihla iphasiwedi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.invalid" datatype="html">
+        <source>Invalid credentials. Please try again.</source>
+        <target state="translated">Imininingwane yokungena ayilungile. Zama futhi.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.badCode" datatype="html">
+        <source>That code did not work. Try again.</source>
+        <target state="translated">Leyo khodi ayisebenzanga. Zama futhi.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.forgotTitle" datatype="html">
+        <source>Reset your password</source>
+        <target state="translated">Setha kabusha iphasiwedi yakho</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/forgot-password.component.ts</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.forgotHint" datatype="html">
+        <source>Enter the email on your account and we&apos;ll send you a reset link.</source>
+        <target state="translated">Faka i-imeyili ye-akhawunti yakho, sizokuthumelela isixhumanisi sokusetha kabusha.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/forgot-password.component.ts</context>
+          <context context-type="linenumber">18,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.email" datatype="html">
+        <source>Email</source>
+        <target state="translated">I-imeyili</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/forgot-password.component.ts</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.sending" datatype="html">
+        <source>Sending...</source>
+        <target state="translated">Iyathumela...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/forgot-password.component.ts</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.send" datatype="html">
+        <source>Send reset link</source>
+        <target state="translated">Thumela isixhumanisi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/forgot-password.component.ts</context>
+          <context context-type="linenumber">25,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.sent" datatype="html">
+        <source>If that email is registered, a reset link is on its way. It expires in one hour.</source>
+        <target state="translated">Uma le imeyili ibhalisiwe, isixhumanisi sokusetha kabusha siyeza. Siphelelwa yisikhathi ngemuva kwehora elilodwa.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/forgot-password.component.ts</context>
+          <context context-type="linenumber">31,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.backToSignIn" datatype="html">
+        <source>Back to sign in</source>
+        <target state="translated">Buyela ekungeneni</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/forgot-password.component.ts</context>
+          <context context-type="linenumber">33,36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.title" datatype="html">
+        <source>Choose a new password</source>
+        <target state="translated">Khetha iphasiwedi entsha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.incomplete" datatype="html">
+        <source>This reset link is incomplete. Request a new one.</source>
+        <target state="translated">Lesi sixhumanisi asiphelele. Cela esisha.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.newPassword" datatype="html">
+        <source>New password</source>
+        <target state="translated">Iphasiwedi entsha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">168,169</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.min" datatype="html">
+        <source>At least 10 characters</source>
+        <target state="translated">Okungenani izinhlamvu eziyi-10</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">22,23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.confirm" datatype="html">
+        <source>Confirm new password</source>
+        <target state="translated">Qinisekisa iphasiwedi entsha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">25,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.mismatch" datatype="html">
+        <source>Passwords don&apos;t match.</source>
+        <target state="translated">Amaphasiwedi awafani.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">28,29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.saving" datatype="html">
+        <source>Saving...</source>
+        <target state="translated">Iyalondoloza...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.update" datatype="html">
+        <source>Update password</source>
+        <target state="translated">Buyekeza iphasiwedi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">31,32</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">172,173</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.requestNew" datatype="html">
+        <source>Request a new link</source>
+        <target state="translated">Cela isixhumanisi esisha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">34,36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.done" datatype="html">
+        <source>Password updated. Please sign in.</source>
+        <target state="translated">Iphasiwedi ibuyekeziwe. Sicela ungene.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.dismiss" datatype="html">
+        <source>Dismiss</source>
+        <target state="translated">Vala</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">79</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">126</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">152</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">313</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">317</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">329</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">333</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">350</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">357</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">374</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reset.failed" datatype="html">
+        <source>Could not reset the password.</source>
+        <target state="translated">Asikwazanga ukusetha kabusha iphasiwedi.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/password-reset/reset-password.component.ts</context>
+          <context context-type="linenumber">85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.music" datatype="html">
+        <source>Music</source>
+        <target state="translated">Umculo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.sport" datatype="html">
+        <source>Sport</source>
+        <target state="translated">Ezemidlalo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.tech" datatype="html">
+        <source>Tech</source>
+        <target state="translated">Ubuchwepheshe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.food" datatype="html">
+        <source>Food</source>
+        <target state="translated">Ukudla</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.travel" datatype="html">
+        <source>Travel</source>
+        <target state="translated">Ukuvakasha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.gaming" datatype="html">
+        <source>Gaming</source>
+        <target state="translated">Imidlalo yevidiyo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.art" datatype="html">
+        <source>Art</source>
+        <target state="translated">Ubuciko</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.books" datatype="html">
+        <source>Books</source>
+        <target state="translated">Izincwadi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.fitness" datatype="html">
+        <source>Fitness</source>
+        <target state="translated">Ukuzivocavoca</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.film" datatype="html">
+        <source>Film &amp; TV</source>
+        <target state="translated">Amafilimu ne-TV</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.business" datatype="html">
+        <source>Business</source>
+        <target state="translated">Ibhizinisi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interest.nature" datatype="html">
+        <source>Outdoors</source>
+        <target state="translated">Imvelo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interestsTitle" datatype="html">
+        <source>What are you into?</source>
+        <target state="translated">Yini oyithandayo?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interestsHint" datatype="html">
+        <source>Pick a few and we&apos;ll suggest groups to join.</source>
+        <target state="translated">Khetha okumbalwa, sizokuphakamisela amaqembu ongawajoyina.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">59,62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.interestsGroup" datatype="html">
+        <source>Interests</source>
+        <target state="translated">Izinto ozithandayo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.skip" datatype="html">
+        <source>Skip</source>
+        <target state="translated">Yeqa</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">73,74</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">174,175</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.continue" datatype="html">
+        <source>Continue</source>
+        <target state="translated">Qhubeka</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">75,77</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">124,126</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">177,179</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">209,212</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/verify-email/verify-email.component.ts</context>
+          <context context-type="linenumber">18,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.groupsTitle" datatype="html">
+        <source>Join some groups</source>
+        <target state="translated">Joyina amaqembu athile</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">84,85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.groupsHint" datatype="html">
+        <source>Their posts show up in your feed.</source>
+        <target state="translated">Okuthunyelwe kwawo kuzovela ekhaya lakho.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">85,88</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.noGroups" datatype="html">
+        <source>No groups yet</source>
+        <target state="translated">Awekho amaqembu okwamanje</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">94,95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.noGroupsHint" datatype="html">
+        <source>You can start one later from the Groups page.</source>
+        <target state="translated">Ungaqala elakho kamuva ekhasini lamaQembu.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">96,97</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.members" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ g.members_count }}"/> members</source>
+        <target state="translated">amalungu angu-<x id="INTERPOLATION" equiv-text="{{ g.members_count }}"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">104,105</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.back" datatype="html">
+        <source>Back</source>
+        <target state="translated">Emuva</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">123,124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.postTitle" datatype="html">
+        <source>Say hello</source>
+        <target state="translated">Bingelela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">133,134</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.postHint" datatype="html">
+        <source>Write your first post so friends know you&apos;re here.</source>
+        <target state="translated">Bhala okuthunyelwe kwakho kokuqala ukuze abangane bazi ukuthi ukhona.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">134,137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.postLabel" datatype="html">
+        <source>Your first post</source>
+        <target state="translated">Okuthunyelwe kwakho kokuqala</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">138,139</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.later" datatype="html">
+        <source>Maybe later</source>
+        <target state="translated">Mhlawumbe kamuva</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">146,147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.publish" datatype="html">
+        <source>Post and finish</source>
+        <target state="translated">Thumela uqede</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">151,153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.join" datatype="html">
+        <source>Join</source>
+        <target state="translated">Joyina</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">205</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.request" datatype="html">
+        <source>Request</source>
+        <target state="translated">Cela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">206</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.joined" datatype="html">
+        <source>Joined</source>
+        <target state="translated">Ujoyinile</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">207</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.requested" datatype="html">
+        <source>Requested</source>
+        <target state="translated">Kucelwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">208</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.joinGroup" datatype="html">
+        <source>Join <x id="name" equiv-text="g.name"/></source>
+        <target state="translated">Joyina <x id="name" equiv-text="g.name"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">221</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.requestGroup" datatype="html">
+        <source>Request to join <x id="name" equiv-text="g.name"/></source>
+        <target state="translated">Cela ukujoyina <x id="name" equiv-text="g.name"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">222</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.postFailed" datatype="html">
+        <source>Your post could not be published. Try again, or skip for now.</source>
+        <target state="translated">Okuthunyelwe kwakho akushicilelwanga. Zama futhi, noma weqe okwamanje.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">297</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.draftPlain" datatype="html">
+        <source>Hi everyone, <x id="name" equiv-text="name"/> here! I just joined Andromeda.</source>
+        <target state="translated">Sanibonani nonke, ngingu-<x id="name" equiv-text="name"/>! Ngisanda kujoyina i-Andromeda.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">313</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.draftAnon" datatype="html">
+        <source>Hi everyone! I just joined Andromeda.</source>
+        <target state="translated">Sanibonani nonke! Ngisanda kujoyina i-Andromeda.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">314</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.draftInterests" datatype="html">
+        <source>Hi everyone! I just joined Andromeda. I&apos;m into <x id="interests" equiv-text="list"/> — say hi if you are too.</source>
+        <target state="translated">Sanibonani nonke! Ngisanda kujoyina i-Andromeda. Ngithanda <x id="interests" equiv-text="list"/> — uma nani nithanda, ngibingeleleni.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/onboarding.component.ts</context>
+          <context context-type="linenumber">321</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.tagline" datatype="html">
+        <source>Join millions connecting across the universe.</source>
+        <target state="translated">Joyina izigidi zabantu abaxhumana emhlabeni wonke.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.stepOf" datatype="html">
+        <source>Step <x id="INTERPOLATION" equiv-text="{{ currentStep }}"/> of 4</source>
+        <target state="translated">Isinyathelo <x id="INTERPOLATION" equiv-text="{{ currentStep }}"/> kwezi-4</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">53,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.title" datatype="html">
+        <source>Create Account</source>
+        <target state="translated">Dala i-akhawunti</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">59,60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.subtitle" datatype="html">
+        <source>Start your journey on Andromeda</source>
+        <target state="translated">Qala uhambo lwakho ku-Andromeda</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">60,63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.firstName" datatype="html">
+        <source>First Name</source>
+        <target state="translated">Igama</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">66,67</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.lastName" datatype="html">
+        <source>Last Name</source>
+        <target state="translated">Isibongo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">71,72</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">47,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.username" datatype="html">
+        <source>Username</source>
+        <target state="translated">Igama lomsebenzisi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">78,79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.usernameMin" datatype="html">
+        <source>Min 3 characters</source>
+        <target state="translated">Okungenani izinhlamvu ezi-3</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">80,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.email" datatype="html">
+        <source>Email Address</source>
+        <target state="translated">Ikheli le-imeyili</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">84,85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.emailInvalid" datatype="html">
+        <source>Valid email required</source>
+        <target state="translated">Kudingeka i-imeyili evumelekile</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.passwordMin" datatype="html">
+        <source>Min 10 characters</source>
+        <target state="translated">Okungenani izinhlamvu eziyi-10</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">96,97</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.confirmPassword" datatype="html">
+        <source>Confirm Password</source>
+        <target state="translated">Qinisekisa iphasiwedi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">100,101</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.mismatch" datatype="html">
+        <source>Passwords don&apos;t match</source>
+        <target state="translated">Amaphasiwedi awafani</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.terms" datatype="html">
+        <source>I agree to the <x id="START_LINK" ctype="x-a" equiv-text="&lt;a routerLink=&quot;/terms&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;"/>Terms<x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/> and the <x id="START_LINK_1" equiv-text="&lt;a routerLink=&quot;/privacy&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;"/>Privacy Policy<x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/></source>
+        <target state="translated">Ngiyavumelana <x id="START_LINK" ctype="x-a" equiv-text="&lt;a routerLink=&quot;/terms&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;"/>nemiGomo<x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/> kanye <x id="START_LINK_1" equiv-text="&lt;a routerLink=&quot;/privacy&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;"/>neNqubomgomo Yobumfihlo<x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">106,107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.submit" datatype="html">
+        <source>Create Account</source>
+        <target state="translated">Dala i-akhawunti</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">115,117</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.haveAccount" datatype="html">
+        <source>Already have an account?</source>
+        <target state="translated">Usunayo i-akhawunti?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.logIn" datatype="html">
+        <source>Log In</source>
+        <target state="translated">Ngena</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">119,121</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.profileTitle" datatype="html">
+        <source>Set Up Your Profile</source>
+        <target state="translated">Lungisa iphrofayela yakho</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">128,129</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.profileSubtitle" datatype="html">
+        <source>Add a photo and tell people about yourself</source>
+        <target state="translated">Engeza isithombe futhi utshele abantu ngawe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">129,132</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.addCover" datatype="html">
+        <source>Add a cover photo</source>
+        <target state="translated">Engeza isithombe sekhava</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">135</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.addCoverText" datatype="html">
+        <source>Add Cover Photo</source>
+        <target state="translated">Engeza isithombe sekhava</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">139,141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.addAvatar" datatype="html">
+        <source>Add a profile photo</source>
+        <target state="translated">Engeza isithombe sephrofayela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.bio" datatype="html">
+        <source>Bio</source>
+        <target state="translated">Mayelana nawe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">156,157</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">52,53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.bioPlaceholder" datatype="html">
+        <source>Tell the world about yourself...</source>
+        <target state="translated">Tshela umhlaba ngawe...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">157,158</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.birthday" datatype="html">
+        <source>Birthday</source>
+        <target state="translated">Usuku lokuzalwa</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">162,163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.location" datatype="html">
+        <source>Location</source>
+        <target state="translated">Indawo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">167,168</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.locationPlaceholder" datatype="html">
+        <source>City, Country</source>
+        <target state="translated">Idolobha, Izwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">168</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.friendsTitle" datatype="html">
+        <source>Find Friends</source>
+        <target state="translated">Thola abangane</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">186,187</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.friendsSubtitle" datatype="html">
+        <source>Connect with people you may know</source>
+        <target state="translated">Xhumana nabantu okungenzeka ubazi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">187,190</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.noSuggestions" datatype="html">
+        <source> No suggestions yet. You can find people later! </source>
+        <target state="translated">Azikabikho iziphakamiso. Ungathola abantu kamuva!</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.html</context>
+          <context context-type="linenumber">192,194</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.add" datatype="html">
+        <source>Add</source>
+        <target state="translated">Engeza</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.sent" datatype="html">
+        <source>Sent</source>
+        <target state="translated">Kuthunyelwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.profileFailed" datatype="html">
+        <source>Failed to update profile</source>
+        <target state="translated">Asikwazanga ukubuyekeza iphrofayela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">126</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">317</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.requestSent" datatype="html">
+        <source>Friend request sent!</source>
+        <target state="translated">Isicelo sobungane sithunyelwe!</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.requestFailed" datatype="html">
+        <source>Could not send request</source>
+        <target state="translated">Asikwazanga ukuthumela isicelo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">152</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.cropAvatar" datatype="html">
+        <source>Crop Avatar</source>
+        <target state="translated">Sika isithombe sephrofayela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="register.cropCover" datatype="html">
+        <source>Crop Cover Photo</source>
+        <target state="translated">Sika isithombe sekhava</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/register/register.component.ts</context>
+          <context context-type="linenumber">187</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="verify.done" datatype="html">
+        <source>Email confirmed</source>
+        <target state="translated">I-imeyili iqinisekisiwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/verify-email/verify-email.component.ts</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="verify.failed" datatype="html">
+        <source>This link didn&apos;t work</source>
+        <target state="translated">Lesi sixhumanisi asisebenzanga</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/verify-email/verify-email.component.ts</context>
+          <context context-type="linenumber">22,23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="verify.failedHint" datatype="html">
+        <source>It may have expired or already been used. Sign in and send a new one from Settings.</source>
+        <target state="translated">Kungenzeka siphelelwe yisikhathi noma sesisetshenzisiwe. Ngena bese uthumela esisha kuZilungiselelo.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/verify-email/verify-email.component.ts</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="verify.toSettings" datatype="html">
+        <source>Go to Settings</source>
+        <target state="translated">Iya kuZilungiselelo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/verify-email/verify-email.component.ts</context>
+          <context context-type="linenumber">25,27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="verify.toSignIn" datatype="html">
+        <source>Go to sign in</source>
+        <target state="translated">Iya ekungeneni</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/verify-email/verify-email.component.ts</context>
+          <context context-type="linenumber">27,29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.friendsStat" datatype="html">
+        <source>Friends</source>
+        <target state="translated">Abangane</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">14,15</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.postsStat" datatype="html">
+        <source>Posts</source>
+        <target state="translated">Okuthunyelwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">18,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.shortcuts" datatype="html">
+        <source>Shortcuts</source>
+        <target state="translated">Izinqamuleli</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.friends" datatype="html">
+        <source>Friends</source>
+        <target state="translated">Abangane</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">29,31</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.groups" datatype="html">
+        <source>Groups</source>
+        <target state="translated">Amaqembu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">35,37</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.marketplace" datatype="html">
+        <source>Marketplace</source>
+        <target state="translated">Imakethe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">41,43</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.watch" datatype="html">
+        <source>Watch</source>
+        <target state="translated">Buka</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">47,49</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.pages" datatype="html">
+        <source>Pages</source>
+        <target state="translated">Amakhasi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">53,55</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.notifications" datatype="html">
+        <source>Notifications</source>
+        <target state="translated">Izaziso</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">59,61</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.saved" datatype="html">
+        <source>Saved</source>
+        <target state="translated">Okulondoloziwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">65,67</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">46,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.feed" datatype="html">
+        <source>Feed</source>
+        <target state="translated">Ikhaya</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.sort" datatype="html">
+        <source>Sort feed</source>
+        <target state="translated">Hlela okuthunyelwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.sortTop" datatype="html">
+        <source>Top</source>
+        <target state="translated">Okuphezulu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.sortLatest" datatype="html">
+        <source>Latest</source>
+        <target state="translated">Okusha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">83,85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.newPosts" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 new post} other {<x id="INTERPOLATION"/> new posts}}</source>
+        <target state="translated">{VAR_PLURAL, plural, =1 {okuthunyelwe okusha oku-1} other {okuthunyelwe okusha okungu-<x id="INTERPOLATION"/>}}</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">90,91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.caughtUp" datatype="html">
+        <source> You&apos;re all caught up! 🎉 </source>
+        <target state="translated">Usubone konke! 🎉</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">111,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.emptyTitle" datatype="html">
+        <source>Your feed is empty</source>
+        <target state="translated">Akukho lutho lapha okwamanje</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">115</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.emptyMessage" datatype="html">
+        <source>Follow people or join groups to see posts in your feed</source>
+        <target state="translated">Landela abantu noma ujoyine amaqembu ukuze ubone okuthunyelwe lapha</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">116</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.findFriends" datatype="html">
+        <source>Find Friends</source>
+        <target state="translated">Thola abangane</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">117,118</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.findGroups" datatype="html">
+        <source>Browse groups</source>
+        <target state="translated">Bheka amaqembu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">118,120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.peopleYouMayKnow" datatype="html">
+        <source>People You May Know</source>
+        <target state="translated">Abantu okungenzeka ubazi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.html</context>
+          <context context-type="linenumber">125,127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.postHidden" datatype="html">
+        <source>Post hidden from your feed</source>
+        <target state="translated">Okuthunyelwe kufihliwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="feed.undo" datatype="html">
+        <source>Undo</source>
+        <target state="translated">Hlehlisa</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/feed/feed.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.settings" datatype="html">
+        <source>Settings</source>
+        <target state="translated">Izilungiselelo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">33,34</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">32,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.subtitle" datatype="html">
+        <source>Manage your account preferences</source>
+        <target state="translated">Phatha okuthandayo ku-akhawunti yakho</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">34,37</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.editProfile" datatype="html">
+        <source>Edit Profile</source>
+        <target state="translated">Hlela iphrofayela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.website" datatype="html">
+        <source>Website</source>
+        <target state="translated">Iwebhusayithi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">60,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.save" datatype="html">
+        <source>Save Changes</source>
+        <target state="translated">Londoloza izinguquko</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">65,67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.privacy" datatype="html">
+        <source>Privacy Settings</source>
+        <target state="translated">Izilungiselelo zobumfihlo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">72,73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.profileVisibility" datatype="html">
+        <source>Profile Visibility</source>
+        <target state="translated">Ubani obona iphrofayela yami</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">75,76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.everyone" datatype="html">
+        <source>Everyone</source>
+        <target state="translated">Wonke umuntu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">77,78</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">95,96</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">104,105</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.friends" datatype="html">
+        <source>Friends</source>
+        <target state="translated">Abangane</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">78,79</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">87,88</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">105,106</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">114,115</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.onlyMe" datatype="html">
+        <source>Only Me</source>
+        <target state="translated">Mina kuphela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">106,107</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">115,116</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.whoCanMessage" datatype="html">
+        <source>Who Can Message Me</source>
+        <target state="translated">Ubani ongangithumelela imilayezo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">84,85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.nobody" datatype="html">
+        <source>Nobody</source>
+        <target state="translated">Akekho</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">88,89</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">97,98</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.whoCanRequest" datatype="html">
+        <source>Who Can Send Friend Requests</source>
+        <target state="translated">Ubani ongangithumelela izicelo zobungane</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">93,94</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.friendsOfFriends" datatype="html">
+        <source>Friends of Friends</source>
+        <target state="translated">Abangane babangane</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">96,97</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.friendsListVisibility" datatype="html">
+        <source>Friends List Visibility</source>
+        <target state="translated">Ubani obona uhlu lwabangane bami</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.defaultPostPrivacy" datatype="html">
+        <source>Default Post Privacy</source>
+        <target state="translated">Ubumfihlo obujwayelekile bokuthunyelwe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">111,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.public" datatype="html">
+        <source>Public</source>
+        <target state="translated">Kusobala</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">113,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.onlineStatus" datatype="html">
+        <source>Show Online Status</source>
+        <target state="translated">Bonisa uma ngikhona</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">121,122</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.onlineStatusHint" datatype="html">
+        <source>Let others see when you&apos;re active</source>
+        <target state="translated">Vumela abanye babone uma ukhona ku-inthanethi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">122,124</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.searchable" datatype="html">
+        <source>Appear in Search Results</source>
+        <target state="translated">Vela emiphumeleni yosesho</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">129,130</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.searchableHint" datatype="html">
+        <source>Allow others to find you via search</source>
+        <target state="translated">Vumela abanye bakuthole ngosesho</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">130,132</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.savePrivacy" datatype="html">
+        <source>Save Privacy Settings</source>
+        <target state="translated">Londoloza izilungiselelo zobumfihlo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">137,139</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.appearance" datatype="html">
+        <source>Appearance</source>
+        <target state="translated">Ukubukeka</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">144,145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.theme" datatype="html">
+        <source>Theme</source>
+        <target state="translated">Itimu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">147,148</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.themeHint" datatype="html">
+        <source>Match your device, or always use light or dark</source>
+        <target state="translated">Landela idivayisi yakho, noma uhlale usebenzisa ekhanyayo noma emnyama</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">148,150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.themeSystem" datatype="html">
+        <source>System</source>
+        <target state="translated">Idivayisi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">152,153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.themeLight" datatype="html">
+        <source>Light</source>
+        <target state="translated">Ekhanyayo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">153,154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.themeDark" datatype="html">
+        <source>Dark</source>
+        <target state="translated">Emnyama</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">154,155</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.changePassword" datatype="html">
+        <source>Change Password</source>
+        <target state="translated">Shintsha iphasiwedi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">161,162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.currentPassword" datatype="html">
+        <source>Current Password</source>
+        <target state="translated">Iphasiwedi yamanje</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">164,165</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.updating" datatype="html">
+        <source>Updating...</source>
+        <target state="translated">Iyabuyekeza...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.signOutEverywhere" datatype="html">
+        <source>Sign out everywhere</source>
+        <target state="translated">Phuma yonke indawo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">177,178</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.signOutEverywhereHint" datatype="html">
+        <source>End every session on every device, including this one</source>
+        <target state="translated">Qeda konke ukungena kuwo wonke amadivayisi, kuhlanganise nale</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">178,180</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.signOutAll" datatype="html">
+        <source>Sign out all devices</source>
+        <target state="translated">Phuma kuwo wonke amadivayisi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">180,182</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.dangerZone" datatype="html">
+        <source>Danger Zone</source>
+        <target state="translated">Indawo eyingozi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">192,193</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.deleteAccount" datatype="html">
+        <source>Delete Account</source>
+        <target state="translated">Susa i-akhawunti</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">195,196</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">199,201</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.deleteHint" datatype="html">
+        <source>You&apos;re signed out now and everything is permanently deleted after 14 days. Sign in before then to cancel.</source>
+        <target state="translated">Uzokhishwa manje, futhi konke kuzosulwa unomphela ngemuva kwezinsuku eziyi-14. Ngena ngaphambi kwalokho ukuze ukhansele.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">196,198</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.confirmWithPassword" datatype="html">
+        <source>Enter your password to confirm</source>
+        <target state="translated">Faka iphasiwedi yakho ukuze uqinisekise</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">203,204</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.cancel" datatype="html">
+        <source>Cancel</source>
+        <target state="translated">Khansela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">207,208</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.deleting" datatype="html">
+        <source>Deleting...</source>
+        <target state="translated">Iyasusa...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">209</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.deleteForever" datatype="html">
+        <source>Permanently delete my account</source>
+        <target state="translated">Susa i-akhawunti yami unomphela</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">209,211</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.profileSaved" datatype="html">
+        <source>Profile updated!</source>
+        <target state="translated">Iphrofayela ibuyekeziwe!</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">313</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.privacySaved" datatype="html">
+        <source>Privacy settings saved!</source>
+        <target state="translated">Izilungiselelo zobumfihlo zilondoloziwe!</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">329</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.privacyFailed" datatype="html">
+        <source>Failed to update privacy settings</source>
+        <target state="translated">Asikwazanga ukubuyekeza izilungiselelo zobumfihlo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">333</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.passwordUpdated" datatype="html">
+        <source>Password updated. Other devices have been signed out.</source>
+        <target state="translated">Iphasiwedi ibuyekeziwe. Amanye amadivayisi akhishiwe.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">350</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.passwordFailed" datatype="html">
+        <source>Failed to update password</source>
+        <target state="translated">Asikwazanga ukubuyekeza iphasiwedi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">356</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="settings.deleteFailed" datatype="html">
+        <source>Failed to delete account</source>
+        <target state="translated">Asikwazanga ukususa i-akhawunti</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/settings.component.ts</context>
+          <context context-type="linenumber">373</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.home" datatype="html">
+        <source>Andromeda home</source>
+        <target state="translated">Ikhaya le-Andromeda</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.searchLabel" datatype="html">
+        <source>Search Andromeda</source>
+        <target state="translated">Sesha ku-Andromeda</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.html</context>
+          <context context-type="linenumber">12,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.searchPlaceholder" datatype="html">
+        <source>Search Andromeda...</source>
+        <target state="translated">Sesha ku-Andromeda...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.html</context>
+          <context context-type="linenumber">18,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.main" datatype="html">
+        <source>Main</source>
+        <target state="translated">Okuyinhloko</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.html</context>
+          <context context-type="linenumber">39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.sections" datatype="html">
+        <source>Sections</source>
+        <target state="translated">Izigaba</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.html</context>
+          <context context-type="linenumber">85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.more" datatype="html">
+        <source>More</source>
+        <target state="translated">Okunye</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.html</context>
+          <context context-type="linenumber">117,119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.messenger" datatype="html">
+        <source>Messenger</source>
+        <target state="translated">Imilayezo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">38</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.chats" datatype="html">
+        <source>Chats</source>
+        <target state="translated">Izingxoxo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.alerts" datatype="html">
+        <source>Alerts</source>
+        <target state="translated">Izaziso</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.openMenu" datatype="html">
+        <source>Open menu</source>
+        <target state="translated">Vula imenyu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.closeMenu" datatype="html">
+        <source>Close menu</source>
+        <target state="translated">Vala imenyu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.newNotification" datatype="html">
+        <source>New notification: <x id="title" equiv-text="n.title"/></source>
+        <target state="translated">Isaziso esisha: <x id="title" equiv-text="n.title"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.messengerUnread" datatype="html">
+        <source>Messenger, <x id="count" equiv-text="this.unreadChats"/> unread conversations</source>
+        <target state="translated">Imilayezo, izingxoxo ezingafundiwe ezingu-<x id="count" equiv-text="this.unreadChats"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.notificationsUnread" datatype="html">
+        <source>Notifications, <x id="count" equiv-text="this.unreadNotifications"/> unread</source>
+        <target state="translated">Izaziso, ezingafundiwe ezingu-<x id="count" equiv-text="this.unreadNotifications"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/navbar.component.ts</context>
+          <context context-type="linenumber">88</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.accountMenu" datatype="html">
+        <source>Account menu</source>
+        <target state="translated">Imenyu ye-akhawunti</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.myProfile" datatype="html">
+        <source>My Profile</source>
+        <target state="translated">Iphrofayela yami</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">28,30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.moderation" datatype="html">
+        <source>Moderation</source>
+        <target state="translated">Ukulawula</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">37,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.myListings" datatype="html">
+        <source>My Listings</source>
+        <target state="translated">Engikuthengisayo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">42,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.lightTheme" datatype="html">
+        <source>Light theme</source>
+        <target state="translated">Itimu ekhanyayo</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">51,53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.darkTheme" datatype="html">
+        <source>Dark theme</source>
+        <target state="translated">Itimu emnyama</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">53,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.installApp" datatype="html">
+        <source>Install app</source>
+        <target state="translated">Faka i-app</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">59,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.logout" datatype="html">
+        <source>Log Out</source>
+        <target state="translated">Phuma</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/navbar/profile-menu.component.ts</context>
+          <context context-type="linenumber">65,67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="state.retry" datatype="html">
+        <source>Try again</source>
+        <target state="translated">Zama futhi</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/states/error-state.component.ts</context>
+          <context context-type="linenumber">18,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="state.errorTitle" datatype="html">
+        <source>Something went wrong</source>
+        <target state="translated">Kukhona okungahambanga kahle</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/states/error-state.component.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="state.errorMessage" datatype="html">
+        <source>We couldn&apos;t load this. Check your connection and try again.</source>
+        <target state="translated">Asikwazanga ukulayisha lokhu. Hlola uxhumano lwakho bese uzama futhi.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/states/error-state.component.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="state.loading" datatype="html">
+        <source>Loading…</source>
+        <target state="translated">Iyalayisha…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/states/skeleton.component.ts</context>
+          <context context-type="linenumber">61</context>
+        </context-group>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

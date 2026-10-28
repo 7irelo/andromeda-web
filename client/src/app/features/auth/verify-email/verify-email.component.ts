@@ -13,15 +13,19 @@ import { AuthService } from '../../../core/services/auth.service';
     <div class="verify-page card" role="status" aria-live="polite">
       <mat-spinner diameter="36" *ngIf="state === 'working'"></mat-spinner>
       <ng-container *ngIf="state === 'done'">
-        <mat-icon class="ok">mark_email_read</mat-icon>
-        <h1>Email confirmed</h1>
-        <a mat-flat-button color="primary" [routerLink]="auth.isLoggedIn() ? '/feed' : '/login'">Continue</a>
+        <mat-icon class="ok" aria-hidden="true">mark_email_read</mat-icon>
+        <h1 i18n="@@verify.done">Email confirmed</h1>
+        <a mat-flat-button color="primary" [routerLink]="auth.isLoggedIn() ? '/feed' : '/login'" i18n="@@onboarding.continue">Continue</a>
       </ng-container>
       <ng-container *ngIf="state === 'failed'">
-        <mat-icon class="bad">error_outline</mat-icon>
-        <h1>This link didn't work</h1>
-        <p class="text-secondary">It may have expired or already been used. Sign in and send a new one from Settings.</p>
-        <a mat-stroked-button [routerLink]="auth.isLoggedIn() ? '/settings' : '/login'">Go to {{ auth.isLoggedIn() ? 'Settings' : 'sign in' }}</a>
+        <mat-icon class="bad" aria-hidden="true">error_outline</mat-icon>
+        <h1 i18n="@@verify.failed">This link didn't work</h1>
+        <p class="text-secondary" i18n="@@verify.failedHint">It may have expired or already been used. Sign in and send a new one from Settings.</p>
+        @if (auth.isLoggedIn()) {
+          <a mat-stroked-button routerLink="/settings" i18n="@@verify.toSettings">Go to Settings</a>
+        } @else {
+          <a mat-stroked-button routerLink="/login" i18n="@@verify.toSignIn">Go to sign in</a>
+        }
       </ng-container>
     </div>
   `,

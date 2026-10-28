@@ -30,118 +30,118 @@ import { DataSettingsComponent } from './data-settings.component';
     template: `
     <div class="settings-page">
       <div class="page-header-gradient">
-        <h1><mat-icon>settings</mat-icon> Settings</h1>
-        <p>Manage your account preferences</p>
+        <h1><mat-icon aria-hidden="true">settings</mat-icon> <span i18n="@@nav.settings">Settings</span></h1>
+        <p i18n="@@settings.subtitle">Manage your account preferences</p>
       </div>
 
       <!-- Profile Section -->
       <section class="settings-section card">
-        <h2><mat-icon>person</mat-icon> Edit Profile</h2>
+        <h2><mat-icon aria-hidden="true">person</mat-icon> <span i18n="@@settings.editProfile">Edit Profile</span></h2>
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="settings-form">
           <div class="form-row">
             <mat-form-field appearance="outline">
-              <mat-label>First Name</mat-label>
-              <input matInput formControlName="first_name" />
+              <mat-label i18n="@@register.firstName">First Name</mat-label>
+              <input matInput formControlName="first_name" autocomplete="given-name" />
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Last Name</mat-label>
-              <input matInput formControlName="last_name" />
+              <mat-label i18n="@@register.lastName">Last Name</mat-label>
+              <input matInput formControlName="last_name" autocomplete="family-name" />
             </mat-form-field>
           </div>
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Bio</mat-label>
+            <mat-label i18n="@@register.bio">Bio</mat-label>
             <textarea matInput formControlName="bio" rows="3"></textarea>
           </mat-form-field>
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Location</mat-label>
+            <mat-label i18n="@@register.location">Location</mat-label>
             <input matInput formControlName="location" />
           </mat-form-field>
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Website</mat-label>
-            <input matInput formControlName="website" />
+            <mat-label i18n="@@settings.website">Website</mat-label>
+            <input matInput type="url" formControlName="website" autocomplete="url" />
           </mat-form-field>
           <button mat-flat-button color="primary" type="submit" [disabled]="savingProfile">
             <mat-spinner diameter="18" *ngIf="savingProfile"></mat-spinner>
-            <span *ngIf="!savingProfile">Save Changes</span>
+            <span *ngIf="!savingProfile" i18n="@@settings.save">Save Changes</span>
           </button>
         </form>
       </section>
 
       <!-- Privacy Section -->
       <section class="settings-section card">
-        <h2><mat-icon>shield</mat-icon> Privacy Settings</h2>
+        <h2><mat-icon aria-hidden="true">shield</mat-icon> <span i18n="@@settings.privacy">Privacy Settings</span></h2>
         <form [formGroup]="privacyForm" (ngSubmit)="savePrivacy()" class="settings-form">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Profile Visibility</mat-label>
+            <mat-label i18n="@@settings.profileVisibility">Profile Visibility</mat-label>
             <mat-select formControlName="privacy_profile">
-              <mat-option value="everyone">Everyone</mat-option>
-              <mat-option value="friends">Friends</mat-option>
-              <mat-option value="private">Only Me</mat-option>
+              <mat-option value="everyone" i18n="@@settings.everyone">Everyone</mat-option>
+              <mat-option value="friends" i18n="@@settings.friends">Friends</mat-option>
+              <mat-option value="private" i18n="@@settings.onlyMe">Only Me</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Who Can Message Me</mat-label>
+            <mat-label i18n="@@settings.whoCanMessage">Who Can Message Me</mat-label>
             <mat-select formControlName="privacy_messages">
-              <mat-option value="everyone">Everyone</mat-option>
-              <mat-option value="friends">Friends</mat-option>
-              <mat-option value="nobody">Nobody</mat-option>
+              <mat-option value="everyone" i18n="@@settings.everyone">Everyone</mat-option>
+              <mat-option value="friends" i18n="@@settings.friends">Friends</mat-option>
+              <mat-option value="nobody" i18n="@@settings.nobody">Nobody</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Who Can Send Friend Requests</mat-label>
+            <mat-label i18n="@@settings.whoCanRequest">Who Can Send Friend Requests</mat-label>
             <mat-select formControlName="privacy_friend_requests">
-              <mat-option value="everyone">Everyone</mat-option>
-              <mat-option value="friends_of_friends">Friends of Friends</mat-option>
-              <mat-option value="nobody">Nobody</mat-option>
+              <mat-option value="everyone" i18n="@@settings.everyone">Everyone</mat-option>
+              <mat-option value="friends_of_friends" i18n="@@settings.friendsOfFriends">Friends of Friends</mat-option>
+              <mat-option value="nobody" i18n="@@settings.nobody">Nobody</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Friends List Visibility</mat-label>
+            <mat-label i18n="@@settings.friendsListVisibility">Friends List Visibility</mat-label>
             <mat-select formControlName="privacy_friends_list">
-              <mat-option value="everyone">Everyone</mat-option>
-              <mat-option value="friends">Friends</mat-option>
-              <mat-option value="private">Only Me</mat-option>
+              <mat-option value="everyone" i18n="@@settings.everyone">Everyone</mat-option>
+              <mat-option value="friends" i18n="@@settings.friends">Friends</mat-option>
+              <mat-option value="private" i18n="@@settings.onlyMe">Only Me</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Default Post Privacy</mat-label>
+            <mat-label i18n="@@settings.defaultPostPrivacy">Default Post Privacy</mat-label>
             <mat-select formControlName="default_post_privacy">
-              <mat-option value="public">Public</mat-option>
-              <mat-option value="friends">Friends</mat-option>
-              <mat-option value="private">Only Me</mat-option>
+              <mat-option value="public" i18n="@@settings.public">Public</mat-option>
+              <mat-option value="friends" i18n="@@settings.friends">Friends</mat-option>
+              <mat-option value="private" i18n="@@settings.onlyMe">Only Me</mat-option>
             </mat-select>
           </mat-form-field>
 
           <div class="setting-item">
             <div>
-              <div class="font-semibold">Show Online Status</div>
-              <div class="text-secondary text-sm">Let others see when you're active</div>
+              <div class="font-semibold" id="online-label" i18n="@@settings.onlineStatus">Show Online Status</div>
+              <div class="text-secondary text-sm" id="online-hint" i18n="@@settings.onlineStatusHint">Let others see when you're active</div>
             </div>
-            <mat-slide-toggle formControlName="show_online_status"></mat-slide-toggle>
+            <mat-slide-toggle formControlName="show_online_status" aria-labelledby="online-label" aria-describedby="online-hint"></mat-slide-toggle>
           </div>
 
           <div class="setting-item">
             <div>
-              <div class="font-semibold">Appear in Search Results</div>
-              <div class="text-secondary text-sm">Allow others to find you via search</div>
+              <div class="font-semibold" id="search-label" i18n="@@settings.searchable">Appear in Search Results</div>
+              <div class="text-secondary text-sm" id="search-hint" i18n="@@settings.searchableHint">Allow others to find you via search</div>
             </div>
-            <mat-slide-toggle formControlName="searchable"></mat-slide-toggle>
+            <mat-slide-toggle formControlName="searchable" aria-labelledby="search-label" aria-describedby="search-hint"></mat-slide-toggle>
           </div>
 
           <button mat-flat-button color="primary" type="submit" [disabled]="savingPrivacy">
             <mat-spinner diameter="18" *ngIf="savingPrivacy"></mat-spinner>
-            <span *ngIf="!savingPrivacy">Save Privacy Settings</span>
+            <span *ngIf="!savingPrivacy" i18n="@@settings.savePrivacy">Save Privacy Settings</span>
           </button>
         </form>
       </section>
 
       <!-- Appearance -->
       <section class="settings-section card">
-        <h2><mat-icon>palette</mat-icon> Appearance</h2>
+        <h2><mat-icon aria-hidden="true">palette</mat-icon> <span i18n="@@settings.appearance">Appearance</span></h2>
         <div class="setting-item">
           <div>
             <div class="font-semibold" id="theme-label" i18n="@@settings.theme">Theme</div>
@@ -158,26 +158,26 @@ import { DataSettingsComponent } from './data-settings.component';
 
       <!-- Password -->
       <section class="settings-section card">
-        <h2><mat-icon>lock</mat-icon> Change Password</h2>
+        <h2><mat-icon aria-hidden="true">lock</mat-icon> <span i18n="@@settings.changePassword">Change Password</span></h2>
         <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="settings-form">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Current Password</mat-label>
-            <input matInput type="password" formControlName="current_password" />
+            <mat-label i18n="@@settings.currentPassword">Current Password</mat-label>
+            <input matInput type="password" formControlName="current_password" autocomplete="current-password" />
           </mat-form-field>
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>New Password</mat-label>
-            <input matInput type="password" formControlName="new_password" />
+            <mat-label i18n="@@reset.newPassword">New password</mat-label>
+            <input matInput type="password" formControlName="new_password" autocomplete="new-password" />
           </mat-form-field>
           <button mat-flat-button color="primary" type="submit" [disabled]="passwordForm.invalid || changingPassword">
-            {{ changingPassword ? 'Updating...' : 'Update Password' }}
+            @if (changingPassword) { <span i18n="@@settings.updating">Updating...</span> } @else { <span i18n="@@reset.update">Update password</span> }
           </button>
         </form>
         <div class="setting-item" style="margin-top:16px">
           <div>
-            <div class="font-semibold">Sign out everywhere</div>
-            <div class="text-secondary text-sm">End every session on every device, including this one</div>
+            <div class="font-semibold" i18n="@@settings.signOutEverywhere">Sign out everywhere</div>
+            <div class="text-secondary text-sm" i18n="@@settings.signOutEverywhereHint">End every session on every device, including this one</div>
           </div>
-          <button mat-stroked-button (click)="logoutEverywhere()">Sign out all devices</button>
+          <button mat-stroked-button (click)="logoutEverywhere()" i18n="@@settings.signOutAll">Sign out all devices</button>
         </div>
       </section>
 
@@ -189,24 +189,24 @@ import { DataSettingsComponent } from './data-settings.component';
 
       <!-- Danger Zone -->
       <section class="settings-section card danger-zone">
-        <h2><mat-icon>warning</mat-icon> Danger Zone</h2>
+        <h2><mat-icon aria-hidden="true">warning</mat-icon> <span i18n="@@settings.dangerZone">Danger Zone</span></h2>
         <div class="setting-item">
           <div>
-            <div class="font-semibold">Delete Account</div>
-            <div class="text-secondary text-sm">You're signed out now and everything is permanently deleted after
+            <div class="font-semibold" i18n="@@settings.deleteAccount">Delete Account</div>
+            <div class="text-secondary text-sm" i18n="@@settings.deleteHint">You're signed out now and everything is permanently deleted after
               14 days. Sign in before then to cancel.</div>
           </div>
-          <button mat-stroked-button color="warn" *ngIf="!showDelete" (click)="showDelete = true">Delete Account</button>
+          <button mat-stroked-button color="warn" *ngIf="!showDelete" (click)="showDelete = true" i18n="@@settings.deleteAccount">Delete Account</button>
         </div>
         <div *ngIf="showDelete" class="settings-form" style="margin-top:12px">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Enter your password to confirm</mat-label>
+            <mat-label i18n="@@settings.confirmWithPassword">Enter your password to confirm</mat-label>
             <input matInput type="password" autocomplete="current-password" [(ngModel)]="deletePassword" />
           </mat-form-field>
           <div style="display:flex;gap:8px">
-            <button mat-stroked-button (click)="showDelete = false; deletePassword = ''">Cancel</button>
+            <button mat-stroked-button (click)="showDelete = false; deletePassword = ''" i18n="@@common.cancel">Cancel</button>
             <button mat-flat-button color="warn" [disabled]="!deletePassword || deleting" (click)="confirmDelete()">
-              {{ deleting ? 'Deleting...' : 'Permanently delete my account' }}
+              @if (deleting) { <span i18n="@@settings.deleting">Deleting...</span> } @else { <span i18n="@@settings.deleteForever">Permanently delete my account</span> }
             </button>
           </div>
         </div>
@@ -310,11 +310,11 @@ export class SettingsComponent implements OnInit {
       next: () => {
         this.savingProfile = false;
         this.authService.fetchMe().subscribe();
-        this.snackBar.open('Profile updated!', 'Dismiss', { duration: 3000 });
+        this.snackBar.open($localize`:@@settings.profileSaved:Profile updated!`, $localize`:@@common.dismiss:Dismiss`, { duration: 3000 });
       },
       error: () => {
         this.savingProfile = false;
-        this.snackBar.open('Failed to update profile', 'Dismiss', { duration: 3000 });
+        this.snackBar.open($localize`:@@register.profileFailed:Failed to update profile`, $localize`:@@common.dismiss:Dismiss`, { duration: 3000 });
       },
     });
   }
@@ -326,11 +326,11 @@ export class SettingsComponent implements OnInit {
       next: () => {
         this.savingPrivacy = false;
         this.authService.fetchMe().subscribe();
-        this.snackBar.open('Privacy settings saved!', 'Dismiss', { duration: 3000 });
+        this.snackBar.open($localize`:@@settings.privacySaved:Privacy settings saved!`, $localize`:@@common.dismiss:Dismiss`, { duration: 3000 });
       },
       error: () => {
         this.savingPrivacy = false;
-        this.snackBar.open('Failed to update privacy settings', 'Dismiss', { duration: 3000 });
+        this.snackBar.open($localize`:@@settings.privacyFailed:Failed to update privacy settings`, $localize`:@@common.dismiss:Dismiss`, { duration: 3000 });
       },
     });
   }
@@ -347,13 +347,14 @@ export class SettingsComponent implements OnInit {
       next: () => {
         this.changingPassword = false;
         this.passwordForm.reset();
-        this.snackBar.open('Password updated. Other devices have been signed out.', 'Dismiss', { duration: 4000 });
+        this.snackBar.open($localize`:@@settings.passwordUpdated:Password updated. Other devices have been signed out.`, $localize`:@@common.dismiss:Dismiss`, { duration: 4000 });
       },
       error: (err) => {
         this.changingPassword = false;
         const e = err?.error ?? {};
-        const msg = e.current_password?.[0] ?? e.new_password?.[0] ?? e.non_field_errors?.[0] ?? 'Failed to update password';
-        this.snackBar.open(msg, 'Dismiss', { duration: 4000 });
+        const msg = e.current_password?.[0] ?? e.new_password?.[0] ?? e.non_field_errors?.[0]
+          ?? $localize`:@@settings.passwordFailed:Failed to update password`;
+        this.snackBar.open(msg, $localize`:@@common.dismiss:Dismiss`, { duration: 4000 });
       },
     });
   }
@@ -369,7 +370,8 @@ export class SettingsComponent implements OnInit {
       error: (err) => {
         this.deleting = false;
         this.deletePassword = '';
-        this.snackBar.open(err?.error?.password?.[0] ?? 'Failed to delete account', 'Dismiss', { duration: 3000 });
+        this.snackBar.open(err?.error?.password?.[0] ?? $localize`:@@settings.deleteFailed:Failed to delete account`,
+          $localize`:@@common.dismiss:Dismiss`, { duration: 3000 });
       },
     });
   }

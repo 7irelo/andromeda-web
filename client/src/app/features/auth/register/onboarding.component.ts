@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, LOCALE_ID, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, catchError, map } from 'rxjs';
@@ -188,6 +188,7 @@ export class OnboardingComponent {
   readonly done = output<void>();
 
   private readonly api = inject(ApiService);
+  private readonly locale = inject(LOCALE_ID);
 
   readonly interests = INTERESTS;
   readonly step = signal<'interests' | 'groups' | 'post'>('interests');
@@ -312,9 +313,11 @@ export class OnboardingComponent {
         ? $localize`:@@onboarding.draftPlain:Hi everyone, ${name}:name: here! I just joined Andromeda.`
         : $localize`:@@onboarding.draftAnon:Hi everyone! I just joined Andromeda.`;
     }
-    const list = labels.length === 1
-      ? labels[0]
-      : `${labels.slice(0, -1).join(', ')} ${$localize`:@@onboarding.and:and`} ${labels[labels.length - 1]}`;
+    // "music, food and travel" in the page's language (CLDR list patterns).
+    let list = labels.join(', ');
+    try {
+      list = new Intl.ListFormat(this.locale, { style: 'long', type: 'conjunction' }).format(labels);
+    } catch { /* older browser: plain comma list */ }
     return $localize`:@@onboarding.draftInterests:Hi everyone! I just joined Andromeda. I'm into ${list}:interests: — say hi if you are too.`;
   }
 }

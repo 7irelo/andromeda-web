@@ -13,24 +13,24 @@ import { AuthService } from '../../../core/services/auth.service';
     template: `
     <div class="auth-shell">
       <div class="auth-card card">
-        <h1>Reset your password</h1>
+        <h1 i18n="@@reset.forgotTitle">Reset your password</h1>
         <ng-container *ngIf="!sent; else done">
-          <p class="text-secondary">Enter the email on your account and we'll send you a reset link.</p>
+          <p class="text-secondary" i18n="@@reset.forgotHint">Enter the email on your account and we'll send you a reset link.</p>
           <form [formGroup]="form" (ngSubmit)="submit()">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Email</mat-label>
+              <mat-label i18n="@@reset.email">Email</mat-label>
               <input matInput type="email" autocomplete="email" formControlName="email" />
             </mat-form-field>
             <button mat-flat-button color="primary" class="w-full" type="submit" [disabled]="form.invalid || loading">
-              {{ loading ? 'Sending...' : 'Send reset link' }}
+              @if (loading) { <span i18n="@@reset.sending">Sending...</span> } @else { <span i18n="@@reset.send">Send reset link</span> }
             </button>
           </form>
         </ng-container>
         <ng-template #done>
-          <p><mat-icon class="ok">mark_email_read</mat-icon></p>
-          <p>If that email is registered, a reset link is on its way. It expires in one hour.</p>
+          <p><mat-icon class="ok" aria-hidden="true">mark_email_read</mat-icon></p>
+          <p role="status" i18n="@@reset.sent">If that email is registered, a reset link is on its way. It expires in one hour.</p>
         </ng-template>
-        <p class="back"><a routerLink="/login">Back to sign in</a></p>
+        <p class="back"><a routerLink="/login" i18n="@@reset.backToSignIn">Back to sign in</a></p>
       </div>
     </div>
   `,
