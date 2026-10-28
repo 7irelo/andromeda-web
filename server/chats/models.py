@@ -54,11 +54,24 @@ class Message(models.Model):
     TYPE_IMAGE = 'image'
     TYPE_VIDEO = 'video'
     TYPE_FILE = 'file'
+    TYPE_VOICE = 'voice'
     TYPE_CHOICES = [
         (TYPE_TEXT, 'Text'),
         (TYPE_IMAGE, 'Image'),
         (TYPE_VIDEO, 'Video'),
         (TYPE_FILE, 'File'),
+        (TYPE_VOICE, 'Voice note'),
+    ]
+
+    TRANSCRIPT_NONE = ''
+    TRANSCRIPT_PENDING = 'pending'
+    TRANSCRIPT_DONE = 'done'
+    TRANSCRIPT_FAILED = 'failed'
+    TRANSCRIPT_CHOICES = [
+        (TRANSCRIPT_NONE, 'None'),
+        (TRANSCRIPT_PENDING, 'Pending'),
+        (TRANSCRIPT_DONE, 'Done'),
+        (TRANSCRIPT_FAILED, 'Failed'),
     ]
 
     room = models.ForeignKey(ChatRoom, related_name='messages', on_delete=models.CASCADE)
@@ -72,13 +85,20 @@ class Message(models.Model):
         'self', null=True, blank=True, related_name='replies', on_delete=models.SET_NULL
     )
     is_edited = models.BooleanField(default=False)
+    edited_at = models.DateTimeField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
+    # Voice notes: length read from the container, transcript filled in by a Celery task.
+    duration_s = models.FloatField(null=True, blank=True)
+    transcript = models.TextField(blank=True)
+    transcript_status = models.CharField(max_length=10, choices=TRANSCRIPT_CHOICES, blank=True,
+                                         default=TRANSCRIPT_NONE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'messages'
         ordering = ['created_at']
+        indexes = [models.Index(fields=['room', 'created_at'])]
 
     def __str__(self):
         return f'{self.sender} in {self.room}: {self.content[:50]}'
@@ -94,4 +114,23 @@ class MessageRead(models.Model):
 
     class Meta:
         db_table = 'message_reads'
+        unique_together = ('message', 'user')
+
+
+class MessageReaction(models.Model):
+    """One reaction per user per message, from a small fixed set."""
+
+    REACTION_CHOICES = [
+        ('like', 'Like'), ('love', 'Love'), ('haha', 'Haha'),
+        ('wow', 'Wow'), ('sad', 'Sad'), ('angry', 'Angry'),
+    ]
+    REACTIONS = {key for key, _ in REACTION_CHOICES}
+
+    message = models.ForeignKey(Message, related_name='reactions', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    reaction = models.CharField(max_length=10, choices=REACTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'message_reactions'
         unique_together = ('message', 'user')

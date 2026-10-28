@@ -271,6 +271,69 @@ class TestChat:
         assert r.status_code == 200
         assert r['Content-Disposition'].startswith('attachment')
 
+    @pytest.fixture
+    def crew(self, alice, bob):
+        room = ChatRoom.objects.create(room_type='group', name='Crew', created_by=alice)
+        ChatMember.objects.create(room=room, user=alice, role='admin')
+        ChatMember.objects.create(room=room, user=bob)
+        return room
+
+    def test_non_member_cannot_search_or_see_presence(self, crew, alice, mallory):
+        Message.objects.create(room=crew, sender=alice, content='secret plans')
+        c = client_for(mallory)
+        assert c.get(reverse('chatroom-search', kwargs={'pk': crew.pk}) + '?q=secret').status_code == 404
+        assert c.get(reverse('chatroom-presence', kwargs={'pk': crew.pk})).status_code == 404
+        assert c.get(reverse('chatroom-messages', kwargs={'pk': crew.pk}) + '?after_id=0').status_code == 404
+        assert c.get(reverse('chatroom-unread')).data['total'] == 0
+
+    def test_removed_member_loses_room_and_attachments(self, crew, alice, bob):
+        msg = Message.objects.create(room=crew, sender=alice, message_type='file',
+                                     file=SimpleUploadedFile('notes.txt', b'hello'))
+        assert client_for(alice).post(reverse('chatroom-remove-member', kwargs={'pk': crew.pk}),
+                                      {'user_id': bob.id}).status_code == 200
+        c = client_for(bob)
+        assert c.get(reverse('message-file', kwargs={'pk': msg.pk})).status_code == 404
+        assert c.get(reverse('chatroom-search', kwargs={'pk': crew.pk}) + '?q=hello').status_code == 404
+        assert c.post(reverse('message-list'), {'room': crew.id, 'content': 'hi'}).status_code == 403
+
+    def test_only_admins_manage_group(self, crew, bob, mallory):
+        for user, expected in ((bob, 403), (mallory, 404)):
+            c = client_for(user)
+            assert c.patch(reverse('chatroom-rename', kwargs={'pk': crew.pk}), {'name': 'x'},
+                           format='json').status_code == expected
+            assert c.post(reverse('chatroom-set-role', kwargs={'pk': crew.pk}),
+                          {'user_id': user.id, 'role': 'admin'}).status_code == expected
+            assert c.post(reverse('chatroom-add-member', kwargs={'pk': crew.pk}),
+                          {'user_id': user.id}).status_code == expected
+            assert c.delete(reverse('chatroom-avatar', kwargs={'pk': crew.pk})).status_code == expected
+        assert client_for(bob).post(reverse('chatroom-remove-member', kwargs={'pk': crew.pk}),
+                                    {'user_id': crew.created_by_id}).status_code == 403
+        assert ChatMember.objects.filter(room=crew).count() == 2
+        assert ChatMember.objects.get(room=crew, user=bob).role == 'member'
+
+    def test_blocked_user_cannot_be_added_to_group(self, crew, alice, mallory):
+        Block.objects.create(blocker=mallory, blocked=alice)
+        r = client_for(alice).post(reverse('chatroom-add-member', kwargs={'pk': crew.pk}), {'user_id': mallory.id})
+        assert r.status_code == 403
+        assert not ChatMember.objects.filter(room=crew, user=mallory).exists()
+
+    def test_non_member_cannot_react_edit_or_delete(self, crew, alice, mallory):
+        from chats import services
+        msg = Message.objects.create(room=crew, sender=alice, content='x')
+        for action, args in ((services.set_reaction, ('like',)), (services.edit_message, ('pwned',)),
+                             (services.delete_message, ())):
+            with pytest.raises(services.ChatActionError):
+                action(mallory, crew.id, msg.id, *args)
+        msg.refresh_from_db()
+        assert msg.content == 'x' and not msg.is_deleted and not msg.reactions.exists()
+
+    def test_voice_note_must_be_audio(self, crew, alice):
+        disguised = SimpleUploadedFile('note.webm', b'<html><script>alert(1)</script>', content_type='audio/webm')
+        r = client_for(alice).post(reverse('message-list'), {'room': crew.id, 'message_type': 'voice',
+                                                             'file': disguised}, format='multipart')
+        assert r.status_code == 400
+        assert not crew.messages.exists()
+
 
 # ── Blocking & user privacy ──────────────────────────────────────────────────
 
