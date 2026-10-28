@@ -11,13 +11,14 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { User, FriendRequest } from '../../models/user.model';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 @Component({
     selector: 'app-friends',
     imports: [
         CommonModule, RouterLink, FormsModule, MatIconModule,
         MatButtonModule, MatTabsModule, MatInputModule, MatProgressSpinnerModule,
-        MatSnackBarModule,
+        MatSnackBarModule, EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     templateUrl: './friends.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -30,6 +31,7 @@ export class FriendsComponent implements OnInit {
   searchResults: User[] = [];
   searchQuery = '';
   loading = false;
+  loadError = false;
   currentUserId: number | null = null;
 
   constructor(
@@ -50,9 +52,10 @@ export class FriendsComponent implements OnInit {
 
   loadSuggestions(): void {
     this.loading = true;
+    this.loadError = false;
     this.apiService.getSuggestions().subscribe({
       next: (u) => { this.suggestions = u; this.loading = false; },
-      error: () => (this.loading = false),
+      error: () => { this.loading = false; this.loadError = true; },
     });
   }
 

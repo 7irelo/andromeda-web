@@ -1,8 +1,8 @@
 import {
-  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, QueryList,
-  ViewChildren,
+  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, QueryList,
+  ViewChildren, inject,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -18,6 +18,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
 import { CreatePostComponent } from '../../shared/components/create-post/create-post.component';
 import { UserCardComponent } from '../../shared/components/user-card/user-card.component';
 import { DwellTracker } from './dwell-tracker';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 const SORT_KEY = 'andromeda.feedSort';
 /** How often seen/opened posts are reported to the ranker (and once more when the page is hidden). */
@@ -26,8 +27,9 @@ const FLUSH_MS = 10_000;
 @Component({
     selector: 'app-feed',
     imports: [
-        CommonModule, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
+        CommonModule, NgOptimizedImage, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
         MatIconModule, MatSnackBarModule, PostCardComponent, CreatePostComponent, UserCardComponent,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     templateUrl: './feed.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -38,6 +40,7 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   suggestions: User[] = [];
   currentUser: User | null = null;
   loading = false;
+  loadError = false;
   hasMore = true;
   sort: FeedSort = 'top';
   /** Ids of friends' posts announced over the socket that aren't on screen yet. */
@@ -54,6 +57,7 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   private observed = new Set<HTMLElement>();
   private cardsSub?: Subscription;
   private flushTimer?: ReturnType<typeof setInterval>;
+  private zone = inject(NgZone);
 
   constructor(
     private apiService: ApiService,
@@ -88,7 +92,8 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
     }, { threshold: [0, 0.5] });
     this.observeCards();
     this.cardsSub = this.cards.changes.subscribe(() => this.observeCards());
-    this.flushTimer = setInterval(() => this.flushEvents(), FLUSH_MS);
+    // Outside the zone: a background timer shouldn't trigger change detection or keep the app unstable.
+    this.flushTimer = this.zone.runOutsideAngular(() => setInterval(() => this.flushEvents(), FLUSH_MS));
   }
 
   ngOnDestroy(): void {
@@ -145,6 +150,7 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   loadFeed(): void {
     if (this.loading || !this.hasMore) return;
     this.loading = true;
+    this.loadError = false;
 
     this.request = this.apiService.getFeed(this.sort, this.cursor).subscribe({
       next: (res) => {
@@ -155,8 +161,17 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
         this.hasMore = !!res.next_cursor;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.loadError = true;
+      },
     });
+  }
+
+  /** After a failed page: try the same page again. */
+  retry(): void {
+    this.loadError = false;
+    this.loadFeed();
   }
 
   /** Start over from the top: on sort change or when the reader asks for the new posts. */
@@ -202,7 +217,7 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
     if (index < 0) return;
     const [post] = this.posts.splice(index, 1);
     this.posts = [...this.posts];
-    this.snackBar.open('Post hidden from your feed', 'Undo', { duration: 5000 }).onAction().subscribe(() => {
+    this.snackBar.open($localize`:@@feed.postHidden:Post hidden from your feed`, $localize`:@@feed.undo:Undo`, { duration: 5000 }).onAction().subscribe(() => {
       this.apiService.unhidePost(postId).subscribe(() => {
         const copy = [...this.posts];
         copy.splice(Math.min(index, copy.length), 0, post);
@@ -215,7 +230,7 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   onWindowScroll(): void {
     const scrolled = window.scrollY + window.innerHeight;
     const height = document.documentElement.scrollHeight;
-    if (scrolled >= height - 400 && !this.loading && this.hasMore) {
+    if (scrolled >= height - 400 && !this.loading && !this.loadError && this.hasMore) {
       this.loadFeed();
     }
   }

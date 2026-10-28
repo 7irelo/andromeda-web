@@ -18,6 +18,12 @@
   align-items: flex-end;
   gap: 8px;
   max-width: 75%;
+  // Off-screen messages skip layout and paint, so long conversations stay smooth
+  // (variable-height bubbles rule out a fixed-size virtual viewport here).
+  content-visibility: auto;
+  contain-intrinsic-size: auto 56px;
+
+  @media (max-width: 600px) { max-width: 92%; }
 
   &.mine {
     align-self: flex-end;
@@ -30,7 +36,8 @@
 .sender-name { padding-left: 4px; }
 
 .bubble {
-  background: #e4e6eb;
+  background: var(--bg);
+  color: var(--text-primary);
   border-radius: 18px;
   padding: 8px 14px;
   font-size: 14px;
@@ -38,8 +45,8 @@
   word-break: break-word;
 
   &.mine {
-    background: var(--primary);
-    color: #fff;
+    background: var(--primary-strong);
+    color: var(--on-primary);
   }
 
   &.deleted {
@@ -87,6 +94,8 @@
 
 .msg-input {
   flex: 1;
+  min-width: 0;
+  min-height: 40px;
   border: none;
   background: var(--bg);
   border-radius: 20px;
@@ -131,6 +140,18 @@
   .title { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .presence { display: flex; align-items: center; gap: 4px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #31a24c; }
+
+  .back-to-rooms { display: none; }
+  @media (max-width: 768px) { .back-to-rooms { display: inline-flex; } }
+
+  // Icon-only on phones; the label stays available to screen readers.
+  @media (max-width: 600px) {
+    .catchup-btn { min-width: var(--touch-target); padding: 0 10px; }
+    .catchup-btn mat-icon { margin: 0; }
+    .catchup-label {
+      position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+    }
+  }
 }
 
 .removed-banner, .notice {
@@ -187,7 +208,7 @@
   &:hover .msg-actions, &:focus-within .msg-actions { opacity: 1; }
 }
 
-.avatar-wrap { position: relative; }
+.avatar-wrap { position: relative; flex-shrink: 0; }
 
 .online-dot {
   position: absolute;

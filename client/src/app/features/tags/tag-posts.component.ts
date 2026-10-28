@@ -8,14 +8,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../core/services/api.service';
 import { Post } from '../../models/post.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 /** Posts with a hashtag that you're allowed to see, newest first. */
 @Component({
   selector: 'app-tag-posts',
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, PostCardComponent],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, PostCardComponent,
+    EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <main class="tag-page">
+    <div class="tag-page">
       <header class="card tag-header">
         <span class="hash" aria-hidden="true">#</span>
         <div>
@@ -24,10 +26,13 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
         </div>
       </header>
       <app-post-card *ngFor="let p of posts; trackBy: trackById" [post]="p" (postDeleted)="onDeleted($event)"></app-post-card>
-      <div *ngIf="loading" class="center"><mat-spinner diameter="32"></mat-spinner></div>
-      <p *ngIf="!loading && posts.length === 0" class="card empty">No posts with #{{ tag }} yet.</p>
-      <button mat-stroked-button *ngIf="hasMore && !loading" (click)="loadMore()">Load more</button>
-    </main>
+      <app-skeleton *ngIf="loading && posts.length === 0" variant="post" [count]="2"></app-skeleton>
+      <div *ngIf="loading && posts.length > 0" class="center"><mat-spinner diameter="32"></mat-spinner></div>
+      <app-error-state *ngIf="!loading && loadError" [compact]="posts.length > 0" (retry)="retry()"></app-error-state>
+      <app-empty-state *ngIf="!loading && !loadError && posts.length === 0" icon="tag"
+                       [title]="'No posts with #' + tag + ' yet'" message="Use the tag in a post to start it off."></app-empty-state>
+      <button mat-stroked-button *ngIf="hasMore && !loading && !loadError" (click)="loadMore()">Load more</button>
+    </div>
   `,
   styles: [`
     .tag-page { max-width: 640px; margin: 16px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -45,6 +50,7 @@ export class TagPostsComponent implements OnInit, OnDestroy {
   posts: Post[] = [];
   count: number | null = null;
   loading = false;
+  loadError = false;
   hasMore = false;
   private page = 1;
   private sub?: Subscription;
@@ -71,6 +77,7 @@ export class TagPostsComponent implements OnInit, OnDestroy {
     this.request?.unsubscribe();
     if (!this.tag) return;
     this.loading = true;
+    this.loadError = false;
     this.request = this.api.getTagPosts(this.tag, this.page).subscribe({
       next: (res) => {
         this.posts = [...this.posts, ...res.results];
@@ -78,8 +85,15 @@ export class TagPostsComponent implements OnInit, OnDestroy {
         this.hasMore = !!res.next;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.loadError = true;
+      },
     });
+  }
+
+  retry(): void {
+    this.load();
   }
 
   loadMore(): void {

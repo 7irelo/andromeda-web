@@ -30,6 +30,8 @@ export class LoginComponent {
   hidePassword = true;
   /** Set once the password is accepted and a second factor is needed. */
   mfaToken: string | null = null;
+  readonly showPasswordLabel = $localize`:@@auth.showPassword:Show password`;
+  readonly hidePasswordLabel = $localize`:@@auth.hidePassword:Hide password`;
 
   constructor(
     private fb: FormBuilder,
@@ -57,7 +59,7 @@ export class LoginComponent {
         this.done();
       },
       error: (err) => {
-        this.error = err.error?.detail || 'Invalid credentials. Please try again.';
+        this.error = err.error?.detail || $localize`:@@login.invalid:Invalid credentials. Please try again.`;
         this.loading = false;
       },
     });
@@ -70,7 +72,7 @@ export class LoginComponent {
     this.authService.completeMfaLogin(this.mfaToken, (this.codeForm.value.code ?? '').trim()).subscribe({
       next: () => this.done(),
       error: (err) => {
-        this.error = err.error?.detail || 'That code did not work. Try again.';
+        this.error = err.error?.detail || $localize`:@@login.badCode:That code did not work. Try again.`;
         this.loading = false;
       },
     });

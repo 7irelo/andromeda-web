@@ -1,6 +1,5 @@
-import { APP_INITIALIZER, ApplicationConfig, isDevMode } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -9,8 +8,13 @@ import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    // Components update plain fields from HTTP and socket callbacks and use Eager change
+    // detection, so they need zone.js to know when to re-render. Angular 22 bootstraps
+    // zoneless unless this is provided, and lists then stayed on their loading state.
+    provideZoneChangeDetection({ eventCoalescing: true, runCoalescing: true }),
     provideRouter(routes, withComponentInputBinding()),
-    provideAnimations(),
+    // No provideAnimations(): nothing uses @angular/animations (Material animates with CSS and
+    // honours prefers-reduced-motion itself), and the engine was ~75 kB of the initial bundle.
     provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
     {
       // Resume the session from the HttpOnly refresh cookie before the first route guard runs.

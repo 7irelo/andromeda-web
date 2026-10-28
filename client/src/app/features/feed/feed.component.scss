@@ -111,6 +111,7 @@
   border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary);
   font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
   mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  @media (pointer: coarse), (max-width: 600px) { min-height: var(--touch-target); }
   &.active { background: var(--primary-light); color: var(--primary-dark); border-color: transparent; }
   &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 }
@@ -118,11 +119,11 @@
 .new-posts-pill {
   position: sticky; top: calc(var(--header-height) + 8px); z-index: 30; align-self: center;
   display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; border: none; border-radius: 20px;
-  background: var(--primary); color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  background: var(--primary-strong); color: var(--on-primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
   box-shadow: var(--shadow-md);
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
-  &:hover { background: var(--primary-dark); }
-  &:focus-visible { outline: 3px solid var(--primary-light); }
+  &:hover { background: #4338ca; }
+  &:focus-visible { outline: 3px solid var(--focus-ring-color); outline-offset: 2px; }
 }
 
 .end-message {

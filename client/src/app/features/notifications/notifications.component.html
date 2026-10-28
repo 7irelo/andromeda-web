@@ -4,48 +4,54 @@
       <h1>Notifications</h1>
       <p style="opacity:.85;margin-top:4px;font-size:14px">Stay up to date with your activity</p>
     </div>
-    <button mat-flat-button (click)="markAllRead()" *ngIf="notifications.length > 0" style="background:#fff;color:var(--primary);font-weight:600">
-      <mat-icon>done_all</mat-icon> Mark all read
+    <button mat-flat-button (click)="markAllRead()" *ngIf="notifications.length > 0" class="mark-all">
+      <mat-icon aria-hidden="true">done_all</mat-icon> Mark all read
     </button>
   </div>
 
-  <div class="loading-center" *ngIf="loading">
-    <mat-spinner diameter="40"></mat-spinner>
-  </div>
+  <app-skeleton *ngIf="loading" variant="list" [count]="6" class="notif-list"></app-skeleton>
 
-  <div class="notif-list" *ngIf="!loading">
-    <div
-      *ngFor="let n of notifications"
-      class="notif-item"
-      [class.unread]="!n.is_read"
-      (click)="markRead(n)"
+  <app-error-state *ngIf="!loading && loadError" (retry)="load()"></app-error-state>
+
+  <ng-container *ngIf="!loading && !loadError">
+    <!-- Window-scrolled virtual list: only the rows on screen are in the DOM. -->
+    <cdk-virtual-scroll-viewport
+      *ngIf="notifications.length > 0"
+      scrollWindow
+      [itemSize]="rowHeight"
+      class="notif-list"
+      role="list"
+      aria-label="Notifications"
     >
-      <div class="notif-avatar-wrap">
-        <img
-          [src]="n.sender?.avatar_url || 'assets/default-avatar.png'"
-          class="avatar md"
-          [alt]="n.sender?.username || 'System'"
-        />
-        <div class="notif-type-icon">
-          <mat-icon>{{ getIcon(n.notification_type, n.extra) }}</mat-icon>
-        </div>
-      </div>
+      <div *cdkVirtualFor="let n of notifications; trackBy: trackById" role="listitem" class="notif-row">
+        <button type="button" class="notif-item" [class.unread]="!n.is_read" (click)="markRead(n)">
+          <span class="notif-avatar-wrap">
+            <img
+              [src]="n.sender?.avatar_url || 'assets/default-avatar.png'"
+              class="avatar md"
+              alt=""
+              width="40"
+              height="40"
+              loading="lazy"
+            />
+            <span class="notif-type-icon" aria-hidden="true">
+              <mat-icon>{{ getIcon(n.notification_type, n.extra) }}</mat-icon>
+            </span>
+          </span>
 
-      <div class="notif-content">
-        <div class="notif-title">{{ n.title }}</div>
-        <div class="notif-body text-secondary text-sm" *ngIf="n.body">{{ n.body }}</div>
-        <div class="notif-time text-xs text-secondary">{{ timeAgo(n.created_at) }}</div>
-      </div>
+          <span class="notif-content">
+            <span class="notif-title">{{ n.title }}</span>
+            <span class="notif-body" *ngIf="n.body">{{ n.body }}</span>
+            <span class="notif-time">{{ timeAgo(n.created_at) }}</span>
+          </span>
 
-      <div class="unread-dot" *ngIf="!n.is_read"></div>
-    </div>
-
-    <div class="empty-state" *ngIf="notifications.length === 0">
-      <div class="empty-icon">
-        <mat-icon>notifications_none</mat-icon>
+          <span class="unread-dot" *ngIf="!n.is_read"></span>
+          <span class="visually-hidden" *ngIf="!n.is_read">(unread)</span>
+        </button>
       </div>
-      <h3>All caught up!</h3>
-      <p>You'll be notified when something happens</p>
-    </div>
-  </div>
+    </cdk-virtual-scroll-viewport>
+
+    <app-empty-state *ngIf="notifications.length === 0" icon="notifications_none"
+                     title="All caught up!" message="You'll be notified when something happens"></app-empty-state>
+  </ng-container>
 </div>

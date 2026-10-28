@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { openReportDialog } from '../../../shared/components/report-dialog/report-dialog.component';
 import { MatIconModule } from '@angular/material/icon';
@@ -28,7 +28,7 @@ const VOICE_EXT: Record<string, string> = { 'audio/webm': 'webm', 'audio/ogg': '
 
 @Component({
     selector: 'app-chat-window',
-    imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule,
+    imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule,
         VoiceNoteComponent, GroupSettingsComponent, SmartRepliesComponent],
     templateUrl: './chat-window.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -48,6 +48,8 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
   typingUsers: string[] = [];
   onlineIds = new Set<number>();
   notice = '';
+  /** Polite live-region text for messages from other people. */
+  liveAnnouncement = '';
   removed = false;
   private subs = new Subscription();
   private scrollPending = false;
@@ -137,6 +139,7 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
       this.upsert(m);
       this.scrollPending = true;
       if (!this.isMyMessage(m)) {
+        this.announce(m);
         this.wsService.markMessageRead(m.id);
         this.markRead();
         if (!m.is_deleted) this.incomingTick++;
@@ -471,6 +474,12 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
 
   onLeft(): void {
     this.router.navigate(['/chat']);
+  }
+
+  private announce(m: Message): void {
+    const who = m.sender?.full_name ?? 'Someone';
+    const what = m.message_type === 'voice' ? 'sent a voice message' : `says: ${m.content || 'an attachment'}`;
+    this.liveAnnouncement = `${who} ${what}`;
   }
 
   private showNotice(text: string): void {

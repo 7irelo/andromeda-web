@@ -14,6 +14,7 @@ import { ApiService } from '../../core/services/api.service';
 import { City, LISTING_CONDITIONS, Listing, ListingCategory } from '../../models/listing.model';
 import { ListingCardComponent } from './listing-card/listing-card.component';
 import { ListingFormComponent, apiError } from './listing-form/listing-form.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 type Sort = 'newest' | 'price_asc' | 'price_desc' | 'nearest' | '';
 
@@ -23,6 +24,7 @@ type Sort = 'newest' | 'price_asc' | 'price_desc' | 'nearest' | '';
         CommonModule, RouterLink, FormsModule,
         MatIconModule, MatButtonModule, MatInputModule, MatProgressSpinnerModule,
         MatFormFieldModule, MatSelectModule, MatSnackBarModule, ListingCardComponent, ListingFormComponent,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     templateUrl: './marketplace.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -31,6 +33,7 @@ type Sort = 'newest' | 'price_asc' | 'price_desc' | 'nearest' | '';
 export class MarketplaceComponent implements OnInit {
   listings: Listing[] = [];
   loading = false;
+  loadError = '';
   loadingMore = false;
   nextPage: number | null = null;
 
@@ -96,6 +99,7 @@ export class MarketplaceComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.loadError = '';
     this.apiService.getListings(this.params()).subscribe({
       next: (res) => {
         this.listings = res.results;
@@ -104,7 +108,7 @@ export class MarketplaceComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
-        this.snackBar.open(apiError(err, 'Could not load listings'), 'Dismiss', { duration: 3000 });
+        this.loadError = apiError(err, 'Could not load listings');
       },
     });
   }

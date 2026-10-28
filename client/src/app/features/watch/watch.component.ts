@@ -12,6 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { Video } from '../../models/video.model';
 import { VideoCardComponent } from './video-card/video-card.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 const POLL_MS = 10_000;
@@ -28,7 +29,7 @@ const POLL_MS = 10_000;
         MatCheckboxModule,
         MatProgressSpinnerModule,
         MatSnackBarModule,
-        VideoCardComponent,
+        VideoCardComponent, EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     templateUrl: './watch.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -37,6 +38,7 @@ const POLL_MS = 10_000;
 export class WatchComponent implements OnInit, OnDestroy {
   videos: Video[] = [];
   loading = false;
+  loadError = false;
   uploading = false;
   uploadTitle = '';
   uploadDescription = '';
@@ -56,7 +58,10 @@ export class WatchComponent implements OnInit, OnDestroy {
   }
 
   loadVideos(quiet = false): void {
-    if (!quiet) this.loading = true;
+    if (!quiet) {
+      this.loading = true;
+      this.loadError = false;
+    }
     const params: Record<string, string> = this.feed === 'subscriptions' ? { feed: 'subscriptions' } : {};
     this.apiService.getVideos(params).subscribe({
       next: (res) => {
@@ -64,7 +69,11 @@ export class WatchComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.schedulePoll();
       },
-      error: () => (this.loading = false),
+      error: () => {
+        // A failed background refresh keeps what is on screen.
+        if (!quiet) this.loadError = true;
+        this.loading = false;
+      },
     });
   }
 

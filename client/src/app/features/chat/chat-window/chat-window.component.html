@@ -1,6 +1,9 @@
 <div class="chat-window">
   <!-- Header -->
   <div class="chat-header" *ngIf="room">
+    <a mat-icon-button routerLink="/chat" class="back-to-rooms" aria-label="Back to chats">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
     <div class="title">
       <strong>{{ title }}</strong>
       <span class="presence text-xs text-secondary" *ngIf="presenceLabel">
@@ -14,8 +17,8 @@
             matTooltip="Group settings" aria-label="Group settings">
       <mat-icon>settings</mat-icon>
     </button>
-    <button mat-stroked-button (click)="catchUp()" [disabled]="catchingUp">
-      <mat-icon>auto_awesome</mat-icon> {{ catchingUp ? 'Summarising...' : 'Catch me up' }}
+    <button mat-stroked-button class="catchup-btn" (click)="catchUp()" [disabled]="catchingUp">
+      <mat-icon aria-hidden="true">auto_awesome</mat-icon> <span class="catchup-label">{{ catchingUp ? 'Summarising...' : 'Catch me up' }}</span>
     </button>
   </div>
 
@@ -66,7 +69,7 @@
   </div>
 
   <!-- Messages -->
-  <div class="messages-area">
+  <div class="messages-area" tabindex="0" role="region" aria-label="Messages">
     <div
       *ngFor="let msg of messages"
       class="message-row"
@@ -147,6 +150,9 @@
 
   <div class="notice text-xs" *ngIf="notice" role="status">{{ notice }}</div>
 
+  <!-- Screen readers hear new incoming messages without re-reading the whole list. -->
+  <div class="visually-hidden" aria-live="polite" aria-atomic="true">{{ liveAnnouncement }}</div>
+
   <!-- Reply / edit context -->
   <div class="compose-context" *ngIf="replyingTo || editing">
     <mat-icon>{{ editing ? 'edit' : 'reply' }}</mat-icon>
@@ -174,6 +180,7 @@
       <input
         class="msg-input"
         type="text"
+        [attr.aria-label]="editing ? 'Edit message' : 'Message'"
         [(ngModel)]="messageText"
         [placeholder]="editing ? 'Edit message' : 'Aa'"
         maxlength="5000"

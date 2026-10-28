@@ -6,7 +6,7 @@
   </div>
   <div class="post-header">
     <ng-container *ngIf="post.page_data as page; else personHeader">
-      <img [src]="page.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="page.name" />
+      <img [ngSrc]="page.avatar_url || 'assets/default-avatar.png'" width="40" height="40" class="avatar md" [alt]="page.name" />
       <div class="author-info">
         <span class="author-name" [id]="'post-author-' + post.id">{{ page.name }}</span>
         <ng-container *ngTemplateOutlet="meta"></ng-container>
@@ -14,7 +14,7 @@
     </ng-container>
     <ng-template #personHeader>
       <a [routerLink]="'/profile/' + post.author.username" class="author-link" tabindex="-1" aria-hidden="true">
-        <img [src]="post.author.avatar_url || 'assets/default-avatar.png'" class="avatar md" alt="" />
+        <img [ngSrc]="post.author.avatar_url || 'assets/default-avatar.png'" width="40" height="40" class="avatar md" alt="" />
       </a>
       <div class="author-info">
         <span class="author-line">
@@ -147,7 +147,7 @@
       <p *ngIf="shared.unavailable" class="text-secondary text-sm">This content isn't available right now.</p>
       <ng-container *ngIf="!shared.unavailable">
         <div class="post-header small">
-          <img [src]="shared.author.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="shared.author.username" />
+          <img [ngSrc]="shared.author.avatar_url || 'assets/default-avatar.png'" width="32" height="32" class="avatar sm" [alt]="shared.author.username" />
           <a [routerLink]="'/posts/' + shared.id" class="author-name">{{ shared.author.full_name }}</a>
         </div>
         <p *ngIf="shared.content"><app-post-text [text]="shared.content"></app-post-text></p>

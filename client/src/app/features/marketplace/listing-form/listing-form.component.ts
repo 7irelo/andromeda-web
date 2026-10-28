@@ -15,6 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../../core/services/api.service';
 import { ComposeAssistComponent } from '../../../shared/components/compose-assist/compose-assist.component';
+import { ModalDialogDirective } from '../../../shared/a11y/modal-dialog.directive';
 import {
   City, LISTING_CONDITIONS, Listing, ListingCategory, ListingStatus, PriceSuggestion,
 } from '../../../models/listing.model';
@@ -46,10 +47,12 @@ export function apiError(err: HttpErrorResponse, fallback: string): string {
     imports: [
         CommonModule, ReactiveFormsModule, MatIconModule, MatButtonModule, MatInputModule, MatFormFieldModule,
         MatSelectModule, MatCheckboxModule, MatProgressSpinnerModule, MatSnackBarModule, ComposeAssistComponent,
+        ModalDialogDirective,
     ],
     template: `
     <div class="edit-overlay" (click)="close()"></div>
-    <div class="edit-dialog card" [formGroup]="form" role="dialog" aria-modal="true">
+    <div class="edit-dialog card" [formGroup]="form" appModalDialog
+         [dialogLabel]="listing ? 'Edit listing' : 'Create listing'" (dismiss)="close()">
       <div class="edit-dialog-header">
         <h2>{{ listing ? 'Edit listing' : 'Create listing' }}</h2>
         <button mat-icon-button (click)="close()" aria-label="Close"><mat-icon>close</mat-icon></button>

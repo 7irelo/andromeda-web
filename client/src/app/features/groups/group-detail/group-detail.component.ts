@@ -15,6 +15,7 @@ import { Group, GroupJoinRequest, GroupMember, GroupRole, GroupRule } from '../.
 import { Post } from '../../../models/post.model';
 import { User } from '../../../models/user.model';
 import { GroupManageComponent } from '../group-manage/group-manage.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../../shared/components/states';
 
 const MAX_PINS = 3;
 
@@ -24,6 +25,7 @@ const MAX_PINS = 3;
         CommonModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, MatTabsModule,
         MatProgressSpinnerModule, MatSnackBarModule,
         CreatePostComponent, PostCardComponent, GroupManageComponent,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     template: `
     <div class="group-detail" *ngIf="group">
@@ -101,7 +103,12 @@ const MAX_PINS = 3;
                 </div>
                 <app-post-card [post]="p" (postDeleted)="onPostDeleted($event)"></app-post-card>
               </div>
-              <p class="text-secondary" *ngIf="posts.length === 0 && pinned.length === 0">No posts yet.</p>
+              <app-skeleton *ngIf="postsLoading" variant="post" [count]="2"></app-skeleton>
+              <app-error-state *ngIf="!postsLoading && postsError" [compact]="true"
+                               (retry)="loadPosts(group.id)"></app-error-state>
+              <app-empty-state *ngIf="!postsLoading && !postsError && posts.length === 0 && pinned.length === 0"
+                               icon="forum" title="No posts yet" [compact]="true"
+                               [message]="group.is_member ? 'Start the conversation with the first post.' : ''"></app-empty-state>
             </div>
             <p class="text-secondary private-note" *ngIf="!canSeeContent">
               <mat-icon>lock</mat-icon> Only members can see posts and members of this group.
@@ -181,8 +188,14 @@ const MAX_PINS = 3;
       </ng-container>
     </ng-template>
 
-    <div class="loading-center" *ngIf="loading">
-      <mat-spinner diameter="40"></mat-spinner>
+    <div class="group-detail" *ngIf="loading">
+      <app-skeleton variant="card" [count]="1"></app-skeleton>
+      <app-skeleton variant="post" [count]="2"></app-skeleton>
+    </div>
+    <div class="group-detail" *ngIf="!loading && loadError">
+      <app-error-state [title]="loadError === 404 ? 'Group not found' : ''"
+                       [message]="loadError === 404 ? 'It may have been deleted, or it is a secret group you are not in.' : ''"
+                       (retry)="load()"></app-error-state>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -231,6 +244,10 @@ export class GroupDetailComponent implements OnInit {
   group: Group | null = null;
   members: GroupMember[] = [];
   loading = false;
+  /** 0 when fine; otherwise the HTTP status (or -1) of the failed load. */
+  loadError = 0;
+  postsLoading = false;
+  postsError = false;
 
   joinRequests: GroupJoinRequest[] = [];
   posts: Post[] = [];
@@ -280,6 +297,7 @@ export class GroupDetailComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.loadError = 0;
     const groupId = Number(this.id);
     this.apiService.getGroup(groupId).subscribe({
       next: (g) => {
@@ -293,7 +311,10 @@ export class GroupDetailComponent implements OnInit {
         }
         if (this.isModerator) this.loadJoinRequests(groupId);
       },
-      error: () => (this.loading = false),
+      error: (err) => {
+        this.loading = false;
+        this.loadError = err?.status || -1;
+      },
     });
   }
 
@@ -304,6 +325,12 @@ export class GroupDetailComponent implements OnInit {
   }
 
   loadPosts(groupId: number): void {
+    this.postsLoading = true;
+    this.postsError = false;
+    const failed = () => {
+      this.postsLoading = false;
+      this.postsError = true;
+    };
     this.apiService.getGroupPinnedPosts(groupId).subscribe({
       next: (pinned) => {
         this.pinned = pinned;
@@ -312,9 +339,12 @@ export class GroupDetailComponent implements OnInit {
             // Pinned posts are already shown at the top.
             const pinnedIds = new Set(pinned.map((p) => p.id));
             this.posts = res.results.filter((p) => !pinnedIds.has(p.id));
+            this.postsLoading = false;
           },
+          error: failed,
         });
       },
+      error: failed,
     });
   }
 

@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { User } from '../../../models/user.model';
 import { ImageCropperComponent, ImageCropperResult } from '../../../shared/components/image-cropper/image-cropper.component';
+import { OnboardingComponent } from './onboarding.component';
 
 function passwordMatchValidator(control: AbstractControl) {
   const p = control.get('password');
@@ -28,7 +29,7 @@ function passwordMatchValidator(control: AbstractControl) {
     imports: [
         CommonModule, ReactiveFormsModule, RouterLink,
         MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
-        MatSnackBarModule, MatDialogModule, MatCheckboxModule,
+        MatSnackBarModule, MatDialogModule, MatCheckboxModule, OnboardingComponent,
     ],
     templateUrl: './register.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -64,6 +65,10 @@ export class RegisterComponent {
   loading = false;
   error = '';
   hidePassword = true;
+  readonly showPasswordLabel = $localize`:@@auth.showPassword:Show password`;
+  readonly hidePasswordLabel = $localize`:@@auth.hidePassword:Hide password`;
+  readonly addLabel = $localize`:@@register.add:Add`;
+  readonly sentLabel = $localize`:@@register.sent:Sent`;
 
   avatarPreview: string | null = null;
   coverPreview: string | null = null;
@@ -118,7 +123,7 @@ export class RegisterComponent {
       },
       error: () => {
         this.loading = false;
-        this.snackBar.open('Failed to update profile', 'Dismiss', { duration: 3000 });
+        this.snackBar.open($localize`:@@register.profileFailed:Failed to update profile`, $localize`:@@common.dismiss:Dismiss`, { duration: 3000 });
         // Still advance to step 3
         this.currentStep = 3;
         this.loadSuggestions();
@@ -142,10 +147,15 @@ export class RegisterComponent {
     this.apiService.sendFriendRequest(user.id).subscribe({
       next: () => {
         user.friend_request_sent = true;
-        this.snackBar.open('Friend request sent!', 'Dismiss', { duration: 2000 });
+        this.snackBar.open($localize`:@@register.requestSent:Friend request sent!`, $localize`:@@common.dismiss:Dismiss`, { duration: 2000 });
       },
-      error: () => this.snackBar.open('Could not send request', 'Dismiss', { duration: 3000 }),
+      error: () => this.snackBar.open($localize`:@@register.requestFailed:Could not send request`, $localize`:@@common.dismiss:Dismiss`, { duration: 3000 }),
     });
+  }
+
+  /** After friend suggestions: interests, suggested groups and a first post (OnboardingComponent). */
+  startOnboarding(): void {
+    this.currentStep = 4;
   }
 
   finish(): void {
@@ -159,7 +169,7 @@ export class RegisterComponent {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     const ref = this.dialog.open(ImageCropperComponent, {
-      data: { file, aspectRatio: 1, title: 'Crop Avatar' },
+      data: { file, aspectRatio: 1, title: $localize`:@@register.cropAvatar:Crop Avatar` },
       width: '500px',
     });
     ref.afterClosed().subscribe((result: ImageCropperResult | undefined) => {
@@ -174,7 +184,7 @@ export class RegisterComponent {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     const ref = this.dialog.open(ImageCropperComponent, {
-      data: { file, aspectRatio: 16 / 9, title: 'Crop Cover Photo' },
+      data: { file, aspectRatio: 16 / 9, title: $localize`:@@register.cropCover:Crop Cover Photo` },
       width: '600px',
     });
     ref.afterClosed().subscribe((result: ImageCropperResult | undefined) => {

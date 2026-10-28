@@ -1,0 +1,22 @@
+:host { display: contents; }
+
+.avatar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
+  transition: transform .1s;
+
+  &:hover { transform: scale(1.05); }
+
+  .avatar {
+    border: 2.5px solid var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+}

@@ -13,25 +13,25 @@ import { AuthService } from '../../../core/services/auth.service';
     template: `
     <div class="auth-shell">
       <div class="auth-card card">
-        <h1>Choose a new password</h1>
-        <p class="error" *ngIf="!uid || !token">This reset link is incomplete. Request a new one.</p>
+        <h1 i18n="@@reset.title">Choose a new password</h1>
+        <p class="error" *ngIf="!uid || !token" i18n="@@reset.incomplete">This reset link is incomplete. Request a new one.</p>
         <form [formGroup]="form" (ngSubmit)="submit()" *ngIf="uid && token">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>New password</mat-label>
+            <mat-label i18n="@@reset.newPassword">New password</mat-label>
             <input matInput type="password" autocomplete="new-password" formControlName="password" />
-            <mat-error>At least 10 characters</mat-error>
+            <mat-error i18n="@@reset.min">At least 10 characters</mat-error>
           </mat-form-field>
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Confirm new password</mat-label>
+            <mat-label i18n="@@reset.confirm">Confirm new password</mat-label>
             <input matInput type="password" autocomplete="new-password" formControlName="confirm" />
           </mat-form-field>
-          <p class="error" *ngIf="mismatch">Passwords don't match.</p>
-          <p class="error" *ngIf="error">{{ error }}</p>
+          <p class="error" *ngIf="mismatch" i18n="@@reset.mismatch">Passwords don't match.</p>
+          <p class="error" *ngIf="error" role="alert">{{ error }}</p>
           <button mat-flat-button color="primary" class="w-full" type="submit" [disabled]="form.invalid || loading">
-            {{ loading ? 'Saving...' : 'Update password' }}
+            @if (loading) { <span i18n="@@common.saving">Saving...</span> } @else { <span i18n="@@reset.update">Update password</span> }
           </button>
         </form>
-        <p class="back"><a routerLink="/forgot-password">Request a new link</a></p>
+        <p class="back"><a routerLink="/forgot-password" i18n="@@reset.requestNew">Request a new link</a></p>
       </div>
     </div>
   `,
@@ -76,13 +76,13 @@ export class ResetPasswordComponent implements OnInit {
     this.auth.confirmPasswordReset(this.uid, this.token, this.form.value.password as string).subscribe({
       next: () => {
         this.auth.clearSession();
-        this.snackBar.open('Password updated. Please sign in.', 'Dismiss', { duration: 4000 });
+        this.snackBar.open($localize`:@@reset.done:Password updated. Please sign in.`, $localize`:@@common.dismiss:Dismiss`, { duration: 4000 });
         this.router.navigate(['/login']);
       },
       error: (err) => {
         this.loading = false;
         const e = err?.error ?? {};
-        this.error = e.new_password?.[0] ?? e.detail ?? 'Could not reset the password.';
+        this.error = e.new_password?.[0] ?? e.detail ?? $localize`:@@reset.failed:Could not reset the password.`;
       },
     });
   }

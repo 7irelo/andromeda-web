@@ -161,10 +161,11 @@
 
 <!-- ── Delete Account Dialog ─────────────────────────────────────── -->
 <div class="edit-overlay" *ngIf="isConfirmingDelete" (click)="cancelDelete()"></div>
-<div class="edit-dialog card" *ngIf="isConfirmingDelete">
+<div class="edit-dialog card" *ngIf="isConfirmingDelete"
+     appModalDialog dialogLabel="Delete Account" (dismiss)="cancelDelete()">
   <div class="edit-dialog-header">
     <h2>Delete Account</h2>
-    <button mat-icon-button (click)="cancelDelete()"><mat-icon>close</mat-icon></button>
+    <button mat-icon-button (click)="cancelDelete()" aria-label="Close"><mat-icon>close</mat-icon></button>
   </div>
   <div class="edit-dialog-body">
     <p class="delete-warning">This will permanently delete your account and all your data. This cannot be undone.</p>
@@ -190,10 +191,11 @@
 
 <!-- ── Edit Profile Dialog ──────────────────────────────────────── -->
 <div class="edit-overlay" *ngIf="isEditing" (click)="cancelEdit()"></div>
-<div class="edit-dialog card" *ngIf="isEditing" [formGroup]="editForm">
+<div class="edit-dialog card" *ngIf="isEditing" [formGroup]="editForm"
+     appModalDialog dialogLabel="Edit Profile" (dismiss)="cancelEdit()">
   <div class="edit-dialog-header">
     <h2>Edit Profile</h2>
-    <button mat-icon-button (click)="cancelEdit()"><mat-icon>close</mat-icon></button>
+    <button mat-icon-button (click)="cancelEdit()" aria-label="Close"><mat-icon>close</mat-icon></button>
   </div>
 
   <div class="edit-dialog-body">
