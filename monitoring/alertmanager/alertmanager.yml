@@ -1,0 +1,55 @@
+# Alertmanager routing for Andromeda.
+#
+# Receivers read their secrets from files that the container entrypoint
+# writes from environment variables at start-up (see docker-compose.yml), so
+# nothing secret lives in this file or in the repository:
+#
+#   ALERTMANAGER_WEBHOOK_URL  -> /tmp/am/webhook_url   (Slack/Teams/Discord/PagerDuty-style webhook,
+#                                                       or any HTTP endpoint that accepts the
+#                                                       Alertmanager webhook JSON)
+#   ALERTMANAGER_SMTP_PASSWORD -> /tmp/am/smtp_password (only if you enable email below)
+#
+# With no webhook configured the URL points at a closed local port: alerts
+# are still visible at http://127.0.0.1:9093 and in Prometheus, just not sent.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: [alertname, severity]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity="critical"']
+      receiver: default
+      repeat_interval: 1h
+
+receivers:
+  - name: default
+    webhook_configs:
+      - url_file: /tmp/am/webhook_url
+        send_resolved: true
+        max_alerts: 20
+    # Email (placeholder): fill in and uncomment, then set ALERTMANAGER_SMTP_PASSWORD.
+    # email_configs:
+    #   - to: oncall@example.com
+    #     from: alerts@example.com
+    #     smarthost: smtp.example.com:587
+    #     auth_username: alerts@example.com
+    #     auth_password_file: /tmp/am/smtp_password
+    #     require_tls: true
+    #     send_resolved: true
+
+inhibit_rules:
+  # A critical alert silences the matching warning (e.g. OutboxStalled over OutboxLagging).
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: [alertname]
+  - source_matchers: ['alertname="OutboxStalled"']
+    target_matchers: ['alertname="OutboxLagging"']
+  - source_matchers: ['alertname="ApiLatencyP95Critical"']
+    target_matchers: ['alertname="ApiLatencyP95High"']
+  - source_matchers: ['alertname="Api5xxRateCritical"']
+    target_matchers: ['alertname="Api5xxRateHigh"']

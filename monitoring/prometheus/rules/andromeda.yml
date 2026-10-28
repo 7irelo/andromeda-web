@@ -1,0 +1,156 @@
+# SLOs and alerts for Andromeda. Thresholds are starting points: tune them
+# against a week of real traffic (docs/OPERATIONS.md, "Alerts").
+#
+# Note: the Django exporter is scraped through one of several uvicorn worker
+# processes per scrape, so per-process counters are sampled, not summed.
+# Ratios (5xx share, disconnect share) and quantiles are robust to that;
+# absolute rates are indicative.
+
+groups:
+  - name: andromeda-slo-recording
+    interval: 30s
+    rules:
+      - record: andromeda:api_latency_seconds:p95_5m
+        expr: >
+          histogram_quantile(0.95, sum by (le) (rate(
+            django_http_requests_latency_seconds_by_view_method_bucket{view!~"prometheus-django-metrics|.*health.*"}[5m])))
+      - record: andromeda:api_5xx_ratio:rate5m
+        expr: >
+          sum(rate(django_http_responses_total_by_status_total{status=~"5.."}[5m]))
+          / clamp_min(sum(rate(django_http_responses_total_by_status_total[5m])), 1e-9)
+      - record: andromeda:ws_bad_disconnect_ratio:rate10m
+        expr: >
+          sum(rate(ws_disconnects_total{reason=~"abnormal|error"}[10m]))
+          / clamp_min(sum(rate(ws_disconnects_total[10m])), 1e-9)
+      - record: andromeda:ai_spend_usd:increase1h
+        expr: sum(increase(ai_cost_usd_total[1h]))
+
+  - name: andromeda-api
+    rules:
+      - alert: ApiLatencyP95High
+        expr: andromeda:api_latency_seconds:p95_5m > 0.5
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: API p95 latency above 500 ms
+          description: "p95 over the last 5 minutes is {{ $value | humanizeDuration }}."
+      - alert: ApiLatencyP95Critical
+        expr: andromeda:api_latency_seconds:p95_5m > 1.5
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: API p95 latency above 1.5 s
+          description: "p95 over the last 5 minutes is {{ $value | humanizeDuration }}."
+      - alert: Api5xxRateHigh
+        expr: andromeda:api_5xx_ratio:rate5m > 0.01
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: More than 1% of API responses are 5xx
+          description: "{{ $value | humanizePercentage }} of responses failed over 5 minutes."
+      - alert: Api5xxRateCritical
+        expr: andromeda:api_5xx_ratio:rate5m > 0.05
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: More than 5% of API responses are 5xx
+          description: "{{ $value | humanizePercentage }} of responses failed over 5 minutes."
+      - alert: ScrapeTargetDown
+        expr: up == 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.job }} is not being scraped"
+          description: "Prometheus can't reach {{ $labels.instance }}."
+
+  - name: andromeda-workers
+    rules:
+      - alert: CeleryQueueBacklog
+        expr: max by (queue_name) (celery_queue_length{queue_name!="video"}) > 200
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "Celery queue {{ $labels.queue_name }} is backing up"
+          description: "{{ $value }} tasks waiting for 10 minutes."
+      - alert: VideoQueueBacklog
+        expr: max(celery_queue_length{queue_name="video"}) > 20
+        for: 30m
+        labels: {severity: warning}
+        annotations:
+          summary: Video transcoding queue is backing up
+          description: "{{ $value }} videos waiting for 30 minutes (single-slot worker)."
+      - alert: CeleryWorkersDown
+        expr: sum(celery_worker_up) == 0
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: No Celery workers are reporting
+          description: Background tasks (notifications, moderation, the outbox drain) are not running.
+
+  - name: andromeda-realtime
+    rules:
+      - alert: WebSocketDisconnectRateHigh
+        expr: andromeda:ws_bad_disconnect_ratio:rate10m > 0.25 and sum(rate(ws_disconnects_total[10m])) > 0.05
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: Many WebSockets are dropping abnormally
+          description: "{{ $value | humanizePercentage }} of disconnects are abnormal (1006) or errors."
+
+  - name: andromeda-ai
+    rules:
+      - alert: AiSpendSpike
+        # The last hour costs more than 3x the hourly average of the past week (and at least $1).
+        expr: >
+          andromeda:ai_spend_usd:increase1h > 3 * (sum(increase(ai_cost_usd_total[7d])) / 168)
+          and andromeda:ai_spend_usd:increase1h > 1
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: AI spend is spiking
+          description: "${{ $value | printf \"%.2f\" }} in the last hour."
+      - alert: AiDailySpendHigh
+        expr: sum(increase(ai_cost_usd_total[24h])) > 50
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: AI spend above $50 in 24 hours
+          description: "${{ $value | printf \"%.2f\" }} in the last 24 hours. Check budgets and fallbacks."
+
+  - name: andromeda-graph
+    rules:
+      - alert: OutboxLagging
+        expr: outbox_oldest_pending_age_seconds > 300
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Outbox events are waiting more than 5 minutes
+          description: "Oldest pending event is {{ $value | humanizeDuration }} old: is Neo4j or the drain down?"
+      - alert: OutboxStalled
+        expr: outbox_oldest_pending_age_seconds > 1800
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: Outbox has not drained for 30 minutes
+          description: "Oldest pending event is {{ $value | humanizeDuration }} old."
+      - alert: OutboxDeadLetters
+        expr: outbox_dead_letter_events > 0
+        for: 1m
+        labels: {severity: warning}
+        annotations:
+          summary: Outbox events were dead-lettered
+          description: "{{ $value }} event(s) gave up retrying. Fix the cause, then retry them from the admin."
+      - alert: GraphDriftDetected
+        expr: sum(graph_drift_last_run) > 50
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Nightly reconciliation repaired a lot of graph drift
+          description: "{{ $value }} users/friendships/posts/likes were out of sync with Postgres."
+      - alert: GraphReconcileStale
+        expr: time() - max(graph_reconcile_last_run_timestamp_seconds) > 2 * 86400
+        for: 30m
+        labels: {severity: warning}
+        annotations:
+          summary: Graph reconciliation hasn't completed in two days
+          description: Check celery beat and the reconcile_graph task.
