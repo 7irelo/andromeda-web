@@ -2,10 +2,10 @@
   <div class="marketplace-header">
     <h1>Marketplace</h1>
     <div class="header-actions">
-      <a mat-stroked-button routerLink="/marketplace/saved"><mat-icon>favorite_border</mat-icon> Saved</a>
-      <a mat-stroked-button routerLink="/marketplace/mine"><mat-icon>inventory_2</mat-icon> My listings</a>
+      <a mat-stroked-button routerLink="/marketplace/saved"><mat-icon aria-hidden="true">favorite_border</mat-icon> Saved</a>
+      <a mat-stroked-button routerLink="/marketplace/mine"><mat-icon aria-hidden="true">inventory_2</mat-icon> My listings</a>
       <button mat-flat-button color="primary" (click)="openCreateDialog()">
-        <mat-icon>add</mat-icon> Create Listing
+        <mat-icon aria-hidden="true">add</mat-icon> Create Listing
       </button>
     </div>
   </div>
@@ -13,8 +13,8 @@
   <div class="search-bar">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>Search Marketplace</mat-label>
-      <input matInput [(ngModel)]="searchQuery" (keyup.enter)="load()" maxlength="100" placeholder="Search items..." />
-      <mat-icon matSuffix (click)="load()" style="cursor:pointer">search</mat-icon>
+      <input matInput type="search" [(ngModel)]="searchQuery" (keyup.enter)="load()" maxlength="100" placeholder="Search items..." />
+      <button mat-icon-button matSuffix type="button" (click)="load()" aria-label="Search"><mat-icon>search</mat-icon></button>
     </mat-form-field>
     <mat-form-field appearance="outline" class="sort-field">
       <mat-label>Sort</mat-label>
@@ -83,9 +83,10 @@
     <button mat-button (click)="clearFilters()" [disabled]="!activeFilterCount">Clear filters</button>
   </div>
 
-  <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+  <app-skeleton *ngIf="loading" variant="grid" [count]="8"></app-skeleton>
+  <app-error-state *ngIf="!loading && loadError" [message]="loadError" (retry)="load()"></app-error-state>
 
-  <div class="listings-grid" *ngIf="!loading">
+  <div class="listings-grid" *ngIf="!loading && !loadError">
     <app-listing-card *ngFor="let listing of listings" [listing]="listing"></app-listing-card>
   </div>
 
@@ -95,10 +96,11 @@
     </button>
   </div>
 
-  <div *ngIf="!loading && listings.length === 0" class="empty-state">
-    <mat-icon>storefront</mat-icon>
-    <p>No listings found</p>
-  </div>
+  <app-empty-state *ngIf="!loading && !loadError && listings.length === 0" icon="storefront" title="No listings found"
+                   [message]="activeFilterCount || searchQuery ? 'Try a different search or clear some filters.' : 'Be the first to sell something nearby.'">
+    <button mat-stroked-button type="button" *ngIf="activeFilterCount" (click)="clearFilters()">Clear filters</button>
+    <button mat-flat-button color="primary" type="button" (click)="openCreateDialog()">Create Listing</button>
+  </app-empty-state>
 </div>
 
 <app-listing-form

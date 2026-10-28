@@ -12,6 +12,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { Group } from '../../models/group.model';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
+import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
 
 @Component({
     selector: 'app-groups',
@@ -19,6 +21,7 @@ import { Group } from '../../models/group.model';
         CommonModule, RouterLink, ReactiveFormsModule,
         MatIconModule, MatButtonModule, MatTabsModule, MatProgressSpinnerModule,
         MatFormFieldModule, MatInputModule, MatSelectModule, MatSnackBarModule,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent, ModalDialogDirective,
     ],
     templateUrl: './groups.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -28,6 +31,9 @@ export class GroupsComponent implements OnInit {
   allGroups: Group[] = [];
   myGroups: Group[] = [];
   loading = false;
+  loadError = false;
+  mineLoading = false;
+  mineError = false;
 
   isCreating = false;
   saving = false;
@@ -52,19 +58,30 @@ export class GroupsComponent implements OnInit {
 
   loadAll(): void {
     this.loading = true;
+    this.loadError = false;
     this.apiService.getGroups().subscribe({
       next: (res) => {
         this.allGroups = res.results;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.loadError = true;
+      },
     });
   }
 
   loadMine(): void {
+    this.mineLoading = true;
+    this.mineError = false;
     this.apiService.getGroups({ mine: 'true' }).subscribe({
       next: (res) => {
         this.myGroups = res.results;
+        this.mineLoading = false;
+      },
+      error: () => {
+        this.mineLoading = false;
+        this.mineError = true;
       },
     });
   }

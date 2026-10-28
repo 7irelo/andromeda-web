@@ -3,14 +3,16 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ApiService } from '../../core/services/api.service';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { Notification } from '../../models/notification.model';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 @Component({
     selector: 'app-notifications',
-    imports: [CommonModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+    imports: [CommonModule, MatIconModule, MatButtonModule, ScrollingModule,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     templateUrl: './notifications.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./notifications.component.scss']
@@ -18,6 +20,9 @@ import { Notification } from '../../models/notification.model';
 export class NotificationsComponent implements OnInit {
   notifications: Notification[] = [];
   loading = false;
+  loadError = false;
+  /** Fixed row height for the virtual list (rows clamp their text to fit). */
+  readonly rowHeight = 84;
 
   constructor(
     private apiService: ApiService,
@@ -38,13 +43,21 @@ export class NotificationsComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.loadError = false;
     this.apiService.getNotifications().subscribe({
       next: (res) => {
         this.notifications = res.results;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.loadError = true;
+      },
     });
+  }
+
+  trackById(_: number, n: Notification): number {
+    return n.id;
   }
 
   markRead(n: Notification): void {
@@ -86,7 +99,8 @@ export class NotificationsComponent implements OnInit {
 
   markAllRead(): void {
     this.apiService.markAllNotificationsRead().subscribe(() => {
-      this.notifications.forEach((n) => (n.is_read = true));
+      // New array so the virtual list re-renders the rows.
+      this.notifications = this.notifications.map((n) => ({ ...n, is_read: true }));
     });
   }
 

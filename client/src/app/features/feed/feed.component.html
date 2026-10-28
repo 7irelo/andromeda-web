@@ -3,7 +3,7 @@
   <aside class="left-sidebar">
     <div class="sidebar-card" *ngIf="currentUser">
       <a [routerLink]="'/profile/' + currentUser.username" class="profile-preview">
-        <img [src]="currentUser.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="currentUser.username" />
+        <img [src]="currentUser.avatar_url || 'assets/default-avatar.png'" class="avatar md" alt="" width="40" height="40" />
         <div>
           <div class="font-semibold">{{ currentUser.full_name }}</div>
           <div class="text-secondary text-sm">&#64;{{ currentUser.username }}</div>
@@ -11,89 +11,87 @@
       </a>
       <div class="divider"></div>
       <div class="stat-row">
-        <span class="text-secondary text-sm">Friends</span>
+        <span class="text-secondary text-sm" i18n="@@feed.friendsStat">Friends</span>
         <span class="font-bold">{{ currentUser.friends_count }}</span>
       </div>
       <div class="stat-row">
-        <span class="text-secondary text-sm">Posts</span>
+        <span class="text-secondary text-sm" i18n="@@feed.postsStat">Posts</span>
         <span class="font-bold">{{ currentUser.posts_count }}</span>
       </div>
     </div>
 
     <!-- Shortcuts -->
-    <div class="sidebar-card sidebar-shortcuts">
+    <nav class="sidebar-card sidebar-shortcuts" aria-label="Shortcuts" i18n-aria-label="@@feed.shortcuts">
       <a routerLink="/friends" routerLinkActive="shortcut-active" class="shortcut-link">
-        <span class="shortcut-icon" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)">
+        <span class="shortcut-icon" aria-hidden="true" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)">
           <mat-icon>people</mat-icon>
         </span>
-        <span>Friends</span>
+        <span i18n="@@nav.friends">Friends</span>
       </a>
       <a routerLink="/groups" routerLinkActive="shortcut-active" class="shortcut-link">
-        <span class="shortcut-icon" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+        <span class="shortcut-icon" aria-hidden="true" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
           <mat-icon>group</mat-icon>
         </span>
-        <span>Groups</span>
+        <span i18n="@@nav.groups">Groups</span>
       </a>
       <a routerLink="/marketplace" routerLinkActive="shortcut-active" class="shortcut-link">
-        <span class="shortcut-icon" style="background:linear-gradient(135deg,#059669,#10b981)">
+        <span class="shortcut-icon" aria-hidden="true" style="background:linear-gradient(135deg,#059669,#10b981)">
           <mat-icon>storefront</mat-icon>
         </span>
-        <span>Marketplace</span>
+        <span i18n="@@nav.marketplace">Marketplace</span>
       </a>
       <a routerLink="/watch" routerLinkActive="shortcut-active" class="shortcut-link">
-        <span class="shortcut-icon" style="background:linear-gradient(135deg,#dc2626,#ef4444)">
+        <span class="shortcut-icon" aria-hidden="true" style="background:linear-gradient(135deg,#dc2626,#ef4444)">
           <mat-icon>play_circle</mat-icon>
         </span>
-        <span>Watch</span>
+        <span i18n="@@nav.watch">Watch</span>
       </a>
       <a routerLink="/pages" routerLinkActive="shortcut-active" class="shortcut-link">
-        <span class="shortcut-icon" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">
+        <span class="shortcut-icon" aria-hidden="true" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">
           <mat-icon>auto_stories</mat-icon>
         </span>
-        <span>Pages</span>
+        <span i18n="@@nav.pages">Pages</span>
       </a>
       <a routerLink="/notifications" routerLinkActive="shortcut-active" class="shortcut-link">
-        <span class="shortcut-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+        <span class="shortcut-icon" aria-hidden="true" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
           <mat-icon>notifications</mat-icon>
         </span>
-        <span>Notifications</span>
+        <span i18n="@@nav.notifications">Notifications</span>
       </a>
       <a routerLink="/saved" routerLinkActive="shortcut-active" class="shortcut-link">
-        <span class="shortcut-icon" style="background:linear-gradient(135deg,#9333ea,#c026d3)">
+        <span class="shortcut-icon" aria-hidden="true" style="background:linear-gradient(135deg,#9333ea,#c026d3)">
           <mat-icon>bookmark</mat-icon>
         </span>
-        <span>Saved</span>
+        <span i18n="@@nav.saved">Saved</span>
       </a>
-    </div>
+    </nav>
   </aside>
 
   <!-- Main Feed -->
-  <main class="feed-main">
+  <section class="feed-main" aria-label="Feed" i18n-aria-label="@@nav.feed">
     <!-- Create Post -->
     <app-create-post (postCreated)="onPostCreated($event)" [currentUser]="currentUser"></app-create-post>
 
     <!-- Ordering -->
-    <div class="feed-toolbar" role="group" aria-label="Sort feed">
+    <div class="feed-toolbar" role="group" aria-label="Sort feed" i18n-aria-label="@@feed.sort">
       <button type="button" class="sort-btn" [class.active]="sort === 'top'" [attr.aria-pressed]="sort === 'top'"
               (click)="setSort('top')">
-        <mat-icon>auto_awesome</mat-icon> Top
+        <mat-icon aria-hidden="true">auto_awesome</mat-icon> <span i18n="@@feed.sortTop">Top</span>
       </button>
       <button type="button" class="sort-btn" [class.active]="sort === 'latest'" [attr.aria-pressed]="sort === 'latest'"
               (click)="setSort('latest')">
-        <mat-icon>schedule</mat-icon> Latest
+        <mat-icon aria-hidden="true">schedule</mat-icon> <span i18n="@@feed.sortLatest">Latest</span>
       </button>
     </div>
 
     <!-- New posts from friends, announced over the notifications socket -->
     <button type="button" class="new-posts-pill" *ngIf="newPostIds.size > 0" (click)="showNewPosts()" aria-live="polite">
-      <mat-icon>arrow_upward</mat-icon>
-      {{ newPostIds.size }} new {{ newPostIds.size === 1 ? 'post' : 'posts' }}
+      <mat-icon aria-hidden="true">arrow_upward</mat-icon>
+      <span i18n="@@feed.newPosts">{newPostIds.size, plural, =1 {1 new post} other {{{ newPostIds.size }} new posts}}</span>
     </button>
 
     <!-- Posts -->
-    <div *ngIf="loading && posts.length === 0" class="loading-center">
-      <mat-spinner diameter="40"></mat-spinner>
-    </div>
+    <app-skeleton *ngIf="loading && posts.length === 0" variant="post" [count]="3"></app-skeleton>
 
     <app-post-card
       *ngFor="let post of posts; trackBy: trackById"
@@ -107,24 +105,24 @@
       <mat-spinner diameter="32"></mat-spinner>
     </div>
 
-    <div *ngIf="!hasMore && posts.length > 0" class="end-message">
+    <app-error-state *ngIf="loadError" [compact]="posts.length > 0" (retry)="retry()"></app-error-state>
+
+    <div *ngIf="!hasMore && posts.length > 0" class="end-message" i18n="@@feed.caughtUp">
       You're all caught up! 🎉
     </div>
 
-    <div *ngIf="!loading && posts.length === 0" class="empty-feed">
-      <div class="empty-icon">
-        <mat-icon>dynamic_feed</mat-icon>
-      </div>
-      <h3>Your feed is empty</h3>
-      <p>Follow people or join groups to see posts in your feed</p>
-      <a routerLink="/friends" mat-flat-button color="primary" class="empty-cta">Find Friends</a>
-    </div>
-  </main>
+    <app-empty-state *ngIf="!loading && !loadError && posts.length === 0" icon="dynamic_feed"
+                     title="Your feed is empty" i18n-title="@@feed.emptyTitle"
+                     message="Follow people or join groups to see posts in your feed" i18n-message="@@feed.emptyMessage">
+      <a routerLink="/friends" mat-flat-button color="primary" i18n="@@feed.findFriends">Find Friends</a>
+      <a routerLink="/groups" mat-stroked-button i18n="@@feed.findGroups">Browse groups</a>
+    </app-empty-state>
+  </section>
 
   <!-- Right Sidebar: Suggestions -->
   <aside class="right-sidebar">
     <div class="sidebar-card" *ngIf="suggestions.length > 0">
-      <h3 class="sidebar-title">People You May Know</h3>
+      <h2 class="sidebar-title" i18n="@@feed.peopleYouMayKnow">People You May Know</h2>
       <app-user-card
         *ngFor="let user of suggestions"
         [user]="user"

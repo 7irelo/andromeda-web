@@ -28,9 +28,9 @@
   transition: all .3s;
 
   &.active {
-    border-color: var(--primary);
-    background: var(--primary);
-    color: #fff;
+    border-color: var(--primary-strong);
+    background: var(--primary-strong);
+    color: var(--on-primary);
   }
 
   &.done {

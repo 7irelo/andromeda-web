@@ -8,11 +8,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { User } from '../../models/user.model';
+import { ThemePreference, ThemeService } from '../../core/services/theme.service';
 import { SecuritySettingsComponent } from './security-settings.component';
 import { NotificationSettingsComponent } from './notification-settings.component';
 import { DataSettingsComponent } from './data-settings.component';
@@ -22,7 +24,7 @@ import { DataSettingsComponent } from './data-settings.component';
     imports: [
         CommonModule, FormsModule, ReactiveFormsModule,
         MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-        MatSelectModule, MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
+        MatSelectModule, MatSlideToggleModule, MatButtonToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
         SecuritySettingsComponent, NotificationSettingsComponent, DataSettingsComponent,
     ],
     template: `
@@ -142,10 +144,15 @@ import { DataSettingsComponent } from './data-settings.component';
         <h2><mat-icon>palette</mat-icon> Appearance</h2>
         <div class="setting-item">
           <div>
-            <div class="font-semibold">Dark Mode</div>
-            <div class="text-secondary text-sm">Switch between light and dark themes</div>
+            <div class="font-semibold" id="theme-label" i18n="@@settings.theme">Theme</div>
+            <div class="text-secondary text-sm" i18n="@@settings.themeHint">Match your device, or always use light or dark</div>
           </div>
-          <mat-slide-toggle [checked]="isDark" (change)="toggleTheme($event.checked)"></mat-slide-toggle>
+          <mat-button-toggle-group [value]="theme.preference()" (change)="setTheme($event.value)"
+                                   aria-labelledby="theme-label" hideSingleSelectionIndicator>
+            <mat-button-toggle value="system" i18n="@@settings.themeSystem">System</mat-button-toggle>
+            <mat-button-toggle value="light" i18n="@@settings.themeLight">Light</mat-button-toggle>
+            <mat-button-toggle value="dark" i18n="@@settings.themeDark">Dark</mat-button-toggle>
+          </mat-button-toggle-group>
         </div>
       </section>
 
@@ -225,7 +232,7 @@ import { DataSettingsComponent } from './data-settings.component';
     @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
     .setting-item {
       display: flex; align-items: center; justify-content: space-between; gap: 16px;
-      padding: 12px 0;
+      padding: 12px 0; flex-wrap: wrap;
     }
     .danger-zone { border-color: var(--danger); }
     .danger-zone h2 { color: var(--danger); }
@@ -233,7 +240,6 @@ import { DataSettingsComponent } from './data-settings.component';
 })
 export class SettingsComponent implements OnInit {
   currentUser: User | null = null;
-  isDark = false;
   changingPassword = false;
   showDelete = false;
   deletePassword = '';
@@ -270,10 +276,10 @@ export class SettingsComponent implements OnInit {
     private apiService: ApiService,
     private snackBar: MatSnackBar,
     private router: Router,
+    protected theme: ThemeService,
   ) {}
 
   ngOnInit(): void {
-    this.isDark = localStorage.getItem('theme') === 'dark';
     this.authService.currentUser$.subscribe((u) => {
       this.currentUser = u;
       if (u) {
@@ -329,11 +335,8 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  toggleTheme(dark: boolean): void {
-    this.isDark = dark;
-    const theme = dark ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+  setTheme(pref: ThemePreference): void {
+    this.theme.set(pref);
   }
 
   changePassword(): void {

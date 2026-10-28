@@ -13,12 +13,14 @@
       <input
         type="text"
         placeholder="Title (optional)"
+        aria-label="Video title (optional)"
         [(ngModel)]="uploadTitle"
         maxlength="255"
         class="upload-input"
       />
       <textarea
         placeholder="Description (optional)"
+        aria-label="Video description (optional)"
         [(ngModel)]="uploadDescription"
         class="upload-input upload-textarea"
       ></textarea>
@@ -43,14 +45,14 @@
     <mat-button-toggle value="subscriptions">Subscriptions</mat-button-toggle>
   </mat-button-toggle-group>
 
-  <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+  <app-skeleton *ngIf="loading" variant="grid" [count]="6"></app-skeleton>
+  <app-error-state *ngIf="!loading && loadError" (retry)="loadVideos()"></app-error-state>
 
-  <div class="video-grid" *ngIf="!loading">
+  <div class="video-grid" *ngIf="!loading && !loadError">
     <app-video-card *ngFor="let v of videos" [video]="v"></app-video-card>
   </div>
 
-  <div *ngIf="!loading && videos.length === 0" class="empty-state">
-    <mat-icon>play_circle_outline</mat-icon>
-    <p>{{ feed === 'subscriptions' ? 'No videos from channels you subscribe to yet' : 'No videos yet' }}</p>
-  </div>
+  <app-empty-state *ngIf="!loading && !loadError && videos.length === 0" icon="play_circle_outline"
+                   [title]="feed === 'subscriptions' ? 'No videos from channels you subscribe to yet' : 'No videos yet'"
+                   [message]="feed === 'subscriptions' ? 'Subscribe to a channel from any of its videos.' : 'Upload the first one above.'"></app-empty-state>
 </div>

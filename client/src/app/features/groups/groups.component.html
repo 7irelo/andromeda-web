@@ -4,15 +4,20 @@
       <h1>Groups</h1>
       <p style="opacity:.8;margin-top:4px;font-size:14px">Connect with communities that matter to you</p>
     </div>
-    <button mat-flat-button (click)="openCreateDialog()" style="background:#fff;color:var(--primary);font-weight:600">
-      <mat-icon>add</mat-icon> Create Group
+    <button mat-flat-button (click)="openCreateDialog()" style="background:#fff;color:#4f46e5;font-weight:600">
+      <mat-icon aria-hidden="true">add</mat-icon> Create Group
     </button>
   </div>
 
   <mat-tab-group>
     <mat-tab label="Discover">
-      <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
-      <div class="groups-grid" *ngIf="!loading">
+      <app-skeleton *ngIf="loading" variant="grid" [count]="6" class="tab-state"></app-skeleton>
+      <app-error-state *ngIf="!loading && loadError" (retry)="loadAll()"></app-error-state>
+      <app-empty-state *ngIf="!loading && !loadError && allGroups.length === 0" icon="groups"
+                       title="No groups to discover yet" message="Start one and invite your friends.">
+        <button mat-flat-button color="primary" type="button" (click)="openCreateDialog()">Create Group</button>
+      </app-empty-state>
+      <div class="groups-grid" *ngIf="!loading && !loadError">
         <div class="group-card card" *ngFor="let g of allGroups">
           <div class="group-cover">
             <img [src]="g.cover_photo || 'assets/default-cover.png'" alt="" />
@@ -30,7 +35,11 @@
     </mat-tab>
 
     <mat-tab label="Your Groups">
-      <div class="groups-grid">
+      <app-skeleton *ngIf="mineLoading" variant="grid" [count]="3" class="tab-state"></app-skeleton>
+      <app-error-state *ngIf="!mineLoading && mineError" (retry)="loadMine()"></app-error-state>
+      <app-empty-state *ngIf="!mineLoading && !mineError && myGroups.length === 0" icon="group"
+                       title="You haven't joined any groups" message="Groups you join or create show up here."></app-empty-state>
+      <div class="groups-grid" *ngIf="!mineLoading && !mineError">
         <div class="group-card card" *ngFor="let g of myGroups">
           <div class="group-cover">
             <img [src]="g.cover_photo || 'assets/default-cover.png'" alt="" />
@@ -48,10 +57,11 @@
 
 <!-- ── Create Group Dialog ─────────────────────────────────────── -->
 <div class="edit-overlay" *ngIf="isCreating" (click)="cancelCreate()"></div>
-<div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm">
+<div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm"
+     appModalDialog dialogLabel="Create Group" (dismiss)="cancelCreate()">
   <div class="edit-dialog-header">
     <h2>Create Group</h2>
-    <button mat-icon-button (click)="cancelCreate()"><mat-icon>close</mat-icon></button>
+    <button mat-icon-button (click)="cancelCreate()" aria-label="Close"><mat-icon>close</mat-icon></button>
   </div>
 
   <div class="edit-dialog-body">

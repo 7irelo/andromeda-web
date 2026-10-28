@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, Router } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,10 +11,12 @@ import { WebSocketService } from '../../core/services/websocket.service';
 import { Subscription } from 'rxjs';
 import { ChatRoom } from '../../models/chat.model';
 import { User } from '../../models/user.model';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 @Component({
     selector: 'app-chat',
-    imports: [CommonModule, RouterOutlet, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatInputModule],
+    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, FormsModule, MatIconModule, MatButtonModule,
+        MatInputModule, EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     templateUrl: './chat.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./chat.component.scss']
@@ -23,6 +25,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   rooms: ChatRoom[] = [];
   currentUser: User | null = null;
   loading = false;
+  loadError = false;
 
   // New-message search panel
   showNewChat = false;
@@ -65,12 +68,17 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   loadRooms(): void {
     this.loading = true;
+    this.loadError = false;
     this.apiService.getChatRooms().subscribe({
       next: (res) => {
         this.rooms = res.results;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        // Keep showing rooms we already have after a failed background refresh.
+        this.loadError = this.rooms.length === 0;
+      },
     });
   }
 

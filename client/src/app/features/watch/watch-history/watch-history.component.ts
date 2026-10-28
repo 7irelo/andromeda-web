@@ -7,10 +7,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
 import { WatchHistoryEntry } from '../../../models/video.model';
 import { VideoCardComponent } from '../video-card/video-card.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../../shared/components/states';
 
 @Component({
   selector: 'app-watch-history',
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, VideoCardComponent],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, VideoCardComponent,
+    EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
   template: `
     <div class="history-page">
       <div class="header">
@@ -21,7 +23,8 @@ import { VideoCardComponent } from '../video-card/video-card.component';
         </button>
       </div>
 
-      <div class="loading-center" *ngIf="loading"><mat-spinner diameter="40"></mat-spinner></div>
+      <app-skeleton *ngIf="loading" variant="grid" [count]="6"></app-skeleton>
+      <app-error-state *ngIf="!loading && loadError" [compact]="entries.length > 0" (retry)="retry()"></app-error-state>
 
       <div class="video-grid" *ngIf="!loading">
         <div class="entry" *ngFor="let e of entries">
@@ -35,12 +38,12 @@ import { VideoCardComponent } from '../video-card/video-card.component';
         </div>
       </div>
 
-      <button mat-stroked-button class="more" *ngIf="hasMore && !loading" (click)="loadMore()">Load more</button>
+      <button mat-stroked-button class="more" *ngIf="hasMore && !loading && !loadError" (click)="loadMore()">Load more</button>
 
-      <div class="empty-state" *ngIf="!loading && entries.length === 0">
-        <mat-icon>history</mat-icon>
-        <p>Videos you watch will show up here.</p>
-      </div>
+      <app-empty-state *ngIf="!loading && !loadError && entries.length === 0" icon="history"
+                       title="No watch history" message="Videos you watch will show up here.">
+        <a mat-stroked-button routerLink="/watch">Browse videos</a>
+      </app-empty-state>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -60,6 +63,7 @@ import { VideoCardComponent } from '../video-card/video-card.component';
 export class WatchHistoryComponent implements OnInit {
   entries: WatchHistoryEntry[] = [];
   loading = false;
+  loadError = false;
   hasMore = false;
   private page = 1;
 
@@ -71,14 +75,22 @@ export class WatchHistoryComponent implements OnInit {
 
   private load(): void {
     this.loading = this.page === 1;
+    this.loadError = false;
     this.apiService.getWatchHistory(this.page).subscribe({
       next: (res) => {
         this.entries = [...this.entries, ...res.results];
         this.hasMore = !!res.next;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.loadError = true;
+      },
     });
+  }
+
+  retry(): void {
+    this.load();
   }
 
   loadMore(): void {

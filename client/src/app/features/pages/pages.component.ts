@@ -10,6 +10,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { Page } from '../../models/page.model';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
+import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
 
 @Component({
     selector: 'app-pages',
@@ -17,6 +19,7 @@ import { Page } from '../../models/page.model';
         CommonModule, ReactiveFormsModule, RouterLink,
         MatIconModule, MatButtonModule, MatProgressSpinnerModule,
         MatFormFieldModule, MatInputModule, MatSnackBarModule,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent, ModalDialogDirective,
     ],
     template: `
     <div class="pages-page">
@@ -25,20 +28,21 @@ import { Page } from '../../models/page.model';
           <h1>Pages</h1>
           <p style="opacity:.8;margin-top:4px;font-size:14px">Discover and follow community pages</p>
         </div>
-        <button mat-flat-button (click)="openCreateDialog()" style="background:#fff;color:var(--primary);font-weight:600">
-          <mat-icon>add</mat-icon> Create Page
+        <button mat-flat-button (click)="openCreateDialog()" style="background:#fff;color:#4f46e5;font-weight:600">
+          <mat-icon aria-hidden="true">add</mat-icon> Create Page
         </button>
       </div>
 
-      <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+      <app-skeleton *ngIf="loading" variant="grid" [count]="6"></app-skeleton>
+      <app-error-state *ngIf="!loading && loadError" (retry)="loadPages()"></app-error-state>
 
-      <div class="pages-grid" *ngIf="!loading">
+      <div class="pages-grid" *ngIf="!loading && !loadError">
         <div class="page-card card" *ngFor="let p of pages">
           <div class="page-cover">
             <img [src]="p.cover_photo || 'assets/default-cover.png'" alt="" />
           </div>
           <div class="page-body">
-            <a [routerLink]="'/pages/' + p.id"><img [src]="p.avatar || 'assets/default-avatar.png'" class="page-avatar" [alt]="p.name" /></a>
+            <a [routerLink]="'/pages/' + p.id" tabindex="-1" aria-hidden="true"><img [src]="p.avatar || 'assets/default-avatar.png'" class="page-avatar" alt="" width="56" height="56" /></a>
             <div class="page-info">
               <a class="font-semibold page-name" [routerLink]="'/pages/' + p.id">
                 {{ p.name }}
@@ -68,18 +72,19 @@ import { Page } from '../../models/page.model';
         </div>
       </div>
 
-      <div *ngIf="!loading && pages.length === 0" class="empty-state">
-        <mat-icon>auto_stories</mat-icon>
-        <p>No pages yet. Create the first one!</p>
-      </div>
+      <app-empty-state *ngIf="!loading && !loadError && pages.length === 0" icon="auto_stories"
+                       title="No pages yet" message="Create the first one!">
+        <button mat-flat-button color="primary" type="button" (click)="openCreateDialog()">Create Page</button>
+      </app-empty-state>
     </div>
 
     <!-- Create Dialog -->
     <div class="edit-overlay" *ngIf="isCreating" (click)="cancelCreate()"></div>
-    <div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm">
+    <div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm"
+         appModalDialog dialogLabel="Create Page" (dismiss)="cancelCreate()">
       <div class="edit-dialog-header">
         <h2>Create Page</h2>
-        <button mat-icon-button (click)="cancelCreate()"><mat-icon>close</mat-icon></button>
+        <button mat-icon-button (click)="cancelCreate()" aria-label="Close"><mat-icon>close</mat-icon></button>
       </div>
       <div class="edit-dialog-body">
         <mat-form-field appearance="outline" class="w-full">
@@ -154,6 +159,7 @@ import { Page } from '../../models/page.model';
 export class PagesComponent implements OnInit {
   pages: Page[] = [];
   loading = false;
+  loadError = false;
 
   isCreating = false;
   saving = false;
@@ -171,12 +177,16 @@ export class PagesComponent implements OnInit {
 
   loadPages(): void {
     this.loading = true;
+    this.loadError = false;
     this.apiService.getPages().subscribe({
       next: (res) => {
         this.pages = res.results;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.loadError = true;
+      },
     });
   }
 

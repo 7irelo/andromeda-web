@@ -5,15 +5,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Subscription, switchMap, of, catchError, forkJoin } from 'rxjs';
+import { BehaviorSubject, Subscription, combineLatest, switchMap, of, catchError, forkJoin } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AskResponse, SearchResponse, SearchType, SemanticSearchResponse, SemanticType } from '../../models/search.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 @Component({
     selector: 'app-search',
     imports: [CommonModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatIconModule, MatProgressSpinnerModule,
-      PostCardComponent],
+      PostCardComponent, EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     template: `
     <div class="search-page">
       <h1>Results for “{{ query }}”</h1>
@@ -52,7 +53,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
         <p class="text-secondary text-sm" *ngIf="askError">{{ askError }}</p>
       </section>
 
-      <div class="loading-center" *ngIf="loading"><mat-spinner diameter="40"></mat-spinner></div>
+      <app-skeleton *ngIf="loading" variant="list" [count]="5"></app-skeleton>
 
       <ng-container *ngIf="!loading">
         <section *ngIf="data?.results?.people?.length">
@@ -123,9 +124,11 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
           </section>
         </ng-container>
 
-        <p class="text-secondary empty" *ngIf="isEmpty && !error">Nothing matched “{{ query }}”.</p>
+        <app-empty-state *ngIf="isEmpty && !error && !hint" icon="search_off" [title]="'Nothing matched “' + query + '”'"
+                         message="Check the spelling, or try fewer or different words."></app-empty-state>
       </ng-container>
-      <p class="text-secondary empty" *ngIf="error">{{ error }}</p>
+      <app-empty-state *ngIf="hint" icon="search" [title]="hint"></app-empty-state>
+      <app-error-state *ngIf="error" [message]="error" (retry)="retry$.next(retry$.value + 1)"></app-error-state>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -159,18 +162,22 @@ export class SearchComponent implements OnInit, OnDestroy {
   askError = '';
   loading = false;
   error = '';
+  /** Not an error: shown when the query is too short to search. */
+  hint = '';
+  readonly retry$ = new BehaviorSubject(0);
   private sub?: Subscription;
   private askSub?: Subscription;
 
   constructor(private route: ActivatedRoute, private router: Router, private api: ApiService) {}
 
   ngOnInit(): void {
-    this.sub = this.route.queryParamMap
+    this.sub = combineLatest([this.route.queryParamMap, this.retry$])
       .pipe(
-        switchMap((params) => {
+        switchMap(([params]) => {
           this.query = (params.get('q') ?? '').trim();
           this.type = (params.get('type') as SearchType) || 'all';
           this.error = '';
+          this.hint = '';
           this.answer = null;
           this.askError = '';
           this.askSub?.unsubscribe();
@@ -178,7 +185,7 @@ export class SearchComponent implements OnInit, OnDestroy {
           if (this.query.length < 2) {
             this.data = null;
             this.semantic = null;
-            this.error = 'Type at least 2 characters to search.';
+            this.hint = 'Type at least 2 characters to search.';
             return of(null);
           }
           this.loading = true;

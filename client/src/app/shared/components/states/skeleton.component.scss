@@ -1,0 +1,22 @@
+:host { display: flex; flex-direction: column; gap: var(--space-3); }
+:host(.sk-avatar) { flex-direction: row; }
+:host(.sk-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: var(--space-4);
+}
+
+.sk-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); }
+.sk-lines { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); }
+.sk-card { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); }
+.sk-card .sk-row { padding: 0; }
+
+.sk-circle { width: 40px; height: 40px; border-radius: var(--radius-full); flex-shrink: 0; }
+.sk-line { display: block; height: 12px; }
+.sk-media { display: block; height: 140px; border-radius: var(--radius-sm); }
+
+.w20 { width: 20%; }
+.w40 { width: 40%; }
+.w60 { width: 60%; }
+.w70 { width: 70%; }
+.w90 { width: 90%; }

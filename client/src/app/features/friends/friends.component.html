@@ -8,8 +8,8 @@
   <div class="search-bar">
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>Search people</mat-label>
-      <input matInput [(ngModel)]="searchQuery" (input)="search()" placeholder="Name, username..." />
-      <mat-icon matSuffix>search</mat-icon>
+      <input matInput type="search" [(ngModel)]="searchQuery" (input)="search()" placeholder="Name, username..." />
+      <mat-icon matSuffix aria-hidden="true">search</mat-icon>
     </mat-form-field>
   </div>
 
@@ -85,8 +85,12 @@
   <!-- Suggestions -->
   <div>
     <h2>People You May Know</h2>
-    <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
-    <div class="user-grid" *ngIf="!loading">
+    <app-skeleton *ngIf="loading" variant="grid" [count]="6"></app-skeleton>
+    <app-error-state *ngIf="!loading && loadError" (retry)="loadSuggestions()"></app-error-state>
+    <app-empty-state *ngIf="!loading && !loadError && suggestions.length === 0" icon="person_search"
+                     title="No suggestions right now"
+                     message="Search for people above, or check back once you've made a few friends."></app-empty-state>
+    <div class="user-grid" *ngIf="!loading && !loadError">
       <div class="user-card-lg card" *ngFor="let user of suggestions">
         <div class="user-card-cover">
           <img *ngIf="user.cover_photo_url" [src]="user.cover_photo_url" alt="" class="cover-img" />

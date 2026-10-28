@@ -7,14 +7,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../core/services/api.service';
 import { Post } from '../../models/post.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../shared/components/states';
 
 /** Your saved posts, most recently saved first. Only you can see this list. */
 @Component({
   selector: 'app-saved-posts',
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, PostCardComponent],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, PostCardComponent,
+    EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <main class="saved-page">
+    <div class="saved-page">
       <header class="card saved-header">
         <mat-icon aria-hidden="true">bookmark</mat-icon>
         <div>
@@ -24,13 +26,15 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
       </header>
       <app-post-card *ngFor="let p of posts; trackBy: trackById" [post]="p"
                      (savedChange)="onSavedChange($event)" (postDeleted)="remove($event)"></app-post-card>
-      <div *ngIf="loading" class="center"><mat-spinner diameter="32"></mat-spinner></div>
-      <section *ngIf="!loading && posts.length === 0" class="card empty">
-        <p>Nothing saved yet. Use <strong>Save post</strong> in a post's menu to keep it here.</p>
+      <app-skeleton *ngIf="loading && posts.length === 0" variant="post" [count]="2"></app-skeleton>
+      <div *ngIf="loading && posts.length > 0" class="center"><mat-spinner diameter="32"></mat-spinner></div>
+      <app-error-state *ngIf="!loading && loadError" [compact]="posts.length > 0" (retry)="retry()"></app-error-state>
+      <app-empty-state *ngIf="!loading && !loadError && posts.length === 0" icon="bookmark_border" title="Nothing saved yet"
+                       message="Use Save post in a post's menu to keep it here.">
         <a mat-stroked-button routerLink="/feed">Browse your feed</a>
-      </section>
-      <button mat-stroked-button *ngIf="hasMore && !loading" (click)="loadMore()">Load more</button>
-    </main>
+      </app-empty-state>
+      <button mat-stroked-button *ngIf="hasMore && !loading && !loadError" (click)="loadMore()">Load more</button>
+    </div>
   `,
   styles: [`
     .saved-page { max-width: 640px; margin: 16px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -46,6 +50,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
 export class SavedPostsComponent implements OnInit {
   posts: Post[] = [];
   loading = false;
+  loadError = false;
   hasMore = false;
   private page = 1;
 
@@ -57,14 +62,22 @@ export class SavedPostsComponent implements OnInit {
 
   private load(): void {
     this.loading = true;
+    this.loadError = false;
     this.api.getSavedPosts(this.page).subscribe({
       next: (res) => {
         this.posts = [...this.posts, ...res.results];
         this.hasMore = !!res.next;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.loadError = true;
+      },
     });
+  }
+
+  retry(): void {
+    this.load();
   }
 
   loadMore(): void {

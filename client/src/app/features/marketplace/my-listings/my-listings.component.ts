@@ -12,6 +12,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { City, Listing, ListingCategory, ListingStatus, MyListingCounts } from '../../../models/listing.model';
 import { primaryImage } from '../listing-card/listing-card.component';
 import { ListingFormComponent, apiError } from '../listing-form/listing-form.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../../shared/components/states';
 
 type Tab = ListingStatus | 'all';
 
@@ -20,6 +21,7 @@ type Tab = ListingStatus | 'all';
     imports: [
         CommonModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, MatProgressSpinnerModule,
         MatSnackBarModule, MatTabsModule, ListingFormComponent,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     template: `
     <div class="page">
@@ -34,11 +36,12 @@ type Tab = ListingStatus | 'all';
         <mat-tab *ngFor="let t of tabs" [label]="t.label + ' (' + (counts?.[t.value] ?? 0) + ')'"></mat-tab>
       </mat-tab-group>
 
-      <div class="loading-center" *ngIf="loading"><mat-spinner diameter="36"></mat-spinner></div>
+      <app-skeleton *ngIf="loading" variant="list" [count]="4" class="rows"></app-skeleton>
+      <app-error-state *ngIf="!loading && failedPage === 1" (retry)="load(1)"></app-error-state>
 
-      <div class="rows" *ngIf="!loading">
+      <div class="rows" *ngIf="!loading && failedPage !== 1">
         <div class="row card" *ngFor="let l of listings">
-          <a [routerLink]="'/marketplace/' + l.id" class="thumb"><img [src]="image(l)" [alt]="l.title" /></a>
+          <a [routerLink]="'/marketplace/' + l.id" class="thumb" tabindex="-1" aria-hidden="true"><img [src]="image(l)" alt="" width="76" height="76" loading="lazy" /></a>
           <div class="info">
             <a [routerLink]="'/marketplace/' + l.id" class="title font-semibold">{{ l.title }}</a>
             <div class="price">{{ l.currency }} {{ l.price }}</div>
@@ -66,12 +69,14 @@ type Tab = ListingStatus | 'all';
           </div>
         </div>
 
-        <div class="empty-state" *ngIf="!listings.length">
-          <mat-icon>inventory_2</mat-icon>
-          <p>Nothing {{ tab === 'all' ? 'here' : tab }} yet.</p>
-        </div>
+        <app-empty-state *ngIf="!listings.length" icon="inventory_2"
+                         [title]="tab === 'all' ? 'You have no listings yet' : 'Nothing ' + tab + ' yet'"
+                         message="Sell something you no longer need.">
+          <button mat-flat-button color="primary" type="button" (click)="creating = true">Create Listing</button>
+        </app-empty-state>
 
-        <div class="load-more" *ngIf="nextPage">
+        <app-error-state *ngIf="failedPage && failedPage > 1" [compact]="true" (retry)="load(failedPage)"></app-error-state>
+        <div class="load-more" *ngIf="nextPage && !failedPage">
           <button mat-stroked-button (click)="load(nextPage)">Load more</button>
         </div>
       </div>
@@ -94,8 +99,8 @@ type Tab = ListingStatus | 'all';
     .price { font-weight: 700; color: var(--primary); }
     .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
     .pill { padding: 1px 8px; border-radius: 999px; background: var(--bg-secondary); font-weight: 600; }
-    .pill-active { background: #dcfce7; color: #16a34a; }
-    .pill-reserved { background: #fef3c7; color: #d97706; }
+    .pill-active { background: var(--success-light); color: var(--success); }
+    .pill-reserved { background: var(--warning-light); color: var(--warning); }
     .pill-sold { background: #e0e7ff; color: #4338ca; }
     .actions { display: flex; align-items: center; gap: 4px; }
     @media (max-width: 560px) { .row { flex-wrap: wrap; } .actions { width: 100%; justify-content: flex-end; } }
@@ -115,6 +120,8 @@ export class MyListingsComponent implements OnInit {
   listings: Listing[] = [];
   nextPage: number | null = null;
   loading = false;
+  /** Page number whose request failed, or 0. */
+  failedPage = 0;
 
   categories: ListingCategory[] = [];
   cities: City[] = [];
@@ -149,13 +156,17 @@ export class MyListingsComponent implements OnInit {
 
   load(page = 1): void {
     if (page === 1) this.loading = true;
+    this.failedPage = 0;
     this.api.getMyListings(this.tab === 'all' ? undefined : this.tab, page).subscribe({
       next: (res) => {
         this.listings = page === 1 ? res.results : [...this.listings, ...res.results];
         this.nextPage = res.next ? page + 1 : null;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.failedPage = page;
+      },
     });
   }
 

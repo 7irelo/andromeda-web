@@ -18,6 +18,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../models/user.model';
 import { Post } from '../../models/post.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
+import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
 import { ImageCropperComponent, ImageCropperResult } from '../../shared/components/image-cropper/image-cropper.component';
 
 @Component({
@@ -26,7 +27,7 @@ import { ImageCropperComponent, ImageCropperResult } from '../../shared/componen
         CommonModule, ReactiveFormsModule, FormsModule,
         MatButtonModule, MatIconModule, MatTabsModule,
         MatProgressSpinnerModule, MatFormFieldModule, MatInputModule,
-        MatSnackBarModule, MatDialogModule, MatMenuModule, PostCardComponent,
+        MatSnackBarModule, MatDialogModule, MatMenuModule, PostCardComponent, ModalDialogDirective,
     ],
     templateUrl: './profile.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,

@@ -77,7 +77,7 @@ import { User } from '../../../models/user.model';
              background: var(--surface); color: var(--text-primary); }
     .member { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
     .who { flex: 1; }
-    .role { font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--primary); color: #fff; margin-left: 4px; }
+    .role { font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--primary-strong); color: var(--on-primary); margin-left: 4px; }
     .upload span { cursor: pointer; text-decoration: underline; }
     .leave { margin-top: 12px; }
     .error { color: var(--danger, #e41e3f); }

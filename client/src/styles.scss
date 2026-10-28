@@ -1,87 +1,186 @@
 // ── Andromeda Global Styles ───────────────────────────────────────────────────
+@use '@angular/material' as mat;
+@use './theme-colors' as theme-colors;
 
-// Variables
-:root {
-  --primary:         #4f46e5;      // indigo-600
-  --primary-dark:    #4338ca;      // indigo-700
-  --primary-light:   #e0e7ff;      // indigo-100
-  --accent:          #06b6d4;      // cyan-500
+// ── Design tokens ─────────────────────────────────────────────────────────────
+// Everything a component needs to look like Andromeda lives here as a CSS custom
+// property. Colours have a light and a dark value (see "Dark theme" below); the
+// rest (spacing, radius, elevation, type, motion) is theme-independent.
+//
+// Contrast: every text token meets WCAG 2.2 AA (4.5:1) against --surface and --bg
+// in its theme. Use --primary-strong (not --primary) behind white text.
+
+@mixin light-tokens {
+  --primary:         #4f46e5;      // indigo-600: links, accents, icons
+  --primary-dark:    #4338ca;      // hover
+  --primary-light:   #e0e7ff;      // tinted backgrounds
+  --primary-strong:  #4f46e5;      // fills behind --on-primary text, same in both themes
+  --on-primary:      #ffffff;
+  --accent:          #06b6d4;
   --accent-dark:     #0891b2;
-  --success:         #22c55e;
-  --warning:         #f59e0b;
-  --danger:          #ef4444;
+  --success:         #15803d;
+  --success-light:   #dcfce7;
+  --warning:         #b45309;
+  --warning-light:   #fef3c7;
+  --danger:          #dc2626;
+  --danger-light:    #fee2e2;
+  --danger-text:     #b91c1c;
 
   --bg:              #f1f5f9;      // slate-100
+  --bg-secondary:    #f8fafc;
   --surface:         #ffffff;
-  --surface-2:       #f8fafc;      // slate-50
-  --border:          #e2e8f0;      // slate-200
+  --surface-2:       #f8fafc;
+  --border:          #e2e8f0;
+  --border-strong:   #94a3b8;      // 3:1 against surfaces, for control outlines
   --border-light:    #f1f5f9;
 
-  --text-primary:    #0f172a;      // slate-900
-  --text-secondary:  #64748b;      // slate-500
-  --text-muted:      #94a3b8;      // slate-400
+  --text-primary:    #0f172a;      // 17:1
+  --text-secondary:  #475569;      // 6.9:1 on --bg
+  --text-muted:      #5f6b7a;      // 4.9:1 on --bg
 
-  --sidebar-width:   280px;
-  --header-height:   60px;
-  --border-radius:   12px;
-  --border-radius-sm: 8px;
-  --border-radius-lg: 16px;
+  --focus-ring-color: #4f46e5;
 
   --shadow-sm:       0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
   --shadow:          0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.05);
   --shadow-md:       0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.05);
   --shadow-lg:       0 20px 25px -5px rgba(0,0,0,.1), 0 8px 10px -6px rgba(0,0,0,.05);
   --shadow-glow:     0 0 0 3px rgba(79,70,229,.2);
-
-  --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  --gradient-accent:  linear-gradient(135deg, #06b6d4 0%, #4f46e5 100%);
-  --gradient-warm:    linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
 }
 
-// ── Dark Mode ─────────────────────────────────────────────────────────────────
-[data-theme="dark"] {
-  --bg:              #0f172a;      // slate-900
-  --surface:         #1e293b;      // slate-800
+@mixin dark-tokens {
+  --primary:         #818cf8;      // indigo-400: 4.9:1 on --surface
+  --primary-dark:    #a5b4fc;
+  --primary-light:   rgba(129, 140, 248, .16);
+  --primary-strong:  #4f46e5;
+  --on-primary:      #ffffff;
+  --success:         #4ade80;
+  --success-light:   rgba(74, 222, 128, .14);
+  --warning:         #fbbf24;
+  --warning-light:   rgba(251, 191, 36, .14);
+  --danger:          #f87171;
+  --danger-light:    rgba(248, 113, 113, .14);
+  --danger-text:     #fca5a5;
+
+  --bg:              #0f172a;
+  --bg-secondary:    #1a2332;
+  --surface:         #1e293b;
   --surface-2:       #1a2332;
-  --border:          #334155;      // slate-700
+  --border:          #334155;
+  --border-strong:   #64748b;
   --border-light:    #1e293b;
 
-  --text-primary:    #f1f5f9;      // slate-100
-  --text-secondary:  #94a3b8;      // slate-400
-  --text-muted:      #64748b;      // slate-500
+  --text-primary:    #f1f5f9;
+  --text-secondary:  #a3b1c6;      // 6.9:1 on --surface
+  --text-muted:      #8b9bb4;      // 5.2:1 on --surface
 
-  --primary-light:   rgba(79, 70, 229, .15);
+  --focus-ring-color: #a5b4fc;
 
   --shadow-sm:       0 1px 3px rgba(0,0,0,.2), 0 1px 2px rgba(0,0,0,.15);
   --shadow:          0 4px 6px -1px rgba(0,0,0,.25), 0 2px 4px -2px rgba(0,0,0,.2);
   --shadow-md:       0 10px 15px -3px rgba(0,0,0,.3), 0 4px 6px -4px rgba(0,0,0,.25);
   --shadow-lg:       0 20px 25px -5px rgba(0,0,0,.35), 0 8px 10px -6px rgba(0,0,0,.3);
-  --shadow-glow:     0 0 0 3px rgba(79,70,229,.3);
+  --shadow-glow:     0 0 0 3px rgba(129,140,248,.35);
+}
 
-  // Material overrides for dark mode
-  .mat-mdc-card { background: var(--surface) !important; }
-  .mat-mdc-snack-bar-container { --mdc-snackbar-container-color: #334155; }
+:root {
+  @include light-tokens;
+  color-scheme: light;
 
-  // Fix form field colors
-  .mat-mdc-form-field {
-    --mdc-outlined-text-field-outline-color: var(--border);
-    --mdc-outlined-text-field-hover-outline-color: var(--text-secondary);
-    --mdc-outlined-text-field-label-text-color: var(--text-secondary);
-    --mdc-outlined-text-field-input-text-color: var(--text-primary);
-  }
+  // Spacing (4px scale)
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
 
-  // Fix menu colors
-  .mat-mdc-menu-panel {
-    background: var(--surface) !important;
-  }
-  .mat-mdc-menu-item {
-    color: var(--text-primary) !important;
-  }
+  // Radius
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-full: 999px;
+  // Older names, kept so existing components keep working.
+  --border-radius:    var(--radius-md);
+  --border-radius-sm: var(--radius-sm);
+  --border-radius-lg: var(--radius-lg);
 
-  // Fix tab colors
-  .mat-mdc-tab:not(.mdc-tab--active) .mdc-tab__text-label {
-    color: var(--text-secondary) !important;
+  // Elevation
+  --elevation-1: var(--shadow-sm);
+  --elevation-2: var(--shadow);
+  --elevation-3: var(--shadow-md);
+  --elevation-4: var(--shadow-lg);
+
+  // Typography
+  --font-family:    'Bahnschrift', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --font-size-xs:   12px;
+  --font-size-sm:   13px;
+  --font-size-base: 15px;
+  --font-size-lg:   18px;
+  --font-size-xl:   22px;
+  --font-size-2xl:  28px;
+  --line-height:    1.5;
+
+  // Motion (zeroed under prefers-reduced-motion)
+  --motion-fast: .15s;
+  --motion-base: .25s;
+
+  // Layout
+  --sidebar-width:   280px;
+  --header-height:   60px;
+  --bottom-nav-height: 0px;     // set on small screens, see "Bottom navigation"
+  --touch-target:    44px;
+
+  --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --gradient-accent:  linear-gradient(135deg, #0891b2 0%, #4f46e5 100%);
+  --gradient-warm:    linear-gradient(135deg, #b45309 0%, #dc2626 100%);
+
+  @media (max-width: 600px) {
+    --bottom-nav-height: 60px;
   }
+}
+
+// ── Dark theme ────────────────────────────────────────────────────────────────
+// Follows the OS unless the user picked a theme in Settings (ThemeService sets
+// data-theme on <html>).
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    @include dark-tokens;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  @include dark-tokens;
+  color-scheme: dark;
+}
+
+// ── Angular Material (M3) ─────────────────────────────────────────────────────
+// theme-type: color-scheme emits light-dark() values, so Material follows the
+// same color-scheme switch as our own tokens with no duplicated theme CSS.
+html {
+  @include mat.theme((
+    color: (
+      primary: theme-colors.$primary-palette,
+      tertiary: theme-colors.$tertiary-palette,
+      theme-type: color-scheme,
+    ),
+    typography: (
+      plain-family: var(--font-family),
+      brand-family: var(--font-family),
+    ),
+    density: 0,
+  ));
+}
+
+// The M2 `color` input ("warn", "accent") on buttons, toggles and spinners.
+.mat-warn {
+  --mat-sys-primary: var(--mat-sys-error);
+  --mat-sys-on-primary: var(--mat-sys-on-error);
+}
+.mat-accent {
+  --mat-sys-primary: var(--mat-sys-tertiary);
+  --mat-sys-on-primary: var(--mat-sys-on-tertiary);
 }
 
 // Reset
@@ -89,13 +188,68 @@
 
 html, body {
   height: 100%;
-  font-family: 'Bahnschrift', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  font-size: 15px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
   background: var(--bg);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color .3s, color .3s;
+}
+
+// ── Accessibility ─────────────────────────────────────────────────────────────
+// Visible keyboard focus everywhere (mouse clicks don't show it).
+:focus-visible {
+  outline: 3px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+.mat-mdc-button-base:focus-visible,
+.mat-mdc-menu-item:focus-visible {
+  outline: 3px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.visually-hidden,
+.cdk-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 1000;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--primary-strong);
+  color: var(--on-primary);
+  font-weight: 600;
+  transform: translateY(-200%);
+
+  &:focus, &:focus-visible {
+    transform: none;
+    color: var(--on-primary);
+    text-decoration: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion-fast: 0s; --motion-base: 0s; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 // Scrollbar
@@ -113,22 +267,22 @@ a:hover { color: var(--primary-dark); text-decoration: underline; }
   border-radius: var(--border-radius) !important;
   box-shadow: var(--shadow) !important;
   border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
 }
 .mat-mdc-button, .mat-mdc-outlined-button, .mat-mdc-raised-button { border-radius: 8px !important; }
 .mat-mdc-flat-button { border-radius: 8px !important; }
 .mat-toolbar { height: var(--header-height) !important; }
 .mat-mdc-form-field { width: 100%; }
-.mat-mdc-snack-bar-container {
-  --mdc-snackbar-container-color: var(--text-primary);
-  border-radius: var(--border-radius-sm) !important;
-}
+.mat-mdc-snack-bar-container { border-radius: var(--border-radius-sm) !important; }
+.mat-mdc-menu-panel { background: var(--surface) !important; }
+.mat-mdc-menu-item { color: var(--text-primary) !important; min-height: var(--touch-target); }
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 .text-secondary { color: var(--text-secondary); }
 .text-muted     { color: var(--text-muted); }
 .text-primary-color { color: var(--primary); }
-.text-sm        { font-size: 13px; }
-.text-xs        { font-size: 12px; }
+.text-sm        { font-size: var(--font-size-sm); }
+.text-xs        { font-size: var(--font-size-xs); }
 .font-medium    { font-weight: 500; }
 .font-semibold  { font-weight: 600; }
 .font-bold      { font-weight: 700; }
@@ -211,7 +365,7 @@ a:hover { color: var(--primary-dark); text-decoration: underline; }
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     .left-sidebar { display: none; }
   }
 }
@@ -263,6 +417,11 @@ a:hover { color: var(--primary-dark); text-decoration: underline; }
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
   border-radius: 6px;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background: var(--border);
+  }
 }
 
 // ── Page header ────────────────────────────────────────────────────────────
@@ -272,6 +431,8 @@ a:hover { color: var(--primary-dark); text-decoration: underline; }
   padding: 32px;
   border-radius: var(--border-radius);
   margin-bottom: 20px;
+
+  @media (max-width: 600px) { padding: 20px; }
 }
 
 // ── Badges ────────────────────────────────────────────────────────────────
@@ -284,9 +445,9 @@ a:hover { color: var(--primary-dark); text-decoration: underline; }
   font-weight: 600;
 
   &.badge-primary { background: var(--primary-light); color: var(--primary); }
-  &.badge-success { background: #dcfce7; color: #16a34a; }
-  &.badge-warning { background: #fef3c7; color: #d97706; }
-  &.badge-danger  { background: #fee2e2; color: #dc2626; }
+  &.badge-success { background: var(--success-light); color: var(--success); }
+  &.badge-warning { background: var(--warning-light); color: var(--warning); }
+  &.badge-danger  { background: var(--danger-light); color: var(--danger-text); }
 }
 
 // ── Empty states ──────────────────────────────────────────────────────────
@@ -319,6 +480,12 @@ a:hover { color: var(--primary-dark); text-decoration: underline; }
 
   h3 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
   p { font-size: 14px; max-width: 300px; }
+}
+
+// ── Small screens ─────────────────────────────────────────────────────────
+// No sideways scrolling at 360px, and room for the bottom navigation bar.
+@media (max-width: 600px) {
+  img, video { max-width: 100%; }
 }
 
 // ── Page transitions ──────────────────────────────────────────────────────

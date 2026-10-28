@@ -16,7 +16,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
   imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, PostCardComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <main class="post-detail">
+    <div class="post-detail">
       <a routerLink="/feed" class="back"><mat-icon>arrow_back</mat-icon> Back to feed</a>
       <div *ngIf="loading" class="center"><mat-spinner diameter="36"></mat-spinner></div>
       <app-post-card *ngIf="post && !loading" [post]="post" [expandComments]="true"
@@ -31,7 +31,7 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
         <h1>Something went wrong</h1>
         <p class="text-secondary">The post couldn't be loaded. Please try again.</p>
       </section>
-    </main>
+    </div>
   `,
   styles: [`
     .post-detail { max-width: 640px; margin: 16px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }

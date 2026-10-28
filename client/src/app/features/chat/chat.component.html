@@ -1,9 +1,9 @@
-<div class="chat-layout">
-  <!-- Room List -->
-  <aside class="room-list">
+<div class="chat-layout" [class.has-room]="outlet.isActivated">
+  <!-- Room List (full screen on phones until a conversation is opened) -->
+  <aside class="room-list" aria-label="Conversations">
     <div class="room-list-header">
       <h2>Chats</h2>
-      <button mat-icon-button title="New Message" (click)="openNewChat()">
+      <button mat-icon-button title="New Message" aria-label="New message" (click)="openNewChat()">
         <mat-icon>edit_square</mat-icon>
       </button>
     </div>
@@ -11,64 +11,72 @@
     <!-- New message search panel -->
     <div class="new-chat-panel" *ngIf="showNewChat">
       <div class="new-chat-search">
-        <mat-icon class="search-icon">search</mat-icon>
+        <mat-icon class="search-icon" aria-hidden="true">search</mat-icon>
         <input
-          type="text"
+          type="search"
           placeholder="Search people..."
+          aria-label="Search people to message"
           [(ngModel)]="newChatQuery"
           (ngModelChange)="searchNewChatUsers()"
           class="new-chat-input"
           autofocus
         />
-        <button mat-icon-button (click)="closeNewChat()" class="close-btn">
+        <button mat-icon-button (click)="closeNewChat()" class="close-btn" aria-label="Close new message">
           <mat-icon>close</mat-icon>
         </button>
       </div>
-      <div *ngIf="newChatSearching" class="new-chat-spinner">Searching...</div>
-      <div
+      <div *ngIf="newChatSearching" class="new-chat-spinner" role="status">Searching...</div>
+      <button
+        type="button"
         class="new-chat-result"
         *ngFor="let user of newChatResults"
         (click)="startDM(user)"
       >
-        <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="user.username" />
-        <div class="new-chat-result-info">
-          <div class="font-semibold" style="font-size:14px">{{ user.full_name }}</div>
-          <div class="text-secondary text-xs">&#64;{{ user.username }}</div>
-        </div>
-      </div>
+        <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar sm" alt="" width="32" height="32" />
+        <span class="new-chat-result-info">
+          <span class="font-semibold" style="font-size:14px;display:block">{{ user.full_name }}</span>
+          <span class="text-secondary text-xs">&#64;{{ user.username }}</span>
+        </span>
+      </button>
       <div *ngIf="!newChatSearching && newChatQuery && newChatResults.length === 0" class="new-chat-empty">
         No users found
       </div>
     </div>
 
-    <div class="room-item" *ngFor="let room of rooms" (click)="openRoom(room)" [routerLink]="['/chat', room.id]" routerLinkActive="active">
-      <img [src]="getRoomAvatar(room)" class="avatar md" [alt]="getRoomName(room)" />
-      <div class="room-info">
-        <div class="room-name">
+    <app-skeleton *ngIf="loading && rooms.length === 0" variant="list" [count]="6"></app-skeleton>
+    <app-error-state *ngIf="!loading && loadError" [compact]="true" (retry)="loadRooms()"></app-error-state>
+
+    <a class="room-item" *ngFor="let room of rooms" (click)="room.unread_count = 0" [routerLink]="['/chat', room.id]"
+       routerLinkActive="active" ariaCurrentWhenActive="page">
+      <img [src]="getRoomAvatar(room)" class="avatar md" alt="" width="40" height="40" />
+      <span class="room-info">
+        <span class="room-name">
           {{ getRoomName(room) }}
-          <span class="unread-badge" *ngIf="room.unread_count > 0">{{ room.unread_count }}</span>
-        </div>
-        <div class="last-msg text-secondary text-xs">
+          <span class="unread-badge" *ngIf="room.unread_count > 0">
+            {{ room.unread_count }}<span class="visually-hidden"> unread</span>
+          </span>
+        </span>
+        <span class="last-msg text-secondary text-xs">
           {{ preview(room) }}
           · {{ timeAgo($safeNavigationMigration(room.last_message?.created_at)) }}
-        </div>
-      </div>
-    </div>
+        </span>
+      </span>
+    </a>
 
-    <div *ngIf="!loading && rooms.length === 0 && !showNewChat" class="empty-rooms">
-      <mat-icon>chat_bubble_outline</mat-icon>
-      <p>No conversations yet.<br/>Click the pencil icon to start one.</p>
-    </div>
+    <app-empty-state *ngIf="!loading && !loadError && rooms.length === 0 && !showNewChat" [compact]="true"
+                     icon="chat_bubble_outline" title="No conversations yet">
+      <button mat-stroked-button type="button" (click)="openNewChat()">Start a conversation</button>
+    </app-empty-state>
   </aside>
 
   <!-- Chat Window -->
   <div class="chat-window-area">
-    <router-outlet></router-outlet>
+    <router-outlet #outlet="outlet"></router-outlet>
 
-    <div class="chat-placeholder" *ngIf="!showNewChat">
-      <mat-icon>forum</mat-icon>
+    <div class="chat-placeholder" *ngIf="!showNewChat && !outlet.isActivated">
+      <mat-icon aria-hidden="true">forum</mat-icon>
       <h3>Select a conversation</h3>
-      <p>Choose from your existing conversations or click <strong>✏</strong> to start a new one.</p>
+      <p>Choose from your existing conversations or click <strong aria-label="New message">✏</strong> to start a new one.</p>
     </div>
   </div>
 </div>

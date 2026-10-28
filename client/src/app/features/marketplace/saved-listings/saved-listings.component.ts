@@ -7,10 +7,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
 import { Listing } from '../../../models/listing.model';
 import { ListingCardComponent } from '../listing-card/listing-card.component';
+import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../../../shared/components/states';
 
 @Component({
     selector: 'app-saved-listings',
-    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, ListingCardComponent],
+    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, ListingCardComponent,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     template: `
     <div class="page">
       <div class="page-header">
@@ -19,21 +21,23 @@ import { ListingCardComponent } from '../listing-card/listing-card.component';
       </div>
       <p class="text-secondary text-sm">We'll let you know when a seller drops the price on something you saved.</p>
 
-      <div class="loading-center" *ngIf="loading"><mat-spinner diameter="36"></mat-spinner></div>
+      <app-skeleton *ngIf="loading" variant="grid" [count]="4" class="grid"></app-skeleton>
+      <app-error-state *ngIf="!loading && failedPage === 1" (retry)="load(1)"></app-error-state>
 
-      <div class="grid" *ngIf="!loading">
+      <div class="grid" *ngIf="!loading && failedPage !== 1">
         <div class="cell" *ngFor="let l of listings">
           <app-listing-card [listing]="l"></app-listing-card>
-          <button mat-button class="unsave" (click)="unsave(l)"><mat-icon>favorite</mat-icon> Remove</button>
+          <button mat-button class="unsave" (click)="unsave(l)" [attr.aria-label]="'Remove ' + l.title + ' from saved'"><mat-icon aria-hidden="true">favorite</mat-icon> Remove</button>
         </div>
       </div>
 
-      <div class="empty-state" *ngIf="!loading && !listings.length">
-        <mat-icon>favorite_border</mat-icon>
-        <p>Nothing saved yet. Tap Save on a listing to keep track of it.</p>
-      </div>
+      <app-empty-state *ngIf="!loading && !failedPage && !listings.length" icon="favorite_border" title="Nothing saved yet"
+                       message="Tap Save on a listing to keep track of it.">
+        <a mat-stroked-button routerLink="/marketplace">Browse Marketplace</a>
+      </app-empty-state>
 
-      <div class="load-more" *ngIf="nextPage">
+      <app-error-state *ngIf="failedPage > 1" [compact]="true" (retry)="load(failedPage)"></app-error-state>
+      <div class="load-more" *ngIf="nextPage && !failedPage">
         <button mat-stroked-button (click)="load(nextPage)">Load more</button>
       </div>
     </div>
@@ -56,6 +60,8 @@ export class SavedListingsComponent implements OnInit {
   listings: Listing[] = [];
   nextPage: number | null = null;
   loading = false;
+  /** Page number whose request failed, or 0. */
+  failedPage = 0;
 
   constructor(private api: ApiService) {}
 
@@ -65,13 +71,17 @@ export class SavedListingsComponent implements OnInit {
 
   load(page = 1): void {
     if (page === 1) this.loading = true;
+    this.failedPage = 0;
     this.api.getSavedListings(page).subscribe({
       next: (res) => {
         this.listings = page === 1 ? res.results : [...this.listings, ...res.results];
         this.nextPage = res.next ? page + 1 : null;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.loading = false;
+        this.failedPage = page;
+      },
     });
   }
 
