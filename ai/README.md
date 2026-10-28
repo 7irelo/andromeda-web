@@ -11,6 +11,8 @@ container that holds model-provider keys.
 | `POST /v1/moderate` | Classify a post, comment or listing as `allow`, `review` or `remove` |
 | `POST /v1/catchup` | Summarise chat messages with verified message citations |
 | `POST /v1/video/chapters` | Chapter a video from its timed transcript; starts and titles are checked deterministically |
+| `POST /v1/replies` | Three short smart-reply suggestions for a chat; `variant` (`haiku` / `luna` / `lora`) picks the primary route |
+| `POST /v1/compose` | "Help me write": rewrite a draft in a tone, fix grammar, shorten or translate (en, zu, af, st, xh) |
 | `GET /healthz`, `GET /metrics` | Liveness and Prometheus metrics (tokens, cost, latency, fallbacks) |
 
 ## How it works
@@ -35,6 +37,10 @@ container that holds model-provider keys.
 | `moderation.classify` | `claude-haiku-5-5` | `gpt-6-luna` |
 | `moderation.escalate` | `claude-sonnet-5-5` | `gpt-6.1-terra` |
 | `catchup.summarise` | `claude-haiku-5-5` | `gpt-6.1-terra` |
+| `replies.suggest` (A/B `haiku`) | `claude-haiku-5-5`, effort low, 256 tokens | `gpt-6-luna` |
+| `replies.suggest.luna` (A/B `luna`) | `gpt-6-luna` | `claude-haiku-5-5` |
+| `replies.suggest.lora` (A/B `lora`) | self-hosted LoRA on vLLM (only when `VLLM_BASE_URL` is set) | `claude-haiku-5-5`, `gpt-6-luna` |
+| `compose.rewrite` | `claude-haiku-5-5` | `gpt-6-luna` |
 
 ## Security
 
@@ -52,6 +58,17 @@ container that holds model-provider keys.
 - **Container hardening:** the container runs as non-root on a read-only
   filesystem, with all capabilities dropped and `no-new-privileges`.
 
+- **Smart replies** keep the prompt short (latency goal < 400 ms p95) and
+  treat the output as untrusted: at most three, 120 characters each,
+  duplicates dropped, and any suggestion with a link, phone number or email
+  that wasn't in the chat is dropped. With moderation configured, flagged
+  suggestions are dropped, and if moderation is unreachable none are shown.
+- **Compose assist** caps the rewrite's length relative to the draft and
+  strips contact details the author didn't write.
+- **Fine-tuning (v2, offline)** lives in [`finetune/`](finetune/serve.md):
+  SFT and DPO datasets built from pseudonymised seed conversations only, a
+  LoRA/QLoRA training script, and how to serve the adapter on vLLM.
+
 ## Development
 
 ```bash
@@ -63,6 +80,11 @@ ruff check .
 ```
 
 ## Evals
+
+```bash
+python -m evals.run_replies --a haiku --b luna   # smart replies: cross-family judged win rate + safety
+```
+
 
 ```bash
 export ANTHROPIC_API_KEY=... OPENAI_API_KEY=...

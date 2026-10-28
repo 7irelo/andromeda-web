@@ -1,0 +1,5 @@
+# Exports, datasets and weights never belong in git.
+*.jsonl
+adapters/
+*.safetensors
+*.bin
