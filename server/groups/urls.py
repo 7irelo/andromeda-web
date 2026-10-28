@@ -1,8 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import GroupViewSet
+from .views import GroupInviteView, GroupViewSet
 
 router = DefaultRouter()
 router.register('', GroupViewSet, basename='group')
 
-urlpatterns = [path('', include(router.urls))]
+urlpatterns = [
+    # Before the router so "invites" is never read as a group id.
+    path('invites/<str:token>/', GroupInviteView.as_view(), name='group-invite-redeem'),
+    path('', include(router.urls)),
+]

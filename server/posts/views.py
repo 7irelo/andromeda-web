@@ -44,6 +44,11 @@ class PostViewSet(viewsets.ModelViewSet):
         if group_id and group_id.isdigit():
             qs = qs.filter(group_id=group_id)
 
+        # 'page' is taken by pagination, hence 'page_id'.
+        page_id = self.request.query_params.get('page_id')
+        if page_id and page_id.isdigit():
+            qs = qs.filter(page_id=page_id)
+
         search = self.request.query_params.get('search', '').strip()[:200]
         if search:
             qs = qs.filter(
