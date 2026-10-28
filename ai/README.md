@@ -10,6 +10,7 @@ container that holds model-provider keys.
 |---|---|
 | `POST /v1/moderate` | Classify a post, comment or listing as `allow`, `review` or `remove` |
 | `POST /v1/catchup` | Summarise chat messages with verified message citations |
+| `POST /v1/video/chapters` | Chapter a video from its timed transcript; starts and titles are checked deterministically |
 | `GET /healthz`, `GET /metrics` | Liveness and Prometheus metrics (tokens, cost, latency, fallbacks) |
 
 ## How it works

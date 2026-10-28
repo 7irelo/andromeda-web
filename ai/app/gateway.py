@@ -45,6 +45,8 @@ ROUTES: dict[str, list[Route]] = {
                       Route('openai', 'gpt-6-luna', 1024, None)],
     'ask.answer': [Route('anthropic', 'claude-sonnet-5-5', 2048),
                    Route('openai', 'gpt-6.1-terra', 2048, None)],
+    'video.chapters': [Route('anthropic', 'claude-haiku-5-5', 1024),
+                       Route('openai', 'gpt-6-luna', 1024, None)],
     # Anthropic has no embeddings model, so this job has no cross-provider fallback.
     'search.embed': [Route('openai', 'text-embedding-3-small', 0, None)],
 }
