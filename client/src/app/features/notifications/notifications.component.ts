@@ -60,6 +60,10 @@ export class NotificationsComponent implements OnInit {
       case 'follow':
         return n.sender ? `/profile/${n.sender.username}` : null;
       case 'message': return '/chat';
+      case 'system':
+        // New uploads from channels the user subscribes to.
+        return n.extra?.['kind'] === 'new_video' && Number.isInteger(n.extra?.['video_id'])
+          ? `/watch/${n.extra['video_id']}` : null;
       default: return null;
     }
   }
@@ -73,6 +77,7 @@ export class NotificationsComponent implements OnInit {
   getIcon(type: string, extra?: Record<string, unknown>): string {
     // Product spotlight notifications carry a listing_id in extra
     if (type === 'system' && extra?.['listing_id']) return 'storefront';
+    if (type === 'system' && extra?.['kind'] === 'new_video') return 'smart_display';
     const map: Record<string, string> = {
       like: 'thumb_up', comment: 'comment', friend_request: 'person_add',
       friend_accepted: 'people', follow: 'person_add_alt', message: 'chat',

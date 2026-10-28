@@ -1,13 +1,20 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { Video } from '../../models/video.model';
+import { VideoCardComponent } from './video-card/video-card.component';
+
+const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
+const POLL_MS = 10_000;
 
 @Component({
     selector: 'app-watch',
@@ -17,20 +24,26 @@ import { Video } from '../../models/video.model';
         RouterLink,
         MatIconModule,
         MatButtonModule,
+        MatButtonToggleModule,
+        MatCheckboxModule,
         MatProgressSpinnerModule,
         MatSnackBarModule,
+        VideoCardComponent,
     ],
     templateUrl: './watch.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./watch.component.scss']
 })
-export class WatchComponent implements OnInit {
+export class WatchComponent implements OnInit, OnDestroy {
   videos: Video[] = [];
   loading = false;
   uploading = false;
   uploadTitle = '';
   uploadDescription = '';
+  uploadPublic = true;
   selectedVideo: File | null = null;
+  feed: 'all' | 'subscriptions' = 'all';
+  private pollTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private apiService: ApiService, private snackBar: MatSnackBar) {}
 
@@ -38,21 +51,50 @@ export class WatchComponent implements OnInit {
     this.loadVideos();
   }
 
-  loadVideos(): void {
-    this.loading = true;
-    this.apiService.getVideos().subscribe({
+  ngOnDestroy(): void {
+    this.stopPolling();
+  }
+
+  loadVideos(quiet = false): void {
+    if (!quiet) this.loading = true;
+    const params: Record<string, string> = this.feed === 'subscriptions' ? { feed: 'subscriptions' } : {};
+    this.apiService.getVideos(params).subscribe({
       next: (res) => {
         this.videos = res.results;
         this.loading = false;
+        this.schedulePoll();
       },
       error: () => (this.loading = false),
     });
   }
 
+  setFeed(feed: 'all' | 'subscriptions'): void {
+    this.feed = feed;
+    this.loadVideos();
+  }
+
+  /** Refresh while any of the signed-in user's uploads are still processing. */
+  private schedulePoll(): void {
+    this.stopPolling();
+    if (this.videos.some((v) => v.status === 'processing')) {
+      this.pollTimer = setTimeout(() => this.loadVideos(true), POLL_MS);
+    }
+  }
+
+  private stopPolling(): void {
+    if (this.pollTimer) clearTimeout(this.pollTimer);
+    this.pollTimer = null;
+  }
+
   onVideoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.selectedVideo = input.files?.[0] ?? null;
+    const file = input.files?.[0] ?? null;
     input.value = '';
+    if (file && file.size > MAX_UPLOAD_BYTES) {
+      this.snackBar.open('Videos must be smaller than 500 MB', 'Dismiss', { duration: 4000 });
+      return;
+    }
+    this.selectedVideo = file;
   }
 
   uploadVideo(): void {
@@ -60,8 +102,9 @@ export class WatchComponent implements OnInit {
 
     const formData = new FormData();
     formData.append('video_file', this.selectedVideo);
-    formData.append('title', this.uploadTitle.trim() || this.selectedVideo.name.replace(/\.[^/.]+$/, ''));
+    formData.append('title', (this.uploadTitle.trim() || this.selectedVideo.name.replace(/\.[^/.]+$/, '')).slice(0, 255));
     formData.append('description', this.uploadDescription.trim());
+    formData.append('is_public', String(this.uploadPublic));
 
     this.uploading = true;
     this.apiService.uploadVideo(formData).subscribe({
@@ -71,18 +114,14 @@ export class WatchComponent implements OnInit {
         this.uploadTitle = '';
         this.uploadDescription = '';
         this.uploading = false;
-        this.snackBar.open('Video uploaded', 'Dismiss', { duration: 3000 });
+        this.schedulePoll();
+        this.snackBar.open('Uploaded. We\'ll let you know when it\'s ready to watch.', 'Dismiss', { duration: 4000 });
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.uploading = false;
-        this.snackBar.open('Failed to upload video', 'Dismiss', { duration: 3000 });
+        const detail = err.error?.video_file?.[0] || err.error?.detail || 'Failed to upload video';
+        this.snackBar.open(detail, 'Dismiss', { duration: 4000 });
       },
     });
-  }
-
-  formatDuration(seconds: number): string {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
   }
 }

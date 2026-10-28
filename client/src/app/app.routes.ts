@@ -100,6 +100,18 @@ export const routes: Routes = [
       import('./features/watch/watch.component').then((m) => m.WatchComponent),
   },
   {
+    path: 'watch/history',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/watch/watch-history/watch-history.component').then((m) => m.WatchHistoryComponent),
+  },
+  {
+    path: 'watch/channel/:userId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/watch/channel/channel.component').then((m) => m.ChannelComponent),
+  },
+  {
     path: 'watch/:id',
     canActivate: [authGuard],
     loadComponent: () =>
