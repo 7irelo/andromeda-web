@@ -76,6 +76,12 @@ export const routes: Routes = [
       import('./features/groups/groups.component').then((m) => m.GroupsComponent),
   },
   {
+    path: 'groups/join/:token',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/groups/group-join/group-join.component').then((m) => m.GroupJoinComponent),
+  },
+  {
     path: 'groups/:id',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -110,6 +116,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/pages/pages.component').then((m) => m.PagesComponent),
+  },
+  {
+    path: 'pages/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/pages/page-detail/page-detail.component').then((m) => m.PageDetailComponent),
   },
   {
     path: 'search',

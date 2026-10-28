@@ -21,8 +21,8 @@
             <div class="font-semibold">{{ g.name }}</div>
             <div class="text-secondary text-sm">{{ g.members_count | number }} members · {{ g.privacy }}</div>
             <div class="group-actions">
-              <button mat-stroked-button *ngIf="!g.is_member" (click)="join(g)">Join Group</button>
-              <a mat-stroked-button *ngIf="g.is_member" [routerLink]="'/groups/' + g.id">View Group</a>
+              <!-- Joining happens on the group page, where the rules are shown first. -->
+              <a mat-stroked-button [routerLink]="'/groups/' + g.id">{{ g.is_member ? 'View Group' : 'View & Join' }}</a>
             </div>
           </div>
         </div>

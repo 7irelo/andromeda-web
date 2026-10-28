@@ -7,10 +7,12 @@ import { User, FriendRequest } from '../../models/user.model';
 import { CatchUp, ChatRoom, Message } from '../../models/chat.model';
 import { Notification } from '../../models/notification.model';
 import { Listing, ListingCategory } from '../../models/listing.model';
-import { Group, GroupJoinRequest, GroupMember } from '../../models/group.model';
+import {
+  Group, GroupBan, GroupInvite, GroupInvitePreview, GroupJoinRequest, GroupMember, GroupRole, GroupRule,
+} from '../../models/group.model';
 import { SearchResponse, SearchType } from '../../models/search.model';
 import { Video, VideoComment } from '../../models/video.model';
-import { Page } from '../../models/page.model';
+import { Page, PageRole, PageTeamMember } from '../../models/page.model';
 
 export interface PaginatedResponse<T> {
   count: number;
@@ -185,6 +187,78 @@ export class ApiService {
     return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/join_requests/${requestId}/${decision}/`, {});
   }
 
+  updateGroup(id: number, data: FormData | Partial<Pick<Group, 'name' | 'description' | 'privacy'>>): Observable<Group> {
+    return this.http.patch<Group>(`${this.API}/groups/${id}/`, data);
+  }
+
+  deleteGroup(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/groups/${id}/`);
+  }
+
+  getGroupRules(id: number): Observable<GroupRule[]> {
+    return this.http.get<GroupRule[]>(`${this.API}/groups/${id}/rules/`);
+  }
+
+  setGroupRules(id: number, rules: Pick<GroupRule, 'title' | 'description'>[]): Observable<GroupRule[]> {
+    return this.http.post<GroupRule[]>(`${this.API}/groups/${id}/rules/`, { rules });
+  }
+
+  getGroupPinnedPosts(id: number): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.API}/groups/${id}/pinned/`);
+  }
+
+  pinGroupPost(groupId: number, postId: number, pin: boolean): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/${pin ? 'pin' : 'unpin'}/`, { post_id: postId });
+  }
+
+  removeGroupPost(groupId: number, postId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/remove_post/`, { post_id: postId });
+  }
+
+  setGroupRole(groupId: number, userId: number, role: GroupRole): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/set_role/`, { user_id: userId, role });
+  }
+
+  removeGroupMember(groupId: number, userId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/remove_member/`, { user_id: userId });
+  }
+
+  getGroupBans(id: number): Observable<GroupBan[]> {
+    return this.http
+      .get<PaginatedResponse<GroupBan>>(`${this.API}/groups/${id}/bans/`)
+      .pipe(map((res) => res.results));
+  }
+
+  banGroupMember(groupId: number, userId: number, reason = ''): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/ban/`, { user_id: userId, reason });
+  }
+
+  unbanGroupMember(groupId: number, userId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/unban/`, { user_id: userId });
+  }
+
+  getGroupInvites(id: number): Observable<GroupInvite[]> {
+    return this.http.get<GroupInvite[]>(`${this.API}/groups/${id}/invites/`);
+  }
+
+  createGroupInvite(id: number, data: { expires_in_hours: number; max_uses?: number | null }): Observable<GroupInvite> {
+    return this.http.post<GroupInvite>(`${this.API}/groups/${id}/invites/`, data);
+  }
+
+  revokeGroupInvite(groupId: number, inviteId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/groups/${groupId}/invites/${inviteId}/revoke/`, {});
+  }
+
+  previewGroupInvite(token: string): Observable<GroupInvitePreview> {
+    return this.http.get<GroupInvitePreview>(`${this.API}/groups/invites/${encodeURIComponent(token)}/`);
+  }
+
+  acceptGroupInvite(token: string): Observable<{ status: string; group_id: number }> {
+    return this.http.post<{ status: string; group_id: number }>(
+      `${this.API}/groups/invites/${encodeURIComponent(token)}/`, {}
+    );
+  }
+
   // ── Search ─────────────────────────────────────────────────────────────────
   search(q: string, type: SearchType = 'all'): Observable<SearchResponse> {
     return this.http.get<SearchResponse>(`${this.API}/search/`, { params: { q, type } });
@@ -297,5 +371,41 @@ export class ApiService {
 
   unfollowPage(id: number): Observable<{ following: boolean }> {
     return this.http.post<{ following: boolean }>(`${this.API}/pages/${id}/unfollow/`, {});
+  }
+
+  getPage(id: number): Observable<Page> {
+    return this.http.get<Page>(`${this.API}/pages/${id}/`);
+  }
+
+  updatePage(id: number, data: FormData | Partial<Page>): Observable<Page> {
+    return this.http.patch<Page>(`${this.API}/pages/${id}/`, data);
+  }
+
+  deletePage(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/pages/${id}/`);
+  }
+
+  getPagePosts(id: number, page = 1): Observable<PaginatedResponse<Post>> {
+    return this.http.get<PaginatedResponse<Post>>(`${this.API}/posts/`, {
+      params: { page_id: id.toString(), page: page.toString() },
+    });
+  }
+
+  getPageFollowers(id: number, page = 1): Observable<PaginatedResponse<User>> {
+    return this.http.get<PaginatedResponse<User>>(`${this.API}/pages/${id}/followers/`, {
+      params: { page: page.toString() },
+    });
+  }
+
+  getPageTeam(id: number): Observable<PageTeamMember[]> {
+    return this.http.get<PageTeamMember[]>(`${this.API}/pages/${id}/admins/`);
+  }
+
+  setPageRole(id: number, userId: number, role: PageRole): Observable<PageTeamMember> {
+    return this.http.post<PageTeamMember>(`${this.API}/pages/${id}/admins/`, { user_id: userId, role });
+  }
+
+  removePageRole(id: number, userId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/pages/${id}/admins/remove/`, { user_id: userId });
   }
 }
