@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +14,7 @@ import { timeAgo } from './time-ago';
 /** Comments under a post: likes, one level of replies, and edit/delete where the server allows it. */
 @Component({
   selector: 'app-post-comments',
-  imports: [CommonModule, FormsModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, PostTextComponent],
+  imports: [CommonModule, NgOptimizedImage, FormsModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, PostTextComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="comments-section">
@@ -51,7 +51,7 @@ import { timeAgo } from './time-ago';
 
     <ng-template #commentTpl let-c let-top="top">
       <div class="comment" [class.reply]="c.parent">
-        <img [src]="c.author.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="c.author.username" />
+        <img [ngSrc]="c.author.avatar_url || 'assets/default-avatar.png'" width="32" height="32" class="avatar sm" [alt]="c.author.username" />
         <div class="comment-body">
           <div class="comment-bubble" *ngIf="editingId !== c.id; else editTpl">
             <a [routerLink]="'/profile/' + c.author.username" class="author-name">{{ c.author.full_name }}</a>

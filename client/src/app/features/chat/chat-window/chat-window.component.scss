@@ -94,6 +94,8 @@
 
 .msg-input {
   flex: 1;
+  min-width: 0;
+  min-height: 40px;
   border: none;
   background: var(--bg);
   border-radius: 20px;
@@ -206,7 +208,7 @@
   &:hover .msg-actions, &:focus-within .msg-actions { opacity: 1; }
 }
 
-.avatar-wrap { position: relative; }
+.avatar-wrap { position: relative; flex-shrink: 0; }
 
 .online-dot {
   position: absolute;

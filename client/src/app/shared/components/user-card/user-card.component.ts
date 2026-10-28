@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,11 +8,11 @@ import { User } from '../../../models/user.model';
 
 @Component({
     selector: 'app-user-card',
-    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule],
+    imports: [CommonModule, NgOptimizedImage, RouterLink, MatButtonModule, MatIconModule],
     template: `
     <div class="user-card">
       <a [routerLink]="'/profile/' + user.username" class="user-info">
-        <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="user.username" />
+        <img [ngSrc]="user.avatar_url || 'assets/default-avatar.png'" width="40" height="40" class="avatar md" alt="" />
         <div>
           <div class="font-semibold text-sm">{{ user.full_name }}</div>
           <div class="text-secondary" style="font-size:12px">{{ user.friends_count }} mutual friends</div>

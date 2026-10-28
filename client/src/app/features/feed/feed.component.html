@@ -3,7 +3,7 @@
   <aside class="left-sidebar">
     <div class="sidebar-card" *ngIf="currentUser">
       <a [routerLink]="'/profile/' + currentUser.username" class="profile-preview">
-        <img [src]="currentUser.avatar_url || 'assets/default-avatar.png'" class="avatar md" alt="" width="40" height="40" />
+        <img [ngSrc]="currentUser.avatar_url || 'assets/default-avatar.png'" class="avatar md" alt="" width="40" height="40" />
         <div>
           <div class="font-semibold">{{ currentUser.full_name }}</div>
           <div class="text-secondary text-sm">&#64;{{ currentUser.username }}</div>

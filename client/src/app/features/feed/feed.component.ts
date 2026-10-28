@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -21,7 +21,7 @@ const SORT_KEY = 'andromeda.feedSort';
 @Component({
     selector: 'app-feed',
     imports: [
-        CommonModule, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
+        CommonModule, NgOptimizedImage, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
         MatIconModule, MatSnackBarModule, PostCardComponent, CreatePostComponent, UserCardComponent,
         EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,7 +21,7 @@ const GRID_MAX = 4;
 @Component({
     selector: 'app-post-card',
     imports: [
-      CommonModule, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatMenuModule,
+      CommonModule, NgOptimizedImage, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatMenuModule,
       LightboxComponent, PostCommentsComponent, PostTextComponent,
     ],
     templateUrl: './post-card.component.html',

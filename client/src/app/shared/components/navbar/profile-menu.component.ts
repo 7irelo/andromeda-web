@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -14,12 +15,12 @@ import { User } from '../../../models/user.model';
  */
 @Component({
   selector: 'app-profile-menu',
-  imports: [RouterLink, MatIconModule, MatMenuModule, MatDividerModule],
+  imports: [NgOptimizedImage, RouterLink, MatIconModule, MatMenuModule, MatDividerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button type="button" class="avatar-btn" [matMenuTriggerFor]="profileMenu"
             aria-label="Account menu" i18n-aria-label="@@nav.accountMenu">
-      <img [src]="user()?.avatar_url || 'assets/default-avatar.png'" alt="" class="avatar sm" width="32" height="32" />
+      <img [ngSrc]="user()?.avatar_url || 'assets/default-avatar.png'" alt="" class="avatar sm" width="32" height="32" />
     </button>
 
     <mat-menu #profileMenu="matMenu">
