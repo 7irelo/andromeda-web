@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Post, Comment } from '../../models/post.model';
+import { Post, Comment, FeedPage, FeedSort, PostRevision } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
 import { CatchUp, ChatRoom, Message } from '../../models/chat.model';
 import { Notification, NotificationPreferences } from '../../models/notification.model';
@@ -28,8 +28,45 @@ export class ApiService {
   constructor(private http: HttpClient) {}
 
   // ── Posts ────────────────────────────────────────────────────────────
-  getFeed(page = 1): Observable<PaginatedResponse<Post>> {
-    return this.http.get<PaginatedResponse<Post>>(`${this.API}/posts/?feed=true&page=${page}`);
+  /** Home feed. Pass the previous page's `next_cursor` to continue; the window stays stable under new posts. */
+  getFeed(sort: FeedSort = 'top', cursor: string | null = null): Observable<FeedPage> {
+    let params = new HttpParams().set('feed', 'true').set('sort', sort);
+    if (cursor) params = params.set('cursor', cursor);
+    return this.http.get<FeedPage>(`${this.API}/posts/`, { params });
+  }
+
+  getPost(id: number): Observable<Post> {
+    return this.http.get<Post>(`${this.API}/posts/${id}/`);
+  }
+
+  getPostRevisions(id: number): Observable<PostRevision[]> {
+    return this.http.get<PostRevision[]>(`${this.API}/posts/${id}/revisions/`);
+  }
+
+  getTagPosts(tag: string, page = 1): Observable<PaginatedResponse<Post>> {
+    return this.http.get<PaginatedResponse<Post>>(`${this.API}/posts/`, {
+      params: { tag, page: page.toString() },
+    });
+  }
+
+  getSavedPosts(page = 1): Observable<PaginatedResponse<Post>> {
+    return this.http.get<PaginatedResponse<Post>>(`${this.API}/posts/saved/`, { params: { page: page.toString() } });
+  }
+
+  savePost(id: number): Observable<{ saved: boolean }> {
+    return this.http.post<{ saved: boolean }>(`${this.API}/posts/${id}/save/`, {});
+  }
+
+  unsavePost(id: number): Observable<{ saved: boolean }> {
+    return this.http.delete<{ saved: boolean }>(`${this.API}/posts/${id}/save/`);
+  }
+
+  hidePost(id: number): Observable<{ hidden: boolean }> {
+    return this.http.post<{ hidden: boolean }>(`${this.API}/posts/${id}/hide/`, {});
+  }
+
+  unhidePost(id: number): Observable<{ hidden: boolean }> {
+    return this.http.delete<{ hidden: boolean }>(`${this.API}/posts/${id}/hide/`);
   }
 
   getPosts(params?: Record<string, string>): Observable<PaginatedResponse<Post>> {
@@ -42,7 +79,8 @@ export class ApiService {
     return this.http.post<Post>(`${this.API}/posts/`, data);
   }
 
-  updatePost(id: number, data: Partial<Post>): Observable<Post> {
+  /** `media_order` (ids to keep, in order) and `images` (FormData) edit a post's gallery. */
+  updatePost(id: number, data: FormData | (Partial<Post> & { media_order?: number[] })): Observable<Post> {
     return this.http.patch<Post>(`${this.API}/posts/${id}/`, data);
   }
 
@@ -64,6 +102,18 @@ export class ApiService {
     return this.http.post<Comment>(`${this.API}/posts/${postId}/comments/`, data);
   }
 
+  updateComment(id: number, content: string): Observable<Comment> {
+    return this.http.patch<Comment>(`${this.API}/posts/comments/${id}/`, { content });
+  }
+
+  deleteComment(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/posts/comments/${id}/`);
+  }
+
+  likeComment(id: number): Observable<{ liked: boolean; likes_count: number }> {
+    return this.http.post<{ liked: boolean; likes_count: number }>(`${this.API}/posts/comments/${id}/like/`, {});
+  }
+
   sharePost(postId: number, content: string): Observable<Post> {
     return this.http.post<Post>(`${this.API}/posts/${postId}/share/`, { content });
   }
@@ -74,7 +124,7 @@ export class ApiService {
   }
 
   searchUsers(query: string): Observable<PaginatedResponse<User>> {
-    return this.http.get<PaginatedResponse<User>>(`${this.API}/auth/users/?search=${query}`);
+    return this.http.get<PaginatedResponse<User>>(`${this.API}/auth/users/`, { params: { search: query } });
   }
 
   getSuggestions(): Observable<User[]> {

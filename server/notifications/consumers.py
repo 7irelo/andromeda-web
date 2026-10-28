@@ -37,6 +37,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         """Called by channel layer when a notification is pushed."""
         await self.send(text_data=json.dumps({k: v for k, v in event.items() if k != 'type'}))
 
+    async def feed_new_post(self, event):
+        """A friend posted. Only the id is sent; the client fetches it through the visibility-checked API."""
+        if isinstance(event.get('post_id'), int):
+            await self.send(text_data=json.dumps({'type': 'feed.new_post', 'post_id': event['post_id']}))
+
     async def mark_notification_read(self, notification_id):
         from channels.db import database_sync_to_async
 

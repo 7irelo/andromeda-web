@@ -20,6 +20,8 @@ export class WebSocketService {
 
   notification$ = new Subject<Notification>();
   unreadCount$ = new BehaviorSubject<number>(0);
+  /** Ids of friends' new posts, for the feed's "new posts" pill. */
+  feedNewPost$ = new Subject<number>();
   chatMessage$ = new Subject<unknown>();
   typing$ = new Subject<unknown>();
   chatError$ = new Subject<{ code: string; detail: string }>();
@@ -42,7 +44,13 @@ export class WebSocketService {
       ws.onopen = () => (this.notificationRetries = 0);
       ws.onmessage = (event) => {
         try {
-          this.notification$.next(JSON.parse(event.data));
+          const data = JSON.parse(event.data);
+          // Feed events carry only a post id; they are not notifications and don't touch the badge.
+          if (data?.type === 'feed.new_post') {
+            if (typeof data.post_id === 'number') this.feedNewPost$.next(data.post_id);
+            return;
+          }
+          this.notification$.next(data);
           this.unreadCount$.next(this.unreadCount$.value + 1);
         } catch {
           /* ignore malformed frames */

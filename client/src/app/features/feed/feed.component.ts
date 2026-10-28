@@ -1,66 +1,112 @@
-import { Component, OnInit, HostListener, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { WebSocketService } from '../../core/services/websocket.service';
-import { Post } from '../../models/post.model';
+import { FeedSort, Post } from '../../models/post.model';
 import { User } from '../../models/user.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
 import { CreatePostComponent } from '../../shared/components/create-post/create-post.component';
 import { UserCardComponent } from '../../shared/components/user-card/user-card.component';
 
+const SORT_KEY = 'andromeda.feedSort';
+
 @Component({
     selector: 'app-feed',
     imports: [
         CommonModule, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
-        MatIconModule, PostCardComponent, CreatePostComponent, UserCardComponent,
+        MatIconModule, MatSnackBarModule, PostCardComponent, CreatePostComponent, UserCardComponent,
     ],
     templateUrl: './feed.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./feed.component.scss']
 })
-export class FeedComponent implements OnInit {
+export class FeedComponent implements OnInit, OnDestroy {
   posts: Post[] = [];
   suggestions: User[] = [];
   currentUser: User | null = null;
   loading = false;
-  page = 1;
   hasMore = true;
+  sort: FeedSort = 'top';
+  /** Ids of friends' posts announced over the socket that aren't on screen yet. */
+  newPostIds = new Set<number>();
+
+  private cursor: string | null = null;
+  private request?: Subscription;
+  private wsSub?: Subscription;
 
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
     private wsService: WebSocketService,
+    private snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
     this.currentUser = this.authService.currentUser;
+    try {
+      const saved = localStorage.getItem(SORT_KEY);
+      if (saved === 'top' || saved === 'latest') this.sort = saved;
+    } catch { /* storage unavailable: keep the default */ }
     this.loadFeed();
     this.loadSuggestions();
 
-    // Show new notifications in real time
-    this.wsService.notification$.subscribe((notif) => {
-      console.log('New notification:', notif);
+    this.wsSub = this.wsService.feedNewPost$.subscribe((postId) => {
+      if (!this.posts.some((p) => p.id === postId)) {
+        this.newPostIds = new Set(this.newPostIds).add(postId);
+      }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.wsSub?.unsubscribe();
+    this.request?.unsubscribe();
   }
 
   loadFeed(): void {
     if (this.loading || !this.hasMore) return;
     this.loading = true;
 
-    this.apiService.getFeed(this.page).subscribe({
+    this.request = this.apiService.getFeed(this.sort, this.cursor).subscribe({
       next: (res) => {
-        this.posts = [...this.posts, ...res.results];
-        this.hasMore = !!res.next;
-        this.page++;
+        // Engagement can shift between ranked pages; never show a post twice.
+        const seen = new Set(this.posts.map((p) => p.id));
+        this.posts = [...this.posts, ...res.results.filter((p) => !seen.has(p.id))];
+        this.cursor = res.next_cursor;
+        this.hasMore = !!res.next_cursor;
         this.loading = false;
       },
       error: () => (this.loading = false),
     });
+  }
+
+  /** Start over from the top: on sort change or when the reader asks for the new posts. */
+  reload(): void {
+    this.request?.unsubscribe();
+    this.posts = [];
+    this.cursor = null;
+    this.hasMore = true;
+    this.loading = false;
+    this.newPostIds = new Set();
+    this.loadFeed();
+  }
+
+  setSort(sort: FeedSort): void {
+    if (sort === this.sort) return;
+    this.sort = sort;
+    try { localStorage.setItem(SORT_KEY, sort); } catch { /* ignore */ }
+    this.reload();
+  }
+
+  showNewPosts(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.reload();
   }
 
   loadSuggestions(): void {
@@ -76,6 +122,20 @@ export class FeedComponent implements OnInit {
 
   onPostDeleted(postId: number): void {
     this.posts = this.posts.filter((p) => p.id !== postId);
+  }
+
+  onPostHidden(postId: number): void {
+    const index = this.posts.findIndex((p) => p.id === postId);
+    if (index < 0) return;
+    const [post] = this.posts.splice(index, 1);
+    this.posts = [...this.posts];
+    this.snackBar.open('Post hidden from your feed', 'Undo', { duration: 5000 }).onAction().subscribe(() => {
+      this.apiService.unhidePost(postId).subscribe(() => {
+        const copy = [...this.posts];
+        copy.splice(Math.min(index, copy.length), 0, post);
+        this.posts = copy;
+      });
+    });
   }
 
   @HostListener('window:scroll')

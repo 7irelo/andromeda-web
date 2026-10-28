@@ -1,31 +1,69 @@
-<article class="post-card">
+<article class="post-card" [attr.aria-labelledby]="'post-author-' + post.id">
   <!-- Header -->
   <div class="moderation-notice" *ngIf="post.moderation_status === 'removed'" role="status">
     <mat-icon>visibility_off</mat-icon>
     Only you can see this post. It was removed for breaking the community guidelines.
   </div>
   <div class="post-header">
-    <a [routerLink]="'/profile/' + post.author.username" class="author-link">
-      <img [src]="post.author.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="post.author.username" />
-    </a>
-    <div class="author-info">
-      <a [routerLink]="'/profile/' + post.author.username" class="author-name">
-        {{ post.author.full_name }}
-        <mat-icon class="verified" *ngIf="post.author.is_verified" title="Verified">verified</mat-icon>
+    <ng-container *ngIf="post.page_data as page; else personHeader">
+      <img [src]="page.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="page.name" />
+      <div class="author-info">
+        <span class="author-name" [id]="'post-author-' + post.id">{{ page.name }}</span>
+        <ng-container *ngTemplateOutlet="meta"></ng-container>
+      </div>
+    </ng-container>
+    <ng-template #personHeader>
+      <a [routerLink]="'/profile/' + post.author.username" class="author-link" tabindex="-1" aria-hidden="true">
+        <img [src]="post.author.avatar_url || 'assets/default-avatar.png'" class="avatar md" alt="" />
       </a>
+      <div class="author-info">
+        <span class="author-line">
+          <a [routerLink]="'/profile/' + post.author.username" class="author-name" [id]="'post-author-' + post.id">
+            {{ post.author.full_name }}
+            <mat-icon class="verified" *ngIf="post.author.is_verified" title="Verified">verified</mat-icon>
+          </a>
+          <ng-container *ngIf="post.group_data as group">
+            <mat-icon class="in-arrow" aria-hidden="true">arrow_right</mat-icon>
+            <a [routerLink]="'/groups/' + group.id" class="author-name">{{ group.name }}</a>
+          </ng-container>
+        </span>
+        <ng-container *ngTemplateOutlet="meta"></ng-container>
+      </div>
+    </ng-template>
+    <ng-template #meta>
       <span class="post-time text-secondary text-xs">
-        {{ timeAgo(post.created_at) }}<span *ngIf="post.is_edited" class="edited-badge">· edited</span>
+        <a [routerLink]="'/posts/' + post.id" class="time-link">{{ ago(post.created_at) }}</a>
+        <mat-icon class="privacy-icon" [attr.aria-label]="'Audience: ' + post.privacy">{{ privacyIcon }}</mat-icon>
+        <button *ngIf="post.is_edited" type="button" class="edited-badge" (click)="toggleHistory()"
+                [attr.aria-expanded]="showHistory" title="See edit history">· edited</button>
       </span>
-    </div>
-    <button mat-icon-button [matMenuTriggerFor]="postMenu" class="menu-btn">
+    </ng-template>
+
+    <button mat-icon-button [matMenuTriggerFor]="postMenu" class="menu-btn" aria-label="Post options">
       <mat-icon>more_horiz</mat-icon>
     </button>
     <mat-menu #postMenu="matMenu">
+      <a mat-menu-item [routerLink]="'/posts/' + post.id">
+        <mat-icon>open_in_new</mat-icon> Open post
+      </a>
+      <button mat-menu-item *ngIf="isOwner" (click)="startEdit()">
+        <mat-icon>edit</mat-icon> Edit post
+      </button>
+      <button mat-menu-item *ngIf="post.is_edited" (click)="toggleHistory()">
+        <mat-icon>history</mat-icon> Edit history
+      </button>
+      <button mat-menu-item (click)="toggleSave()">
+        <mat-icon>{{ post.is_saved ? 'bookmark_remove' : 'bookmark_add' }}</mat-icon>
+        {{ post.is_saved ? 'Unsave post' : 'Save post' }}
+      </button>
+      <button mat-menu-item *ngIf="post.reason" (click)="showReason = true">
+        <mat-icon>help_outline</mat-icon> Why am I seeing this?
+      </button>
+      <button mat-menu-item *ngIf="allowHide && !isOwner" (click)="hide()">
+        <mat-icon>visibility_off</mat-icon> Hide from feed
+      </button>
       <button mat-menu-item *ngIf="isOwner" (click)="deletePost()">
         <mat-icon color="warn">delete</mat-icon> Delete
-      </button>
-      <button mat-menu-item>
-        <mat-icon>bookmark_add</mat-icon> Save Post
       </button>
       <button mat-menu-item>
         <mat-icon>flag</mat-icon> Report
@@ -33,29 +71,98 @@
     </mat-menu>
   </div>
 
+  <div class="reason-notice" *ngIf="showReason && post.reason" role="status">
+    <mat-icon>info</mat-icon>
+    <span>{{ post.reason }}</span>
+    <button mat-icon-button (click)="showReason = false" aria-label="Dismiss"><mat-icon>close</mat-icon></button>
+  </div>
+
   <!-- Content -->
   <div class="post-content">
-    <p *ngIf="post.content">{{ post.content }}</p>
-    <img *ngIf="post.image" [src]="post.image" alt="Post image" class="post-image" (click)="expandedImage = post.image" />
+    <ng-container *ngIf="!editing; else editForm">
+      <p *ngIf="post.content" class="post-text"><app-post-text [text]="post.content"></app-post-text></p>
+    </ng-container>
+
+    <ng-template #editForm>
+      <form class="edit-form" (ngSubmit)="saveEdit()">
+        <label class="sr-only" [for]="'edit-' + post.id">Edit post</label>
+        <textarea [id]="'edit-' + post.id" name="content" [(ngModel)]="editText" rows="4" maxlength="10000"
+                  class="edit-textarea" (keydown.escape)="editing = false"></textarea>
+        <ul class="edit-media" *ngIf="editMedia.length" aria-label="Images, in display order">
+          <li *ngFor="let m of editMedia; let i = index; let last = last">
+            <img [src]="m.file" [alt]="'Image ' + (i + 1)" />
+            <div class="thumb-actions">
+              <button type="button" (click)="moveMedia(i, -1)" [disabled]="i === 0"
+                      [attr.aria-label]="'Move image ' + (i + 1) + ' earlier'"><mat-icon>chevron_left</mat-icon></button>
+              <button type="button" (click)="removeMedia(i)" [attr.aria-label]="'Remove image ' + (i + 1)">
+                <mat-icon>close</mat-icon></button>
+              <button type="button" (click)="moveMedia(i, 1)" [disabled]="last"
+                      [attr.aria-label]="'Move image ' + (i + 1) + ' later'"><mat-icon>chevron_right</mat-icon></button>
+            </div>
+          </li>
+        </ul>
+        <p class="edit-error" *ngIf="editError" role="alert">{{ editError }}</p>
+        <div class="edit-actions">
+          <button mat-button type="button" (click)="editing = false">Cancel</button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">Save</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <section class="history" *ngIf="showHistory" aria-label="Edit history">
+      <h4>Edit history</h4>
+      <p *ngIf="revisions === null" class="text-secondary text-sm">Loading…</p>
+      <p *ngIf="revisions?.length === 0" class="text-secondary text-sm">No earlier versions.</p>
+      <ol *ngIf="revisions?.length">
+        <li *ngFor="let r of revisions">
+          <time class="text-xs text-secondary" [attr.datetime]="r.created_at">
+            Before {{ r.created_at | date: 'medium' }}
+          </time>
+          <p>{{ r.content || '(no text)' }}</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Image grid -->
+    <div class="media-grid" *ngIf="!editing && images.length" [attr.data-count]="images.length > gridMax ? gridMax : images.length">
+      <button type="button" class="media-tile" *ngFor="let src of images | slice: 0 : gridMax; let i = index"
+              (click)="openLightbox(i)" [attr.aria-label]="'Open image ' + (i + 1) + ' of ' + images.length">
+        <img [src]="src" alt="" loading="lazy" />
+        <span class="more-overlay" *ngIf="i === gridMax - 1 && images.length > gridMax" aria-hidden="true">
+          +{{ images.length - gridMax }}
+        </span>
+      </button>
+    </div>
+
+    <video *ngIf="post.video" [src]="post.video" controls preload="metadata" class="post-video"></video>
+
+    <a *ngIf="post.link_url && post.link_title" class="link-card" [href]="post.link_url" target="_blank"
+       rel="noopener noreferrer nofollow ugc">
+      <span class="link-title">{{ post.link_title }}</span>
+      <span class="link-desc text-secondary text-sm" *ngIf="post.link_description">{{ post.link_description }}</span>
+    </a>
 
     <!-- Shared post -->
-    <div class="shared-post" *ngIf="post.shared_post_data">
-      <div class="post-header small">
-        <img [src]="post.shared_post_data.author.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="post.shared_post_data.author.username" />
-        <span class="author-name">{{ post.shared_post_data.author.full_name }}</span>
-      </div>
-      <p>{{ post.shared_post_data.content }}</p>
+    <div class="shared-post" *ngIf="post.shared_post_data as shared">
+      <p *ngIf="shared.unavailable" class="text-secondary text-sm">This content isn't available right now.</p>
+      <ng-container *ngIf="!shared.unavailable">
+        <div class="post-header small">
+          <img [src]="shared.author.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="shared.author.username" />
+          <a [routerLink]="'/posts/' + shared.id" class="author-name">{{ shared.author.full_name }}</a>
+        </div>
+        <p *ngIf="shared.content"><app-post-text [text]="shared.content"></app-post-text></p>
+      </ng-container>
     </div>
   </div>
 
   <!-- Counts -->
-  <div class="post-counts" *ngIf="post.likes_count > 0 || post.comments_count > 0">
+  <div class="post-counts" *ngIf="post.likes_count > 0 || post.comments_count > 0 || post.shares_count > 0">
     <span *ngIf="post.likes_count > 0" class="text-secondary text-sm">
       👍 {{ post.likes_count }}
     </span>
-    <span *ngIf="post.comments_count > 0" class="text-secondary text-sm" (click)="toggleComments()" style="cursor:pointer">
+    <button type="button" *ngIf="post.comments_count > 0" class="count-btn text-secondary text-sm" (click)="toggleComments()">
       {{ post.comments_count }} {{ post.comments_count === 1 ? 'Comment' : 'Comments' }}
-    </span>
+    </button>
     <span *ngIf="post.shares_count > 0" class="text-secondary text-sm">
       {{ post.shares_count }} {{ post.shares_count === 1 ? 'Share' : 'Shares' }}
     </span>
@@ -70,6 +177,7 @@
       <button
         class="action-btn"
         [class.reacted]="!!post.my_reaction"
+        [attr.aria-pressed]="!!post.my_reaction"
         (click)="react(post.my_reaction || 'like')"
         (mouseenter)="showReactions = true"
       >
@@ -80,13 +188,13 @@
         <span>{{ reactionByType[post.my_reaction || '']?.label || 'Like' }}</span>
       </button>
       <div class="reactions-popup" *ngIf="showReactions">
-        <button *ngFor="let r of reactions" (click)="react(r.type)" class="reaction-btn" [title]="r.label">
+        <button *ngFor="let r of reactions" (click)="react(r.type)" class="reaction-btn" [title]="r.label" [attr.aria-label]="r.label">
           {{ r.emoji }}
         </button>
       </div>
     </div>
 
-    <button class="action-btn" (click)="toggleComments()">
+    <button class="action-btn" (click)="toggleComments()" [attr.aria-expanded]="showComments">
       <mat-icon>chat_bubble_outline</mat-icon>
       <span>Comment</span>
     </button>
@@ -98,32 +206,11 @@
   </div>
 
   <!-- Comments Section -->
-  <div class="comments-section" *ngIf="showComments">
+  <ng-container *ngIf="showComments">
     <div class="divider"></div>
-    <div *ngFor="let comment of comments" class="comment">
-      <img [src]="comment.author.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="comment.author.username" />
-      <div class="comment-bubble">
-        <a [routerLink]="'/profile/' + comment.author.username" class="author-name">{{ comment.author.full_name }}</a>
-        <p>{{ comment.content }}</p>
-      </div>
-    </div>
-    <div class="comment-input">
-      <img [src]="currentUserAvatarUrl" class="avatar sm" alt="You" />
-      <input
-        type="text"
-        [(ngModel)]="commentText"
-        placeholder="Write a comment..."
-        (keyup.enter)="submitComment()"
-        class="comment-field"
-      />
-      <button mat-icon-button (click)="submitComment()" [disabled]="!commentText.trim()">
-        <mat-icon>send</mat-icon>
-      </button>
-    </div>
-  </div>
+    <app-post-comments [post]="post" (countChange)="post.comments_count = $event"></app-post-comments>
+  </ng-container>
 </article>
 
-<!-- Image Lightbox -->
-<div class="lightbox" *ngIf="expandedImage" (click)="expandedImage = null">
-  <img [src]="expandedImage" alt="Enlarged post image" />
-</div>
+<app-lightbox *ngIf="lightboxIndex !== null" [images]="images" [index]="lightboxIndex"
+              (closed)="lightboxIndex = null"></app-lightbox>

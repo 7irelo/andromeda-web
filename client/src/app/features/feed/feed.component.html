@@ -58,6 +58,12 @@
         </span>
         <span>Notifications</span>
       </a>
+      <a routerLink="/saved" routerLinkActive="shortcut-active" class="shortcut-link">
+        <span class="shortcut-icon" style="background:linear-gradient(135deg,#9333ea,#c026d3)">
+          <mat-icon>bookmark</mat-icon>
+        </span>
+        <span>Saved</span>
+      </a>
     </div>
   </aside>
 
@@ -65,6 +71,24 @@
   <main class="feed-main">
     <!-- Create Post -->
     <app-create-post (postCreated)="onPostCreated($event)" [currentUser]="currentUser"></app-create-post>
+
+    <!-- Ordering -->
+    <div class="feed-toolbar" role="group" aria-label="Sort feed">
+      <button type="button" class="sort-btn" [class.active]="sort === 'top'" [attr.aria-pressed]="sort === 'top'"
+              (click)="setSort('top')">
+        <mat-icon>auto_awesome</mat-icon> Top
+      </button>
+      <button type="button" class="sort-btn" [class.active]="sort === 'latest'" [attr.aria-pressed]="sort === 'latest'"
+              (click)="setSort('latest')">
+        <mat-icon>schedule</mat-icon> Latest
+      </button>
+    </div>
+
+    <!-- New posts from friends, announced over the notifications socket -->
+    <button type="button" class="new-posts-pill" *ngIf="newPostIds.size > 0" (click)="showNewPosts()" aria-live="polite">
+      <mat-icon>arrow_upward</mat-icon>
+      {{ newPostIds.size }} new {{ newPostIds.size === 1 ? 'post' : 'posts' }}
+    </button>
 
     <!-- Posts -->
     <div *ngIf="loading && posts.length === 0" class="loading-center">
@@ -74,7 +98,9 @@
     <app-post-card
       *ngFor="let post of posts; trackBy: trackById"
       [post]="post"
+      [allowHide]="true"
       (postDeleted)="onPostDeleted($event)"
+      (postHidden)="onPostHidden($event)"
     ></app-post-card>
 
     <div *ngIf="loading && posts.length > 0" class="loading-center">

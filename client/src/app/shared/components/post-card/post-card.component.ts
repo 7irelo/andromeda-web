@@ -7,42 +7,72 @@ import { MatMenuModule } from '@angular/material/menu';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Comment, Post, Reaction, REACTIONS } from '../../../models/post.model';
+import { Post, PostMedia, PostRevision, Reaction, REACTIONS } from '../../../models/post.model';
+import { LightboxComponent } from './lightbox.component';
+import { PostCommentsComponent } from './post-comments.component';
+import { PostTextComponent } from './post-text.component';
+import { timeAgo } from './time-ago';
+
+/** Images shown in the card grid; the rest open in the lightbox. */
+const GRID_MAX = 4;
 
 @Component({
     selector: 'app-post-card',
-    imports: [CommonModule, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatMenuModule],
+    imports: [
+      CommonModule, RouterLink, FormsModule, MatIconModule, MatButtonModule, MatMenuModule,
+      LightboxComponent, PostCommentsComponent, PostTextComponent,
+    ],
     templateUrl: './post-card.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./post-card.component.scss']
 })
 export class PostCardComponent implements OnInit {
   @Input() post!: Post;
+  /** Open the comments straight away (post detail page). */
+  @Input() expandComments = false;
+  /** Offer "Hide from feed" (home feed only). */
+  @Input() allowHide = false;
   @Output() postDeleted = new EventEmitter<number>();
+  @Output() postHidden = new EventEmitter<number>();
+  @Output() savedChange = new EventEmitter<{ id: number; saved: boolean }>();
 
   reactions = REACTIONS;
-  comments: Comment[] = [];
   showComments = false;
-  commentText = '';
   showReactions = false;
-  expandedImage: string | null = null;
+  showReason = false;
+  lightboxIndex: number | null = null;
   currentUserId: number | null = null;
+  gridMax = GRID_MAX;
+
+  editing = false;
+  editText = '';
+  editMedia: PostMedia[] = [];
+  saving = false;
+  editError = '';
+
+  revisions: PostRevision[] | null = null;
+  showHistory = false;
+
+  reactionByType: Partial<Record<string, Reaction>> = {};
+  ago = timeAgo;
 
   constructor(private apiService: ApiService, private authService: AuthService) { }
-
-    reactionByType: Partial<Record<string, Reaction>> = {};
 
   ngOnInit() {
     this.reactionByType = Object.fromEntries(this.reactions.map(r => [r.type, r]));
     this.currentUserId = this.authService.currentUser?.id ?? null;
+    this.showComments = this.expandComments;
   }
 
   get isOwner(): boolean {
     return this.post.author.id === this.currentUserId;
   }
 
-  get currentUserAvatarUrl(): string {
-    return this.authService.currentUser?.avatar_url ?? 'assets/default-avatar.png';
+  /** Gallery images in display order, falling back to the legacy single image. */
+  get images(): string[] {
+    const media = (this.post.media || []).filter((m) => m.media_type === 'image').map((m) => m.file);
+    if (media.length) return media;
+    return this.post.image ? [this.post.image] : [];
   }
 
   react(type: string): void {
@@ -61,44 +91,90 @@ export class PostCardComponent implements OnInit {
 
   toggleComments(): void {
     this.showComments = !this.showComments;
-    if (this.showComments && this.comments.length === 0) {
-      this.loadComments();
-    }
-  }
-
-  loadComments(): void {
-    this.apiService.getComments(this.post.id).subscribe((c) => (this.comments = c));
-  }
-
-  submitComment(): void {
-    if (!this.commentText.trim()) return;
-    this.apiService.createComment(this.post.id, { content: this.commentText }).subscribe((c) => {
-      this.comments.push(c);
-      this.post.comments_count++;
-      this.commentText = '';
-    });
   }
 
   share(): void {
-    this.apiService.sharePost(this.post.id, '').subscribe((p) => {
-      console.log('Shared', p);
+    this.apiService.sharePost(this.post.id, '').subscribe(() => {
       this.post.shares_count++;
     });
   }
 
+  toggleSave(): void {
+    const call = this.post.is_saved ? this.apiService.unsavePost(this.post.id) : this.apiService.savePost(this.post.id);
+    call.subscribe((res) => {
+      this.post.is_saved = res.saved;
+      this.savedChange.emit({ id: this.post.id, saved: res.saved });
+    });
+  }
+
+  hide(): void {
+    this.apiService.hidePost(this.post.id).subscribe(() => this.postHidden.emit(this.post.id));
+  }
+
   deletePost(): void {
+    if (!confirm('Delete this post?')) return;
     this.apiService.deletePost(this.post.id).subscribe(() => {
       this.postDeleted.emit(this.post.id);
     });
   }
 
-  timeAgo(dateStr: string): string {
-    const now = Date.now();
-    const diff = (now - new Date(dateStr).getTime()) / 1000;
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
-    return new Date(dateStr).toLocaleDateString();
+  // ── Editing ────────────────────────────────────────────────────────────
+
+  startEdit(): void {
+    this.editing = true;
+    this.editText = this.post.content;
+    this.editMedia = [...(this.post.media || [])];
+    this.editError = '';
+  }
+
+  moveMedia(index: number, delta: number): void {
+    const target = index + delta;
+    if (target < 0 || target >= this.editMedia.length) return;
+    const copy = [...this.editMedia];
+    [copy[index], copy[target]] = [copy[target], copy[index]];
+    this.editMedia = copy;
+  }
+
+  removeMedia(index: number): void {
+    this.editMedia = this.editMedia.filter((_, i) => i !== index);
+  }
+
+  saveEdit(): void {
+    const original = (this.post.media || []).map((m) => m.id).join(',');
+    const order = this.editMedia.map((m) => m.id);
+    const data: Partial<Post> & { media_order?: number[] } = { content: this.editText };
+    if (order.join(',') !== original) data.media_order = order;
+    if (!this.editText.trim() && !order.length && !this.post.image && !this.post.video && !this.post.shared_post) {
+      this.editError = 'A post needs some text or an image.';
+      return;
+    }
+    this.saving = true;
+    this.apiService.updatePost(this.post.id, data).subscribe({
+      next: (updated) => {
+        Object.assign(this.post, updated);
+        this.editing = false;
+        this.saving = false;
+        this.revisions = null;
+      },
+      error: () => {
+        this.saving = false;
+        this.editError = 'Your changes could not be saved.';
+      },
+    });
+  }
+
+  toggleHistory(): void {
+    this.showHistory = !this.showHistory;
+    if (this.showHistory && this.revisions === null) {
+      this.apiService.getPostRevisions(this.post.id).subscribe((r) => (this.revisions = r));
+    }
+  }
+
+  get privacyIcon(): string {
+    return { public: 'public', friends: 'group', private: 'lock' }[this.post.privacy] ?? 'public';
+  }
+
+  openLightbox(index: number): void {
+    this.lightboxIndex = index;
   }
 }
