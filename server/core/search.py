@@ -39,7 +39,7 @@ def _text_filter(qs, fields, query):
 
 def visible_listings(user):
     from marketplace.models import Listing
-    return Listing.objects.filter(status=Listing.STATUS_ACTIVE).exclude(moderation_status='removed').exclude(
+    return Listing.objects.filter(status__in=Listing.PUBLIC_STATUSES).exclude(moderation_status='removed').exclude(
         seller_id__in=visibility.blocked_ids(user)).prefetch_related('images')
 
 

@@ -102,6 +102,26 @@ class TestOwnership:
         assert c.patch(url, {'title': 'Owned'}, format='json').status_code == 403
         assert c.delete(url).status_code == 403
 
+    def test_stranger_cannot_change_listing_status_or_add_images(self, alice, mallory):
+        listing = Listing.objects.create(seller=alice, title='Couch', price=100)
+        c = client_for(mallory)
+        assert c.patch(reverse('listing-detail', kwargs={'pk': listing.pk}), {'status': 'reserved'},
+                       format='json').status_code == 403
+        r = c.post(reverse('listing-upload-images', kwargs={'pk': listing.pk}),
+                   {'images': SimpleUploadedFile('a.jpg', _jpeg_with_exif(), content_type='image/jpeg')},
+                   format='multipart')
+        assert r.status_code == 403
+        listing.refresh_from_db()
+        assert listing.status == 'active' and not listing.images.exists()
+
+    def test_sold_listing_and_precise_location_stay_private(self, alice, mallory):
+        sold = Listing.objects.create(seller=alice, title='Bike', price=100, status='sold')
+        mine = Listing.objects.create(seller=alice, title='Desk', price=10, latitude=-33.92, longitude=18.42)
+        c = client_for(mallory)
+        assert c.get(reverse('listing-detail', kwargs={'pk': sold.pk})).status_code == 404
+        data = c.get(reverse('listing-detail', kwargs={'pk': mine.pk})).data
+        assert 'latitude' not in data and data['approx_point'] == {'latitude': -33.9, 'longitude': 18.4}
+
     def test_cannot_review_own_listing(self, alice):
         listing = Listing.objects.create(seller=alice, title='Couch', price=100)
         r = client_for(alice).post(reverse('listing-reviews', kwargs={'pk': listing.pk}), {'rating': 5})
