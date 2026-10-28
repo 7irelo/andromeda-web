@@ -77,6 +77,10 @@
         <mat-icon>settings</mat-icon>
         <span>Settings</span>
       </a>
+      <a mat-menu-item routerLink="/moderation" *ngIf="currentUser?.is_staff">
+        <mat-icon>gavel</mat-icon>
+        <span>Moderation</span>
+      </a>
       <a mat-menu-item routerLink="/marketplace">
         <mat-icon>storefront</mat-icon>
         <span>My Listings</span>

@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { openReportDialog } from '../../shared/components/report-dialog/report-dialog.component';
 import { Subscription } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -61,6 +62,12 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
   deleteInput = '';
   deletePassword = '';
   deleting = false;
+
+  reportProfile(): void {
+    if (this.profile) {
+      openReportDialog(this.dialog, { type: 'user', id: this.profile.id, label: '@' + this.profile.username });
+    }
+  }
 
   constructor(
     private apiService: ApiService,

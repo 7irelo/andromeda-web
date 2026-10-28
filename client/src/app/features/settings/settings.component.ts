@@ -15,6 +15,7 @@ import { ApiService } from '../../core/services/api.service';
 import { User } from '../../models/user.model';
 import { SecuritySettingsComponent } from './security-settings.component';
 import { NotificationSettingsComponent } from './notification-settings.component';
+import { DataSettingsComponent } from './data-settings.component';
 
 @Component({
     selector: 'app-settings',
@@ -22,7 +23,7 @@ import { NotificationSettingsComponent } from './notification-settings.component
         CommonModule, FormsModule, ReactiveFormsModule,
         MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
         MatSelectModule, MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
-        SecuritySettingsComponent, NotificationSettingsComponent,
+        SecuritySettingsComponent, NotificationSettingsComponent, DataSettingsComponent,
     ],
     template: `
     <div class="settings-page">
@@ -177,13 +178,16 @@ import { NotificationSettingsComponent } from './notification-settings.component
 
       <app-security-settings></app-security-settings>
 
+      <app-data-settings></app-data-settings>
+
       <!-- Danger Zone -->
       <section class="settings-section card danger-zone">
         <h2><mat-icon>warning</mat-icon> Danger Zone</h2>
         <div class="setting-item">
           <div>
             <div class="font-semibold">Delete Account</div>
-            <div class="text-secondary text-sm">Permanently delete your account and all data</div>
+            <div class="text-secondary text-sm">You're signed out now and everything is permanently deleted after
+              14 days. Sign in before then to cancel.</div>
           </div>
           <button mat-stroked-button color="warn" *ngIf="!showDelete" (click)="showDelete = true">Delete Account</button>
         </div>

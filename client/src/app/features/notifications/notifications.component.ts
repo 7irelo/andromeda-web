@@ -66,6 +66,7 @@ export class NotificationsComponent implements OnInit {
         case 'price_drop': return id('listing_id') !== null ? `/marketplace/${id('listing_id')}` : '/marketplace';
         case 'listing_digest': return '/marketplace';
         case 'new_video': return id('video_id') !== null ? `/watch/${id('video_id')}` : '/watch';
+        case 'moderation': return id('case_id') !== null ? '/decisions' : null;
         default: return id('listing_id') !== null ? `/marketplace/${id('listing_id')}` : null;
       }
     }

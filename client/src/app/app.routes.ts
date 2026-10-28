@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { staffGuard } from './core/guards/staff.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 
@@ -25,6 +26,27 @@ export const routes: Routes = [
     canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/password-reset/forgot-password.component').then((m) => m.ForgotPasswordComponent),
+  },
+  {
+    path: 'moderation',
+    canActivate: [authGuard, staffGuard],
+    loadComponent: () =>
+      import('./features/moderation/moderation-console.component').then((m) => m.ModerationConsoleComponent),
+  },
+  {
+    path: 'decisions',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/moderation/my-decisions.component').then((m) => m.MyDecisionsComponent),
+  },
+  {
+    path: 'privacy',
+    data: { page: 'privacy' },
+    loadComponent: () => import('./features/legal/legal.component').then((m) => m.LegalComponent),
+  },
+  {
+    path: 'terms',
+    data: { page: 'terms' },
+    loadComponent: () => import('./features/legal/legal.component').then((m) => m.LegalComponent),
   },
   {
     // Reachable signed in or out: the link arrives by email.

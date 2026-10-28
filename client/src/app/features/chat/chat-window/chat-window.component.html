@@ -121,12 +121,15 @@
           </div>
         </mat-menu>
         <button mat-icon-button (click)="startReply(msg)" aria-label="Reply"><mat-icon>reply</mat-icon></button>
-        <button mat-icon-button *ngIf="isMyMessage(msg)" [matMenuTriggerFor]="moreMenu" aria-label="More">
+        <button mat-icon-button [matMenuTriggerFor]="moreMenu" aria-label="More">
           <mat-icon>more_horiz</mat-icon>
         </button>
         <mat-menu #moreMenu="matMenu">
-          <button mat-menu-item *ngIf="canEdit(msg)" (click)="startEdit(msg)"><mat-icon>edit</mat-icon> Edit</button>
-          <button mat-menu-item (click)="deleteMessage(msg)"><mat-icon>delete</mat-icon> Delete</button>
+          <ng-container *ngIf="isMyMessage(msg)">
+            <button mat-menu-item *ngIf="canEdit(msg)" (click)="startEdit(msg)"><mat-icon>edit</mat-icon> Edit</button>
+            <button mat-menu-item (click)="deleteMessage(msg)"><mat-icon>delete</mat-icon> Delete</button>
+          </ng-container>
+          <button mat-menu-item *ngIf="!isMyMessage(msg)" (click)="reportMessage(msg)"><mat-icon>flag</mat-icon> Report</button>
         </mat-menu>
       </div>
     </div>

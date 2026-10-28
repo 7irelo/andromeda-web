@@ -65,7 +65,7 @@
       <button mat-menu-item *ngIf="isOwner" (click)="deletePost()">
         <mat-icon color="warn">delete</mat-icon> Delete
       </button>
-      <button mat-menu-item>
+      <button mat-menu-item *ngIf="!isOwner" (click)="report()">
         <mat-icon>flag</mat-icon> Report
       </button>
     </mat-menu>

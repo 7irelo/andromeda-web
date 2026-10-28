@@ -17,6 +17,9 @@ import {
   ChannelSubscriptionEntry, Video, VideoChannel, VideoComment, VideoDetail, VideoTranscript, WatchHistoryEntry,
 } from '../../models/video.model';
 import { Page, PageRole, PageTeamMember } from '../../models/page.model';
+import {
+  DataExportEntry, ModerationActionKind, ModerationCase, MyCase, ReportableType, ReportReason,
+} from '../../models/moderation.model';
 
 export interface PaginatedResponse<T> {
   count: number;
@@ -656,5 +659,47 @@ export class ApiService {
 
   removePageRole(id: number, userId: number): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(`${this.API}/pages/${id}/admins/remove/`, { user_id: userId });
+  }
+
+  // ── Trust & safety ───────────────────────────────────────────────────────
+  getReportReasons(): Observable<{ reasons: ReportReason[] }> {
+    return this.http.get<{ reasons: ReportReason[] }>(`${this.API}/moderation/reports/`);
+  }
+
+  report(content_type: ReportableType, object_id: number, reason: string, details = ''): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${this.API}/moderation/reports/`, { content_type, object_id, reason, details });
+  }
+
+  getMyModerationCases(): Observable<MyCase[]> {
+    return this.http.get<MyCase[]>(`${this.API}/moderation/mine/`);
+  }
+
+  appealModeration(caseId: number, message: string): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${this.API}/moderation/mine/${caseId}/appeal/`, { message });
+  }
+
+  getModerationQueue(params: Record<string, string> = {}): Observable<PaginatedResponse<ModerationCase>> {
+    return this.http.get<PaginatedResponse<ModerationCase>>(`${this.API}/moderation/cases/`, { params });
+  }
+
+  resolveModerationCase(id: number, action: ModerationActionKind, note = '', days?: number): Observable<ModerationCase> {
+    return this.http.post<ModerationCase>(`${this.API}/moderation/cases/${id}/resolve/`,
+      days ? { action, note, days } : { action, note });
+  }
+
+  decideAppeal(id: number, restore: boolean, note = ''): Observable<ModerationCase> {
+    return this.http.post<ModerationCase>(`${this.API}/moderation/cases/${id}/appeal/`, { restore, note });
+  }
+
+  getDataExports(): Observable<DataExportEntry[]> {
+    return this.http.get<DataExportEntry[]>(`${this.API}/auth/me/exports/`);
+  }
+
+  requestDataExport(): Observable<DataExportEntry> {
+    return this.http.post<DataExportEntry>(`${this.API}/auth/me/exports/`, {});
+  }
+
+  downloadDataExport(id: number): Observable<Blob> {
+    return this.http.get(`${this.API}/auth/me/exports/${id}/download/`, { responseType: 'blob' });
   }
 }

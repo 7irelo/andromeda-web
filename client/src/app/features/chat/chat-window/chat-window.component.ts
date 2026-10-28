@@ -5,6 +5,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { openReportDialog } from '../../../shared/components/report-dialog/report-dialog.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
@@ -76,7 +78,12 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
     private authService: AuthService,
     private wsService: WebSocketService,
     private router: Router,
+    private dialog: MatDialog,
   ) {}
+
+  reportMessage(msg: Message): void {
+    openReportDialog(this.dialog, { type: 'message', id: msg.id, label: 'message' });
+  }
 
   private get id(): number {
     return parseInt(this.roomId, 10);

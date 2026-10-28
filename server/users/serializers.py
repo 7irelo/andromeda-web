@@ -19,7 +19,7 @@ PRIVATE_FIELDS = [
     'email', 'birth_date', 'avatar', 'cover_photo',
     'privacy_profile', 'privacy_messages', 'privacy_friend_requests',
     'privacy_friends_list', 'default_post_privacy', 'show_online_status', 'searchable',
-    'email_verified', 'ai_opt_out',
+    'email_verified', 'ai_opt_out', 'is_staff',
 ]
 
 
@@ -99,7 +99,7 @@ class MeSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         fields = PROFILE_FIELDS + PRIVATE_FIELDS
         # Username and email changes go through dedicated, re-authenticated flows.
-        read_only_fields = ['id', 'username', 'email', 'full_name', 'is_verified', 'email_verified',
+        read_only_fields = ['id', 'username', 'email', 'full_name', 'is_verified', 'email_verified', 'is_staff',
                             'friends_count', 'posts_count', 'created_at']
         extra_kwargs = {'avatar': {'write_only': True}, 'cover_photo': {'write_only': True}}
 

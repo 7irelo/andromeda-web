@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { User } from '../../../models/user.model';
@@ -27,7 +28,7 @@ function passwordMatchValidator(control: AbstractControl) {
     imports: [
         CommonModule, ReactiveFormsModule, RouterLink,
         MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
-        MatSnackBarModule, MatDialogModule,
+        MatSnackBarModule, MatDialogModule, MatCheckboxModule,
     ],
     templateUrl: './register.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -47,6 +48,7 @@ export class RegisterComponent {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(10)]],
     password2: ['', Validators.required],
+    accept_terms: [false, Validators.requiredTrue],
   }, { validators: passwordMatchValidator });
 
   // Step 2: Profile

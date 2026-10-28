@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
+import { openReportDialog } from '../report-dialog/report-dialog.component';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Post, PostMedia, PostRevision, Reaction, REACTIONS } from '../../../models/post.model';
@@ -56,7 +58,13 @@ export class PostCardComponent implements OnInit {
   reactionByType: Partial<Record<string, Reaction>> = {};
   ago = timeAgo;
 
+  private readonly dialog = inject(MatDialog);
+
   constructor(private apiService: ApiService, private authService: AuthService) { }
+
+  report(): void {
+    openReportDialog(this.dialog, { type: 'post', id: this.post.id, label: 'post' });
+  }
 
   ngOnInit() {
     this.reactionByType = Object.fromEntries(this.reactions.map(r => [r.type, r]));

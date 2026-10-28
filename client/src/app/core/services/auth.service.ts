@@ -39,7 +39,7 @@ export class AuthService {
   register(data: {
     username: string; email: string;
     first_name: string; last_name: string;
-    password: string; password2: string;
+    password: string; password2: string; accept_terms: boolean;
   }): Observable<SessionResponse> {
     return this.http
       .post<SessionResponse>(`${this.API}/auth/register/`, data, { withCredentials: true })

@@ -31,6 +31,7 @@ export interface User {
   searchable?: boolean;
   email_verified?: boolean;
   ai_opt_out?: boolean;
+  is_staff?: boolean;
 }
 
 export interface FriendRequest {
