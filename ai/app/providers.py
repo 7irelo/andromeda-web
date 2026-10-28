@@ -2,7 +2,37 @@
 import anthropic
 import openai
 
-from .gateway import ProviderError, Refused, Route, T, Usage
+from .gateway import ProviderError, Refused, Route, T, Usage, UserContent
+
+_TRANSIENT_ANTHROPIC = (anthropic.RateLimitError, anthropic.InternalServerError, anthropic.APIConnectionError,
+                        anthropic.APITimeoutError)
+_TRANSIENT_OPENAI = (openai.RateLimitError, openai.InternalServerError, openai.APIConnectionError,
+                     openai.APITimeoutError)
+
+
+def _anthropic_content(user: UserContent):
+    if isinstance(user, str):
+        return user
+    blocks = []
+    for part in user:
+        if part['type'] == 'image':
+            blocks.append({'type': 'image', 'source': {'type': 'base64', 'media_type': part['media_type'],
+                                                       'data': part['data']}})
+        else:
+            blocks.append({'type': 'text', 'text': part['text']})
+    return blocks
+
+
+def _openai_input(user: UserContent):
+    if isinstance(user, str):
+        return user
+    content = []
+    for part in user:
+        if part['type'] == 'image':
+            content.append({'type': 'input_image', 'image_url': f"data:{part['media_type']};base64,{part['data']}"})
+        else:
+            content.append({'type': 'input_text', 'text': part['text']})
+    return [{'role': 'user', 'content': content}]
 
 
 class AnthropicProvider:
@@ -11,7 +41,7 @@ class AnthropicProvider:
     def __init__(self, api_key: str, timeout: float):
         self.client = anthropic.AsyncAnthropic(api_key=api_key, timeout=timeout, max_retries=1)
 
-    async def structured(self, route: Route, system: str, user: str, schema: type[T]) -> tuple[T, Usage]:
+    async def structured(self, route: Route, system: str, user: UserContent, schema: type[T]) -> tuple[T, Usage]:
         kwargs = {}
         if route.effort:
             kwargs['output_config'] = {'effort': route.effort}
@@ -21,12 +51,11 @@ class AnthropicProvider:
                 max_tokens=route.max_tokens,
                 # The system prompt is the stable prefix, so it's cached across calls.
                 system=[{'type': 'text', 'text': system, 'cache_control': {'type': 'ephemeral'}}],
-                messages=[{'role': 'user', 'content': user}],
+                messages=[{'role': 'user', 'content': _anthropic_content(user)}],
                 output_format=schema,
                 **kwargs,
             )
-        except (anthropic.RateLimitError, anthropic.InternalServerError, anthropic.APIConnectionError,
-                anthropic.APITimeoutError) as exc:
+        except _TRANSIENT_ANTHROPIC as exc:
             raise ProviderError(type(exc).__name__) from exc
         except anthropic.APIStatusError as exc:
             if exc.status_code >= 500 or exc.status_code == 529:
@@ -48,18 +77,17 @@ class OpenAIProvider:
     def __init__(self, api_key: str, timeout: float):
         self.client = openai.AsyncOpenAI(api_key=api_key, timeout=timeout, max_retries=1)
 
-    async def structured(self, route: Route, system: str, user: str, schema: type[T]) -> tuple[T, Usage]:
+    async def structured(self, route: Route, system: str, user: UserContent, schema: type[T]) -> tuple[T, Usage]:
         try:
             resp = await self.client.responses.parse(
                 model=route.model,
                 instructions=system,
-                input=user,
+                input=_openai_input(user),
                 text_format=schema,
                 max_output_tokens=route.max_tokens,
                 store=False,  # don't retain user content on the provider side
             )
-        except (openai.RateLimitError, openai.InternalServerError, openai.APIConnectionError,
-                openai.APITimeoutError) as exc:
+        except _TRANSIENT_OPENAI as exc:
             raise ProviderError(type(exc).__name__) from exc
         parsed = resp.output_parsed
         if parsed is None:
@@ -68,12 +96,19 @@ class OpenAIProvider:
         cached = getattr(getattr(u, 'input_tokens_details', None), 'cached_tokens', 0) or 0
         return parsed, Usage(u.input_tokens, u.output_tokens, cached)
 
+    async def embed(self, route: Route, texts: list[str]) -> tuple[list[list[float]], Usage]:
+        try:
+            res = await self.client.embeddings.create(model=route.model, input=texts)
+        except _TRANSIENT_OPENAI as exc:
+            raise ProviderError(type(exc).__name__) from exc
+        vectors = [d.embedding for d in sorted(res.data, key=lambda d: d.index)]
+        return vectors, Usage(res.usage.prompt_tokens, 0, 0)
+
     async def moderate(self, text: str) -> dict:
         """OpenAI's free moderation endpoint (stage 0)."""
         try:
             res = await self.client.moderations.create(model='omni-moderation-latest', input=text)
-        except (openai.RateLimitError, openai.InternalServerError, openai.APIConnectionError,
-                openai.APITimeoutError) as exc:
+        except _TRANSIENT_OPENAI as exc:
             raise ProviderError(type(exc).__name__) from exc
         r = res.results[0]
         scores = r.category_scores.model_dump()

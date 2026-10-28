@@ -3,7 +3,8 @@ services:
   # Databases
   # ============================================================
   postgres:
-    image: postgres:15-alpine
+    # pgvector build of Postgres 15: same major version, so existing volumes keep working.
+    image: pgvector/pgvector:0.8.7-pg15-trixie@sha256:8d4485d6fd3156d090ac5f37eb2e22eb59d93c91169414d5809414102ee924b9
     container_name: andromeda_postgres
     restart: unless-stopped
     environment:
@@ -88,7 +89,9 @@ services:
       start_period: 30s
 
   minio:
-    image: minio/minio
+    # minio/minio is no longer published on Docker Hub; pgsty builds the same
+    # upstream releases. Pinned by tag and digest.
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z@sha256:b6bfe7239bfc83fb90d31612d9704d86039dd714f7904b3f1ad68f211e602372
     container_name: andromeda_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -109,7 +112,7 @@ services:
       retries: 5
 
   createbuckets:
-    image: minio/mc
+    image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z@sha256:cfc83108c3abb371f8fb84d99c1fdc88f8c237e022409b0081fb7c0a3be634dd
     container_name: andromeda_createbuckets
     depends_on:
       minio:
@@ -154,6 +157,7 @@ services:
       # Provider keys live only in the ai service.
       - ANTHROPIC_API_KEY=
       - OPENAI_API_KEY=
+      - DEEPGRAM_API_KEY=
     volumes:
       - media_data:/app/media
       - static_data:/app/staticfiles
@@ -179,13 +183,14 @@ services:
       dockerfile: Dockerfile
     container_name: andromeda_celery_worker
     restart: unless-stopped
-    command: celery -A andromeda worker --loglevel=info --concurrency=4 -Q notifications,messages,emails,default
+    command: celery -A andromeda worker --loglevel=info --concurrency=4 --task-events -Q notifications,messages,emails,default
     env_file:
       - .env
     environment:
       - AI_SERVICE_URL=http://ai:8100
       - ANTHROPIC_API_KEY=
       - OPENAI_API_KEY=
+      - DEEPGRAM_API_KEY=
       - POSTGRES_HOST=postgres
       - NEO4J_BOLT_URL=bolt://neo4j:${NEO4J_PASSWORD:-andromeda_secret}@neo4j:7687
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
@@ -252,6 +257,24 @@ services:
       retries: 3
       start_period: 30s
 
+  # Celery metrics for Prometheus, read from broker events (Flower stays
+  # password-protected and isn't scraped).
+  celery_exporter:
+    image: danihodovic/celery-exporter:0.12.2@sha256:91e0b314cb5d62f0b2cd0ccdd059178d2d26f816ae0df2a4eeeb6b3c6feb5937
+    container_name: andromeda_celery_exporter
+    restart: unless-stopped
+    environment:
+      - CE_BROKER_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - andromeda_network
+    depends_on:
+      - rabbitmq
+
   # ============================================================
   # AI service (internal only: no published ports)
   # ============================================================
@@ -265,6 +288,7 @@ services:
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY:-}
       - AI_SERVICE_SECRET=${AI_SERVICE_SECRET:?Set AI_SERVICE_SECRET in .env}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/2
       - DAILY_USER_TOKEN_BUDGET=${AI_DAILY_USER_TOKEN_BUDGET:-200000}

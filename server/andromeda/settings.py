@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Local apps
     'core.apps.CoreConfig',
     'moderation.apps.ModerationConfig',
+    'retrieval.apps.RetrievalConfig',
     'users.apps.UsersConfig',
     'posts.apps.PostsConfig',
     'chats.apps.ChatsConfig',
@@ -151,6 +152,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_SEND_SENT_EVENT = True  # lets celery-exporter see queued tasks
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
 # Named queues
@@ -201,6 +203,7 @@ REST_FRAMEWORK = {
         'auth': os.environ.get('THROTTLE_AUTH', '10/min'),
         'ws_ticket': os.environ.get('THROTTLE_WS_TICKET', '30/min'),
         'ai': os.environ.get('THROTTLE_AI', '30/hour'),
+        'search': os.environ.get('THROTTLE_SEARCH', '300/hour'),
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
@@ -266,6 +269,10 @@ ADMIN_URL = os.environ.get('ADMIN_URL', 'admin/')
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', '')
 AI_SERVICE_SECRET = os.environ.get('AI_SERVICE_SECRET', '')
 AI_MODERATION_ENABLED = os.environ.get('AI_MODERATION_ENABLED', 'True') == 'True'
+AI_SEARCH_ENABLED = os.environ.get('AI_SEARCH_ENABLED', 'True') == 'True'
+# Listwise LLM rerank of the fused top results. Off by default: see the
+# retrieval ablation in retrieval/evals for when it pays for itself.
+AI_SEARCH_RERANK = os.environ.get('AI_SEARCH_RERANK', 'False') == 'True'
 if AI_SERVICE_SECRET and len(AI_SERVICE_SECRET) < 32:
     raise ImproperlyConfigured('AI_SERVICE_SECRET must be at least 32 characters.')
 PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour

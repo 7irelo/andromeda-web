@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/watch/', include('watch.urls')),
     path('api/pages/', include('pages.urls')),
     path('api/search/', SearchView.as_view(), name='search'),
+    path('api/', include('retrieval.urls')),
     path('api/moderation/', include('moderation.urls')),
 
     # OpenAPI schema + docs (admin-only outside DEBUG, see SPECTACULAR_SETTINGS)

@@ -24,16 +24,50 @@ def _text_filter(qs, fields, query):
     """Postgres full-text search when available, case-insensitive substring otherwise."""
     if connection.vendor == 'postgresql':
         from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-        rank = SearchRank(SearchVector(*fields), SearchQuery(query, search_type='websearch'))
+        vector, sq = SearchVector(*fields), SearchQuery(query, search_type='websearch')
         partial = Q()
         for f in fields:
             partial |= Q(**{f'{f}__icontains': query})
+        # Filter on an actual match (ts_rank is never exactly 0, so it can't be the filter).
         # Ranked full-text matches first; substring matches keep prefix search working.
-        return qs.annotate(_rank=rank).filter(Q(_rank__gt=0) | partial).order_by('-_rank')
+        return qs.annotate(_sv=vector, _rank=SearchRank(vector, sq)).filter(Q(_sv=sq) | partial).order_by('-_rank')
     cond = Q()
     for f in fields:
         cond |= Q(**{f'{f}__icontains': query})
     return qs.filter(cond)
+
+
+def visible_listings(user):
+    from marketplace.models import Listing
+    return Listing.objects.filter(status=Listing.STATUS_ACTIVE).exclude(moderation_status='removed').exclude(
+        seller_id__in=visibility.blocked_ids(user)).prefetch_related('images')
+
+
+def visible_pages(user):
+    from pages.models import Page
+    return Page.objects.all()
+
+
+def visible_videos(user):
+    from watch.models import Video
+    return Video.objects.filter(status=Video.STATUS_READY, is_public=True).exclude(
+        uploader_id__in=visibility.blocked_ids(user)).select_related('uploader')
+
+
+# What each searchable content type exposes to a viewer, and which text fields
+# lexical search matches. Semantic search reuses the same querysets.
+CONTENT = {
+    'posts': (lambda u: visibility.visible_posts(u).select_related('author'), ['content', 'link_title']),
+    'groups': (visibility.visible_groups, ['name', 'description']),
+    'pages': (visible_pages, ['name', 'description']),
+    'listings': (visible_listings, ['title', 'description']),
+    'videos': (visible_videos, ['title', 'description']),
+}
+
+
+def lexical(kind, user, q):
+    finder, fields = CONTENT[kind]
+    return _text_filter(finder(user), fields, q)
 
 
 def _people(user, q):
@@ -43,30 +77,23 @@ def _people(user, q):
 
 
 def _posts(user, q):
-    return _text_filter(visibility.visible_posts(user).select_related('author'), ['content', 'link_title'], q)
+    return lexical('posts', user, q)
 
 
 def _groups(user, q):
-    return _text_filter(visibility.visible_groups(user), ['name', 'description'], q)
+    return lexical('groups', user, q)
 
 
 def _pages(user, q):
-    from pages.models import Page
-    return _text_filter(Page.objects.all(), ['name', 'description'], q)
+    return lexical('pages', user, q)
 
 
 def _listings(user, q):
-    from marketplace.models import Listing
-    qs = Listing.objects.filter(status=Listing.STATUS_ACTIVE).exclude(moderation_status='removed').exclude(
-        seller_id__in=visibility.blocked_ids(user)).prefetch_related('images')
-    return _text_filter(qs, ['title', 'description'], q)
+    return lexical('listings', user, q)
 
 
 def _videos(user, q):
-    from watch.models import Video
-    qs = Video.objects.filter(status=Video.STATUS_READY, is_public=True).exclude(
-        uploader_id__in=visibility.blocked_ids(user)).select_related('uploader')
-    return _text_filter(qs, ['title', 'description'], q)
+    return lexical('videos', user, q)
 
 
 def _serializers():

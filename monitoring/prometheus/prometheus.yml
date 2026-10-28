@@ -26,10 +26,10 @@ scrape_configs:
     metrics_path: /metrics
     scrape_interval: 10s
 
-  # Celery / Flower metrics
-  - job_name: flower
+  # Celery task metrics (celery-exporter; Flower requires a password)
+  - job_name: celery
     static_configs:
-      - targets: ["flower:5555"]
+      - targets: ["celery_exporter:9808"]
     metrics_path: /metrics
     scrape_interval: 30s
 

@@ -1,0 +1,30 @@
+{"id": "p01", "query": "trail walks around Durban", "kind": "posts", "all": ["hiking", "Durban"]}
+{"id": "p02", "query": "jogging partners in Joburg", "kind": "posts", "all": ["running", "Johannesburg"]}
+{"id": "p03", "query": "where can I get decent espresso in Cape Town", "kind": "posts", "all": ["coffee", "Cape Town"]}
+{"id": "p04", "query": "advice for someone new to taking pictures", "kind": "posts", "all": ["photography", "beginner"]}
+{"id": "p05", "query": "power cuts wrecked my rugby", "kind": "posts", "all": ["rugby", "Load shedding"]}
+{"id": "p06", "query": "programmers getting together in Pretoria this weekend", "kind": "posts", "all": ["coding", "Pretoria", "meetup"]}
+{"id": "p07", "query": "barbecue people near Gqeberha", "kind": "posts", "all": ["braai", "Gqeberha"]}
+{"id": "p08", "query": "fans of live saxophone music in Bloemfontein", "kind": "posts", "all": ["jazz", "Bloemfontein"]}
+{"id": "p09", "query": "tips for growing veggies as a newbie", "kind": "posts", "all": ["gardening", "beginner"]}
+{"id": "p10", "query": "hiking", "kind": "posts", "all": ["hiking"]}
+{"id": "p11", "query": "rugby Durban", "kind": "posts", "all": ["rugby", "Durban"]}
+{"id": "p12", "query": "nostalgic about the jazz we had last summer", "kind": "posts", "all": ["jazz", "last summer"]}
+{"id": "p13", "query": "best place to snap photos in Johannesburg", "kind": "posts", "all": ["photography", "Johannesburg", "spot"]}
+{"id": "p14", "query": "eskom blackouts spoiled my run", "kind": "posts", "all": ["running", "Load shedding"]}
+{"id": "p15", "query": "looking for coffee lovers near Pretoria", "kind": "posts", "all": ["coffee", "Pretoria"]}
+{"id": "p16", "query": "anyone want to go for a hike in Cape Town", "kind": "posts", "all": ["hiking", "Cape Town"]}
+{"id": "p17", "query": "new to software development, what should I learn", "kind": "posts", "all": ["coding", "beginner"]}
+{"id": "p18", "query": "grilling meat with friends in Durban", "kind": "posts", "all": ["braai", "Durban"]}
+{"id": "l01", "query": "sofa for my lounge", "kind": "listings", "all": ["Couch"]}
+{"id": "l02", "query": "bicycle for off-road trails", "kind": "listings", "all": ["Mountain bike"]}
+{"id": "l03", "query": "espresso maker", "kind": "listings", "all": ["Coffee machine"]}
+{"id": "l04", "query": "comfortable seat for long gaming sessions", "kind": "listings", "all": ["Gaming chair"]}
+{"id": "l05", "query": "photography gear", "kind": "listings", "all": ["Camera lens"]}
+{"id": "l06", "query": "somewhere to keep my books", "kind": "listings", "all": ["Bookshelf"]}
+{"id": "l07", "query": "reading light for my study", "kind": "listings", "all": ["Desk lamp"]}
+{"id": "l08", "query": "couch", "kind": "listings", "all": ["Couch"]}
+{"id": "g01", "query": "a community for people who run", "kind": "groups", "all": ["Running"]}
+{"id": "g02", "query": "people who love jazz", "kind": "groups", "all": ["Jazz"]}
+{"id": "g03", "query": "club for growing plants", "kind": "groups", "all": ["Gardening"]}
+{"id": "g04", "query": "photographers group", "kind": "groups", "all": ["Photography"]}

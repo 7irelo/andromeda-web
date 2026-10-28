@@ -18,3 +18,34 @@ export interface SearchResponse {
     videos?: Video[];
   };
 }
+
+export type SemanticType = 'posts' | 'listings' | 'groups' | 'pages' | 'videos';
+
+export interface SemanticHit {
+  type: SemanticType;
+  score: number;
+  matched_by: ('lexical' | 'semantic')[];
+  item: Post & Listing & Group & Page & Video;
+}
+
+export interface SemanticSearchResponse {
+  query: string;
+  understood_as: { query: string; types: SemanticType[]; since_days: number | null; author: string | null } | null;
+  semantic: boolean;
+  results: SemanticHit[];
+}
+
+export interface AskSource {
+  type: SemanticType;
+  id: number;
+  title: string;
+  author: string;
+  url: string;
+}
+
+export interface AskResponse {
+  abstain: boolean;
+  answer: string;
+  claims: { text: string; sources: AskSource[] }[];
+  sources: AskSource[];
+}

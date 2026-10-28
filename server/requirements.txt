@@ -18,6 +18,7 @@ websockets~=14.0
 
 # Database
 psycopg[binary]~=3.2
+pgvector~=0.5.1
 neomodel~=5.4
 
 # Cache + Sessions

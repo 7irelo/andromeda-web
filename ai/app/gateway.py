@@ -39,7 +39,17 @@ ROUTES: dict[str, list[Route]] = {
                             Route('openai', 'gpt-6.1-terra', 2048, None)],
     'catchup.summarise': [Route('anthropic', 'claude-haiku-5-5', 4096),
                           Route('openai', 'gpt-6.1-terra', 4096, None)],
+    'search.rewrite': [Route('anthropic', 'claude-haiku-5-5', 512),
+                       Route('openai', 'gpt-6-luna', 512, None)],
+    'search.rerank': [Route('anthropic', 'claude-haiku-5-5', 1024),
+                      Route('openai', 'gpt-6-luna', 1024, None)],
+    'ask.answer': [Route('anthropic', 'claude-sonnet-5-5', 2048),
+                   Route('openai', 'gpt-6.1-terra', 2048, None)],
+    # Anthropic has no embeddings model, so this job has no cross-provider fallback.
+    'search.embed': [Route('openai', 'text-embedding-3-small', 0, None)],
 }
+
+EMBEDDING_DIMS = 1536
 
 # USD per 1M tokens (input, output), standard list prices, checked 2026-10-27.
 PRICES = {
@@ -48,6 +58,7 @@ PRICES = {
     'claude-opus-5-5': (4.00, 20.00),
     'gpt-6-luna': (0.10, 0.50),
     'gpt-6.1-terra': (1.00, 5.00),
+    'text-embedding-3-small': (0.02, 0.0),
 }
 
 
@@ -89,10 +100,23 @@ class Result[T]:
     fallback_used: bool = False
 
 
+@dataclass
+class EmbedResult:
+    vectors: list[list[float]]
+    model: str
+    usage: Usage
+    cost_usd: float
+
+
+# A user turn is plain text, or a list of parts for multimodal input:
+#   {'type': 'text', 'text': ...} | {'type': 'image', 'media_type': 'image/jpeg', 'data': <base64>}
+UserContent = str | list[dict]
+
+
 class Provider(Protocol):
     name: str
 
-    async def structured(self, route: Route, system: str, user: str, schema: type[T]) -> tuple[T, Usage]: ...
+    async def structured(self, route: Route, system: str, user: UserContent, schema: type[T]) -> tuple[T, Usage]: ...
 
 
 @dataclass
@@ -131,17 +155,54 @@ class Gateway:
     routes: dict[str, list[Route]] = field(default_factory=lambda: ROUTES)
     breakers: dict[str, CircuitBreaker] = field(default_factory=dict)
 
-    async def structured(self, job: str, *, system: str, user: str, schema: type[T], user_id: int) -> Result[T]:
+    def _check_budget(self, job: str, user_id: int) -> None:
         if not self.budget.has_room(user_id):
             metrics.BUDGET_REJECTIONS.labels(job).inc()
             raise BudgetExceeded(job)
 
-        last_error: Exception | None = None
+    def _meter(self, job: str, route: Route, usage: Usage, latency: float, user_id: int, fallback: bool) -> float:
+        cost = estimate_cost(route.model, usage)
+        self.budget.spend(user_id, usage.total)
+        metrics.REQUESTS.labels(job, route.provider, route.model, 'ok').inc()
+        metrics.TOKENS.labels(job, route.model, 'input').inc(usage.input_tokens)
+        metrics.TOKENS.labels(job, route.model, 'output').inc(usage.output_tokens)
+        metrics.TOKENS.labels(job, route.model, 'cache_read').inc(usage.cache_read_tokens)
+        metrics.COST.labels(job, route.model).inc(cost)
+        metrics.LATENCY.labels(job, route.model).observe(latency)
+        if fallback:
+            metrics.FALLBACKS.labels(job).inc()
+        return cost
+
+    def _candidates(self, job: str):
         for i, route in enumerate(self.routes[job]):
             provider = self.providers.get(route.provider)
             breaker = self.breakers.setdefault(route.provider, CircuitBreaker())
             if provider is None or not breaker.available():
                 continue
+            yield i, route, provider, breaker
+
+    async def embed(self, job: str, *, texts: list[str], user_id: int) -> EmbedResult:
+        self._check_budget(job, user_id)
+        last_error: Exception | None = None
+        for i, route, provider, breaker in self._candidates(job):
+            started = time.monotonic()
+            try:
+                vectors, usage = await provider.embed(route, texts)
+            except ProviderError as exc:
+                breaker.record(False)
+                metrics.REQUESTS.labels(job, route.provider, route.model, 'error').inc()
+                last_error = exc
+                continue
+            breaker.record(True)
+            cost = self._meter(job, route, usage, time.monotonic() - started, user_id, i > 0)
+            return EmbedResult(vectors, route.model, usage, cost)
+        raise AllRoutesFailed(job) from last_error
+
+    async def structured(self, job: str, *, system: str, user: UserContent, schema: type[T],
+                         user_id: int) -> Result[T]:
+        self._check_budget(job, user_id)
+        last_error: Exception | None = None
+        for i, route, provider, breaker in self._candidates(job):
             started = time.monotonic()
             try:
                 output, usage = await provider.structured(route, system, user, schema)
@@ -157,15 +218,6 @@ class Gateway:
                 continue
             latency = time.monotonic() - started
             breaker.record(True)
-            cost = estimate_cost(route.model, usage)
-            self.budget.spend(user_id, usage.total)
-            metrics.REQUESTS.labels(job, route.provider, route.model, 'ok').inc()
-            metrics.TOKENS.labels(job, route.model, 'input').inc(usage.input_tokens)
-            metrics.TOKENS.labels(job, route.model, 'output').inc(usage.output_tokens)
-            metrics.TOKENS.labels(job, route.model, 'cache_read').inc(usage.cache_read_tokens)
-            metrics.COST.labels(job, route.model).inc(cost)
-            metrics.LATENCY.labels(job, route.model).observe(latency)
-            if i > 0:
-                metrics.FALLBACKS.labels(job).inc()
+            cost = self._meter(job, route, usage, latency, user_id, i > 0)
             return Result(output, route.model, route.provider, usage, cost, latency, fallback_used=i > 0)
         raise AllRoutesFailed(job) from last_error

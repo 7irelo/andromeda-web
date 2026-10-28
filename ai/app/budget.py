@@ -4,8 +4,14 @@ import threading
 
 
 class Budget:
-    def __init__(self, daily_limit: int, redis_url: str | None = None):
+    # User id 0 is Django itself (background indexing), with its own allowance.
+    SYSTEM_USER = 0
+
+    def __init__(self, daily_limit: int, redis_url: str | None = None, system_daily_limit: int | None = None,
+                 daily_audio_seconds: int = 1800):
         self.daily_limit = daily_limit
+        self.daily_audio_seconds = daily_audio_seconds
+        self.system_daily_limit = system_daily_limit if system_daily_limit is not None else daily_limit
         self._redis = None
         if redis_url:
             import redis
@@ -14,11 +20,12 @@ class Budget:
         self._lock = threading.Lock()
 
     @staticmethod
-    def _key(user_id: int) -> str:
-        return f'ai-budget:{dt.date.today().isoformat()}:{user_id}'
+    def _key(user_id: int, kind: str = 'tokens') -> str:
+        prefix = 'ai-budget' if kind == 'tokens' else f'ai-budget-{kind}'
+        return f'{prefix}:{dt.date.today().isoformat()}:{user_id}'
 
-    def used(self, user_id: int) -> int:
-        key = self._key(user_id)
+    def used(self, user_id: int, kind: str = 'tokens') -> int:
+        key = self._key(user_id, kind)
         if self._redis is not None:
             try:
                 return int(self._redis.get(key) or 0)
@@ -27,10 +34,17 @@ class Budget:
         return self._mem.get(key, 0)
 
     def has_room(self, user_id: int) -> bool:
-        return self.used(user_id) < self.daily_limit
+        limit = self.system_daily_limit if user_id == self.SYSTEM_USER else self.daily_limit
+        return self.used(user_id) < limit
 
-    def spend(self, user_id: int, tokens: int) -> None:
-        key = self._key(user_id)
+    def has_audio_room(self, user_id: int) -> bool:
+        return user_id == self.SYSTEM_USER or self.used(user_id, 'audio') < self.daily_audio_seconds
+
+    def spend_audio(self, user_id: int, seconds: float) -> None:
+        self.spend(user_id, int(seconds + 0.999), kind='audio')
+
+    def spend(self, user_id: int, tokens: int, kind: str = 'tokens') -> None:
+        key = self._key(user_id, kind)
         if self._redis is not None:
             try:
                 pipe = self._redis.pipeline()

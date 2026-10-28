@@ -8,7 +8,7 @@ import { CatchUp, ChatRoom, Message } from '../../models/chat.model';
 import { Notification } from '../../models/notification.model';
 import { Listing, ListingCategory } from '../../models/listing.model';
 import { Group, GroupJoinRequest, GroupMember } from '../../models/group.model';
-import { SearchResponse, SearchType } from '../../models/search.model';
+import { AskResponse, SearchResponse, SearchType, SemanticSearchResponse, SemanticType } from '../../models/search.model';
 import { Video, VideoComment } from '../../models/video.model';
 import { Page } from '../../models/page.model';
 
@@ -188,6 +188,14 @@ export class ApiService {
   // ── Search ─────────────────────────────────────────────────────────────────
   search(q: string, type: SearchType = 'all'): Observable<SearchResponse> {
     return this.http.get<SearchResponse>(`${this.API}/search/`, { params: { q, type } });
+  }
+
+  semanticSearch(q: string, type: SemanticType | 'all' = 'all'): Observable<SemanticSearchResponse> {
+    return this.http.get<SemanticSearchResponse>(`${this.API}/search/semantic/`, { params: { q, type } });
+  }
+
+  ask(question: string): Observable<AskResponse> {
+    return this.http.post<AskResponse>(`${this.API}/ask/`, { question });
   }
 
   // ── Profile ────────────────────────────────────────────────────────────────

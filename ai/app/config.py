@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: SecretStr | None = None
     openai_api_key: SecretStr | None = None
+    deepgram_api_key: SecretStr | None = None
 
     # Shared with Django to verify short-lived service tokens.
     ai_service_secret: SecretStr = Field(...)
@@ -20,6 +21,9 @@ class Settings(BaseSettings):
     redis_url: str | None = None
     # Per-user daily token allowance across all AI features.
     daily_user_token_budget: int = 200_000
+    # Background work Django does on nobody's behalf (search indexing).
+    system_daily_token_budget: int = 20_000_000
+    daily_user_audio_seconds: int = 1800
     provider_timeout_seconds: float = 25.0
 
     max_text_chars: int = 10_000

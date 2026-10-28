@@ -22,7 +22,7 @@ jobs:
         working-directory: server
     services:
       postgres:
-        image: postgres:15-alpine
+        image: pgvector/pgvector:0.8.7-pg15-trixie@sha256:8d4485d6fd3156d090ac5f37eb2e22eb59d93c91169414d5809414102ee924b9
         env:
           POSTGRES_DB: andromeda
           POSTGRES_USER: andromeda
@@ -67,6 +67,12 @@ jobs:
 
       - name: Tests with coverage
         run: pytest --cov=. --cov-report=term-missing:skip-covered --cov-fail-under=70
+
+      - name: Postgres integration tests (pgvector retrieval and leak tests)
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PASSWORD: andromeda_ci
+        run: pytest retrieval --migrations --ds=andromeda.settings_pgtest
 
   ai:
     name: AI service (lint, tests)
