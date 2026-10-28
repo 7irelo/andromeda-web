@@ -33,13 +33,17 @@ class Listing(models.Model):
     ]
 
     STATUS_ACTIVE = 'active'
+    STATUS_RESERVED = 'reserved'
     STATUS_SOLD = 'sold'
     STATUS_DRAFT = 'draft'
     STATUS_CHOICES = [
         (STATUS_ACTIVE, 'Active'),
+        (STATUS_RESERVED, 'Reserved'),
         (STATUS_SOLD, 'Sold'),
         (STATUS_DRAFT, 'Draft'),
     ]
+    # What other users can browse. Sold and draft listings are the seller's alone.
+    PUBLIC_STATUSES = (STATUS_ACTIVE, STATUS_RESERVED)
 
     seller = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='listings', on_delete=models.CASCADE
@@ -51,6 +55,9 @@ class Listing(models.Model):
     condition = models.CharField(max_length=10, choices=CONDITION_CHOICES, default=CONDITION_GOOD)
     category = models.ForeignKey(Category, related_name='listings', on_delete=models.SET_NULL, null=True)
     location = models.CharField(max_length=255, blank=True)
+    # Snapped to a ~1 km grid on save (see geo.py); never shown to others at this precision.
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
     # Set by the moderation pipeline; 'removed' hides it from everyone but the author.
     moderation_status = models.CharField(max_length=10, default='ok', db_index=True,
@@ -63,6 +70,7 @@ class Listing(models.Model):
     class Meta:
         db_table = 'marketplace_listings'
         ordering = ['-created_at']
+        indexes = [models.Index(fields=['latitude', 'longitude'], name='listing_geo_idx')]
 
     def __str__(self):
         return f'{self.title} – ${self.price}'
@@ -99,3 +107,4 @@ class Review(models.Model):
     class Meta:
         db_table = 'marketplace_reviews'
         unique_together = ('listing', 'reviewer')
+        ordering = ['-created_at']
