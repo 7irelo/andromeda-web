@@ -42,6 +42,17 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         if isinstance(event.get('post_id'), int):
             await self.send(text_data=json.dumps({'type': 'feed.new_post', 'post_id': event['post_id']}))
 
+    async def assistant_event(self, event):
+        """Assistant run progress. Only whitelisted keys reach the browser; the client refetches the run."""
+        payload = event.get('payload')
+        if not isinstance(payload, dict) or not isinstance(payload.get('run_id'), int):
+            return
+        frame = {k: payload[k] for k in ('event', 'run_id', 'status', 'proposal_id') if k in payload}
+        step = payload.get('step')
+        if isinstance(step, dict):
+            frame['step'] = {k: step[k] for k in ('index', 'kind', 'tool', 'is_error') if k in step}
+        await self.send(text_data=json.dumps({'type': 'assistant.event', **frame}))
+
     async def mark_notification_read(self, notification_id):
         from channels.db import database_sync_to_async
 

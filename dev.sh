@@ -184,7 +184,7 @@ if $RUN_CELERY; then
   celery -A andromeda worker \
     --loglevel=info \
     --concurrency=2 \
-    -Q notifications,messages,default,video \
+    -Q notifications,messages,default,video,ai \
     --logfile="$ROOT/celery-worker.log" &
   PIDS+=($!)
   ok "Celery worker running (PID ${PIDS[-1]}). Logs → celery-worker.log"

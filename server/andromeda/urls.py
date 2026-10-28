@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from assistant.mcp import MCPView
 from core.search import SearchView
 
 
@@ -32,6 +33,8 @@ urlpatterns = [
     path('api/search/', SearchView.as_view(), name='search'),
     path('api/', include('retrieval.urls')),
     path('api/moderation/', include('moderation.urls')),
+    path('api/assistant/', include('assistant.urls')),
+    path('api/mcp/', MCPView.as_view(), name='mcp'),
 
     # OpenAPI schema + docs (admin-only outside DEBUG, see SPECTACULAR_SETTINGS)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
