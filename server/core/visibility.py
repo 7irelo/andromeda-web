@@ -4,7 +4,7 @@ Single source of truth for "who may see what".
 Every read path (feed, profiles, groups, search and, later, AI retrieval) goes
 through these helpers so privacy rules are enforced in exactly one place.
 """
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 
 
 def friend_ids(user):
@@ -47,6 +47,7 @@ def member_group_ids(user):
 
 
 def visible_posts(user, qs=None):
+    from groups.models import GroupBan
     from posts.models import Post
 
     qs = Post.objects.all() if qs is None else qs
@@ -57,7 +58,9 @@ def visible_posts(user, qs=None):
     )
     group = Q(group__isnull=True) | Q(group__privacy='public') | Q(group_id__in=member_group_ids(user))
     moderation = Q(author=user) | ~Q(moderation_status='removed')
-    return qs.filter(privacy & group & moderation).exclude(author_id__in=blocked_ids(user))
+    # A user banned from a group loses their posts in it as well as their seat.
+    banned = GroupBan.objects.filter(group_id=OuterRef('group_id'), user_id=OuterRef('author_id'))
+    return qs.filter(privacy & group & moderation & ~Exists(banned)).exclude(author_id__in=blocked_ids(user))
 
 
 def can_view_post(user, post):
@@ -65,7 +68,11 @@ def can_view_post(user, post):
 
 
 def visible_groups(user, qs=None):
-    """Public and private groups are discoverable; secret groups only by members."""
+    """
+    Public and private groups are discoverable; secret groups only by members.
+    (Invite-link holders see a secret group's card through the invite preview,
+    never through lists, search or suggestions.)
+    """
     from groups.models import Group
 
     qs = Group.objects.all() if qs is None else qs

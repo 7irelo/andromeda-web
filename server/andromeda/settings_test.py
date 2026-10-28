@@ -67,6 +67,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "10000/min", "user": "10000/min", "write": "10000/min",
         "auth": "10000/min", "ws_ticket": "10000/min", "ai": "10000/min", "search": "10000/min",
+        "group_invite": "10000/min",
     },
 }
 STORAGES = {

@@ -207,6 +207,50 @@ class TestGroups:
         GroupMember.objects.create(group=group, user=bob, role='member')
         assert client_for(bob).get(reverse('group-join-requests', kwargs={'pk': group.pk})).status_code == 403
 
+    def test_banned_user_cannot_rejoin(self, alice, mallory):
+        group = Group.objects.create(name='Runners', created_by=alice)
+        GroupMember.objects.create(group=group, user=alice, role='admin')
+        GroupMember.objects.create(group=group, user=mallory, role='member')
+        client_for(alice).post(reverse('group-ban', kwargs={'pk': group.pk}), {'user_id': mallory.id})
+        assert client_for(mallory).post(reverse('group-join', kwargs={'pk': group.pk})).status_code == 403
+        assert not group.memberships.filter(user=mallory).exists()
+
+    def test_moderator_cannot_ban_or_edit(self, alice, bob, mallory):
+        group = Group.objects.create(name='Runners', created_by=alice)
+        GroupMember.objects.create(group=group, user=alice, role='admin')
+        GroupMember.objects.create(group=group, user=bob, role='moderator')
+        c = client_for(bob)
+        assert c.post(reverse('group-ban', kwargs={'pk': group.pk}), {'user_id': mallory.id}).status_code == 403
+        assert c.patch(reverse('group-detail', kwargs={'pk': group.pk}), {'name': 'x'}, format='json').status_code == 403
+
+    def test_invite_token_is_hashed_and_single_purpose(self, alice, mallory):
+        from groups.models import GroupInvite
+        group = Group.objects.create(name='Hidden', privacy='secret', created_by=alice)
+        GroupMember.objects.create(group=group, user=alice, role='admin')
+        token = client_for(alice).post(reverse('group-invites', kwargs={'pk': group.pk})).data['token']
+        assert not GroupInvite.objects.filter(token_hash=token).exists()
+        c = client_for(mallory)
+        assert group.id not in {g['id'] for g in c.get(reverse('group-list')).data['results']}
+        assert c.post(reverse('group-invite-redeem', kwargs={'token': token})).status_code == 200
+        assert group.memberships.filter(user=mallory).exists()
+
+
+class TestPages:
+    def test_only_staff_can_verify_page(self, alice, mallory):
+        page = Page.objects.create(name='Shop', username='shop', created_by=alice)
+        c = client_for(alice)
+        assert c.patch(reverse('page-detail', kwargs={'pk': page.pk}), {'is_verified': True}, format='json').status_code == 200
+        assert c.post(reverse('page-verify', kwargs={'pk': page.pk})).status_code == 403
+        page.refresh_from_db()
+        assert page.is_verified is False
+
+    def test_stranger_cannot_manage_page_roles(self, alice, mallory):
+        page = Page.objects.create(name='Shop', username='shop', created_by=alice)
+        r = client_for(mallory).post(reverse('page-admins', kwargs={'pk': page.pk}),
+                                     {'user_id': mallory.id, 'role': 'admin'})
+        assert r.status_code == 403
+        assert client_for(mallory).get(reverse('page-admins', kwargs={'pk': page.pk})).status_code == 403
+
 
 # ── Chat ─────────────────────────────────────────────────────────────────────
 

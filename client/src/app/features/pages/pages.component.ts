@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -13,7 +14,7 @@ import { Page } from '../../models/page.model';
 @Component({
     selector: 'app-pages',
     imports: [
-        CommonModule, ReactiveFormsModule,
+        CommonModule, ReactiveFormsModule, RouterLink,
         MatIconModule, MatButtonModule, MatProgressSpinnerModule,
         MatFormFieldModule, MatInputModule, MatSnackBarModule,
     ],
@@ -37,9 +38,12 @@ import { Page } from '../../models/page.model';
             <img [src]="p.cover_photo || 'assets/default-cover.png'" alt="" />
           </div>
           <div class="page-body">
-            <img [src]="p.avatar || 'assets/default-avatar.png'" class="page-avatar" [alt]="p.name" />
+            <a [routerLink]="'/pages/' + p.id"><img [src]="p.avatar || 'assets/default-avatar.png'" class="page-avatar" [alt]="p.name" /></a>
             <div class="page-info">
-              <div class="font-semibold">{{ p.name }}</div>
+              <a class="font-semibold page-name" [routerLink]="'/pages/' + p.id">
+                {{ p.name }}
+                <mat-icon class="verified" *ngIf="p.is_verified" aria-label="Verified">verified</mat-icon>
+              </a>
               <div class="text-secondary text-sm">{{ p.category || 'Community' }} · {{ p.followers_count | number }} followers</div>
               <p class="page-desc text-sm" *ngIf="p.description">{{ p.description }}</p>
             </div>
@@ -118,6 +122,8 @@ import { Page } from '../../models/page.model';
       border: 3px solid var(--surface); margin-top: -40px; box-shadow: var(--shadow);
     }
     .page-info { display: flex; flex-direction: column; gap: 2px; }
+    .page-name { display: flex; align-items: center; gap: 4px; color: inherit; text-decoration: none; }
+    .page-name .verified { font-size: 18px; width: 18px; height: 18px; color: var(--primary); }
     .page-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text-secondary); }
     .page-actions { margin-top: 4px; }
     .loading-center { display: flex; justify-content: center; padding: 40px; }

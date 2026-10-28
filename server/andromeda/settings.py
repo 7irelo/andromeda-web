@@ -212,6 +212,7 @@ REST_FRAMEWORK = {
         'ws_ticket': os.environ.get('THROTTLE_WS_TICKET', '30/min'),
         'ai': os.environ.get('THROTTLE_AI', '30/hour'),
         'search': os.environ.get('THROTTLE_SEARCH', '300/hour'),
+        'group_invite': os.environ.get('THROTTLE_GROUP_INVITE', '20/min'),
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
