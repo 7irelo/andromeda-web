@@ -116,10 +116,16 @@ class MeSerializer(UserSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True)
+    accept_terms = serializers.BooleanField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password2']
+        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password2', 'accept_terms']
+
+    def validate_accept_terms(self, value):
+        if value is not True:
+            raise serializers.ValidationError('Please accept the terms and privacy policy to create an account.')
+        return value
 
     def validate_email(self, value):
         normalised = value.strip().lower()
@@ -133,6 +139,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        attrs.pop('accept_terms', None)
         if attrs['password'] != attrs.pop('password2'):
             raise serializers.ValidationError({'password': 'Passwords do not match.'})
         validate_password(attrs['password'], User(username=attrs['username'], email=attrs['email']))
@@ -145,7 +152,15 @@ class RegisterSerializer(serializers.ModelSerializer):
 class AndromedaTokenSerializer(TokenObtainPairSerializer):
     # Keep the access token free of PII: it's a bearer credential that ends up
     # in browser memory and, potentially, in logs.
-    pass
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        from core.auth import account_block_reason
+        reason = account_block_reason(self.user)
+        # Pending deletion is cancelled by signing in (see LoginView); suspension isn't.
+        if reason and self.user.deletion_scheduled_at is None:
+            raise serializers.ValidationError({'detail': reason})
+        return data
 
 
 class PasswordChangeSerializer(serializers.Serializer):

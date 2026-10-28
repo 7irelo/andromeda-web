@@ -181,6 +181,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.send_listing_digests',
         'schedule': crontab(day_of_week='sat', hour=8, minute=0),
     },
+    'erase-due-accounts': {
+        'task': 'users.tasks.erase_due_accounts',
+        'schedule': crontab(hour=2, minute=30),
+    },
+    'expire-data-exports': {
+        'task': 'users.tasks.expire_data_exports',
+        'schedule': crontab(hour=2, minute=45),
+    },
     'watch-requeue-stuck-videos': {
         'task': 'watch.tasks.requeue_stuck_videos',
         'schedule': crontab(minute=17),
@@ -192,7 +200,7 @@ CELERY_BEAT_SCHEDULE = {
 # ============================================================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'core.auth.AndromedaJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -217,6 +225,8 @@ REST_FRAMEWORK = {
         'ws_ticket': os.environ.get('THROTTLE_WS_TICKET', '30/min'),
         'ai': os.environ.get('THROTTLE_AI', '30/hour'),
         'search': os.environ.get('THROTTLE_SEARCH', '300/hour'),
+        'report': os.environ.get('THROTTLE_REPORT', '30/hour'),
+        'export': os.environ.get('THROTTLE_EXPORT', '2/day'),
         'group_invite': os.environ.get('THROTTLE_GROUP_INVITE', '20/min'),
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -313,6 +323,8 @@ WATCH_MAX_CAPTION_AUDIO_BYTES = 24 * 1024 * 1024
 WATCH_STREAM_TOKEN_MAX_AGE = 6 * 60 * 60
 PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
+# Bump when the terms or privacy policy change; consents record the version agreed to.
+POLICY_VERSION = '2026-10-28'
 
 # ============================================================
 # CORS

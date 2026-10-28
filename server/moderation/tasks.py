@@ -22,17 +22,8 @@ STATUS_FOR = {'allow': STATUS_OK, 'review': STATUS_REVIEW, 'remove': STATUS_REMO
 
 
 def _load(content_type, object_id):
-    from marketplace.models import Listing
-    from posts.models import Comment, Post
-
-    if content_type == ModerationCase.TYPE_POST:
-        obj = Post.objects.select_related('author').filter(pk=object_id).first()
-        return obj, (obj.author if obj else None), (obj.content if obj else '')
-    if content_type == ModerationCase.TYPE_COMMENT:
-        obj = Comment.objects.select_related('author').filter(pk=object_id).first()
-        return obj, (obj.author if obj else None), (obj.content if obj else '')
-    obj = Listing.objects.select_related('seller').filter(pk=object_id).first()
-    return obj, (obj.seller if obj else None), (f'{obj.title}\n{obj.description}' if obj else '')
+    from .targets import load
+    return load(content_type, object_id)
 
 
 def queue_moderation(content_type, object_id):
@@ -54,26 +45,28 @@ def moderate_content(content_type, object_id):
 
     decision = result['decision']
     with transaction.atomic():
-        ModerationCase.objects.create(
+        case = ModerationCase.objects.create(
             content_type=content_type, object_id=object_id, author=author, decision=decision,
             categories=result.get('categories', []), confidence=result.get('confidence', 0),
             reason=result.get('reason', '')[:300], model=result.get('model') or '',
             stages=result.get('stages', []), degraded=result.get('degraded', False),
-            cost_usd=result.get('cost_usd', 0), resolved=decision == 'allow',
+            cost_usd=result.get('cost_usd', 0), resolved=decision == 'allow', snapshot=text[:4000],
         )
-        type(obj).objects.filter(pk=object_id).update(moderation_status=STATUS_FOR[decision])
+        from .targets import set_status
+        set_status(content_type, obj, STATUS_FOR[decision])
 
     if decision == 'remove':
-        _notify_author(author, content_type, object_id)
+        _notify_author(author, content_type, object_id, case.pk)
 
 
-def _notify_author(author, content_type, object_id):
+def _notify_author(author, content_type, object_id, case_id=None):
     try:
         from notifications.models import Notification
         from notifications.service import notify
         notify(author, Notification.TYPE_SYSTEM,
                f'Your {content_type} was removed for breaking the community guidelines. '
                'A moderator will review it if you appeal.',
-               extra={'kind': 'moderation', 'content_type': content_type, 'object_id': object_id})
+               extra={'kind': 'moderation', 'content_type': content_type, 'object_id': object_id,
+                      'case_id': case_id})
     except Exception:
         logger.warning('Could not notify author about removal', exc_info=True)

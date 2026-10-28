@@ -4,7 +4,8 @@ from .views import (
     DeleteAccountView, EmailResendView, EmailVerifyView, FriendRequestViewSet, LoginMFAView, LoginView,
     LogoutAllView, LogoutView, MeView, MFADisableView, MFAEnableView, MFASetupView, MFAStatusView,
     PasswordChangeView, PasswordResetConfirmView, PasswordResetRequestView, RefreshView, RegisterView,
-    SessionListView, SessionRevokeView, UserViewSet, WebSocketTicketView,
+    SessionListView, SessionRevokeView, UserViewSet, WebSocketTicketView, DataExportView, DataExportDownloadView,
+    ConsentListView,
 )
 
 router = DefaultRouter()
@@ -32,5 +33,8 @@ urlpatterns = [
     path('ws-ticket/', WebSocketTicketView.as_view(), name='ws-ticket'),
     path('me/', MeView.as_view(), name='me'),
     path('me/delete/', DeleteAccountView.as_view(), name='me-delete'),
+    path('me/exports/', DataExportView.as_view(), name='me-exports'),
+    path('me/exports/<int:export_id>/download/', DataExportDownloadView.as_view(), name='me-export-download'),
+    path('me/consents/', ConsentListView.as_view(), name='me-consents'),
     path('', include(router.urls)),
 ]

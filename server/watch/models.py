@@ -50,6 +50,8 @@ class Video(models.Model):
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
     is_public = models.BooleanField(default=True)
+    moderation_status = models.CharField(max_length=10, default='ok', db_index=True,
+                                         choices=[('ok', 'OK'), ('review', 'In review'), ('removed', 'Removed')])
     tags = models.JSONField(default=list, blank=True)
     captions_status = models.CharField(max_length=15, choices=CAPTIONS_CHOICES, default=CAPTIONS_NONE)
     transcript = models.TextField(blank=True)

@@ -35,8 +35,8 @@ def visible_videos(user, qs=None):
     qs = Video.objects.all() if qs is None else qs
     if not user.is_authenticated:
         return qs.none()
-    return qs.filter(Q(status=Video.STATUS_READY, is_public=True) | Q(uploader=user)).exclude(
-        uploader_id__in=visibility.blocked_ids(user))
+    return qs.filter(Q(status=Video.STATUS_READY, is_public=True) & ~Q(moderation_status='removed')
+                     | Q(uploader=user)).exclude(uploader_id__in=visibility.blocked_ids(user))
 
 
 def asset_dir(video, root=None):

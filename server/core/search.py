@@ -50,7 +50,7 @@ def visible_pages(user):
 
 def visible_videos(user):
     from watch.models import Video
-    return Video.objects.filter(status=Video.STATUS_READY, is_public=True).exclude(
+    return Video.objects.filter(status=Video.STATUS_READY, is_public=True).exclude(moderation_status='removed').exclude(
         uploader_id__in=visibility.blocked_ids(user)).select_related('uploader')
 
 

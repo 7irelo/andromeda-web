@@ -25,7 +25,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from core import visibility, ws_tickets
 from core.throttles import AuthRateThrottle
 from . import security
-from .models import Block, FriendRequest, UserSession
+from .models import Block, ConsentRecord, DataExport, FriendRequest, UserSession
 from .serializers import (
     AndromedaTokenSerializer, FriendRequestSerializer, MeSerializer,
     PasswordChangeSerializer, PasswordResetConfirmSerializer,
@@ -70,6 +70,14 @@ def _revoke_all_sessions(user):
         BlacklistedToken.objects.get_or_create(token=token)
 
 
+def _refresh_user_allowed(raw):
+    from core.auth import account_block_reason
+    user_id = RefreshToken(raw, verify=False).get('user_id')
+    user = User.objects.filter(pk=user_id, is_active=True).first()
+    if user is None or account_block_reason(user):
+        raise TokenError('Account restricted')
+
+
 def _refresh_sid(raw):
     if not raw:
         return None
@@ -90,6 +98,9 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        ConsentRecord.objects.bulk_create([
+            ConsentRecord(user=user, kind=kind, version=settings.POLICY_VERSION, granted=True)
+            for kind in (ConsentRecord.KIND_TERMS, ConsentRecord.KIND_PRIVACY)])
         _send_verification(user)
         return _session_response(user, request, status.HTTP_201_CREATED)
 
@@ -102,6 +113,10 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        if serializer.user.deletion_scheduled_at is not None:
+            # Signing in during the grace period cancels the deletion.
+            User.objects.filter(pk=serializer.user.pk).update(deletion_scheduled_at=None)
+            serializer.user.deletion_scheduled_at = None
         if security.mfa_enabled(serializer.user):
             # Password alone isn't enough: hand back a short-lived challenge, not a session.
             return Response({'mfa_required': True, 'mfa_token': security.issue_challenge(serializer.user)})
@@ -150,6 +165,7 @@ class RefreshView(APIView):
         serializer = TokenRefreshSerializer(data={'refresh': raw})
         try:
             serializer.is_valid(raise_exception=True)
+            _refresh_user_allowed(raw)
         except (TokenError, ValidationError, Exception):
             return _clear_refresh_cookie(
                 Response({'detail': 'Session expired.'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -264,21 +280,76 @@ class MeView(generics.RetrieveUpdateAPIView):
         was_opted_out = self.request.user.ai_opt_out
         user = serializer.save()
         if user.ai_opt_out != was_opted_out:
+            ConsentRecord.objects.create(user=user, kind=ConsentRecord.KIND_AI, version=settings.POLICY_VERSION,
+                                         granted=not user.ai_opt_out)
             from retrieval.tasks import apply_ai_opt_out
             transaction.on_commit(lambda: apply_ai_opt_out.delay(user.id))
 
 
 class DeleteAccountView(APIView):
-    """Account deletion requires re-entering the password."""
+    """
+    Account deletion requires re-entering the password, and happens after a
+    grace period: the account is locked and signed out now, and erased for
+    good when the period ends unless the owner signs in again first.
+    """
 
     throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         ReauthSerializer(data=request.data, context={'request': request}).is_valid(raise_exception=True)
+        from .privacy import schedule_deletion
         user = request.user
-        _revoke_all_sessions(user)
-        user.delete()
-        return _clear_refresh_cookie(Response(status=status.HTTP_204_NO_CONTENT))
+        schedule_deletion(user)
+        try:
+            from .tasks import send_deletion_scheduled_email
+            transaction.on_commit(lambda: send_deletion_scheduled_email.delay(user.id))
+        except Exception:
+            logger.warning('Background dispatch failed', exc_info=True)
+        return _clear_refresh_cookie(Response({'deletion_scheduled_at': user.deletion_scheduled_at},
+                                              status=status.HTTP_202_ACCEPTED))
+
+
+class DataExportView(APIView):
+    """Request and list data exports (one at a time, at most twice a day)."""
+
+    throttle_scope = 'export'
+
+    def get_throttles(self):
+        if self.request.method == 'POST':
+            return [*super().get_throttles(), ScopedRateThrottle()]
+        return super().get_throttles()
+
+    def get(self, request):
+        rows = DataExport.objects.filter(user=request.user)[:10]
+        return Response([{'id': e.id, 'status': e.status, 'size_bytes': e.size_bytes, 'created_at': e.created_at,
+                          'expires_at': e.expires_at} for e in rows])
+
+    def post(self, request):
+        if DataExport.objects.filter(user=request.user, status=DataExport.STATUS_PENDING).exists():
+            raise ValidationError({'detail': 'An export is already being prepared.'})
+        export = DataExport.objects.create(user=request.user)
+        from .tasks import run_data_export
+        transaction.on_commit(lambda: run_data_export.delay(export.id))
+        return Response({'id': export.id, 'status': export.status}, status=status.HTTP_202_ACCEPTED)
+
+
+class DataExportDownloadView(APIView):
+    def get(self, request, export_id):
+        from django.http import FileResponse, Http404
+        export = DataExport.objects.filter(pk=export_id, user=request.user, status=DataExport.STATUS_READY).first()
+        if export is None or not export.file or (export.expires_at and export.expires_at < timezone.now()):
+            raise Http404
+        response = FileResponse(export.file.open('rb'), as_attachment=True,
+                                filename=f'andromeda-export-{export.created_at:%Y%m%d}.zip',
+                                content_type='application/zip')
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
+
+class ConsentListView(APIView):
+    def get(self, request):
+        return Response([{'kind': c.kind, 'version': c.version, 'granted': c.granted, 'created_at': c.created_at}
+                         for c in ConsentRecord.objects.filter(user=request.user)[:100]])
 
 
 # ── Devices, two-factor and email verification ────────────────────────────────

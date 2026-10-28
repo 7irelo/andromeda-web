@@ -22,6 +22,10 @@ class User(AbstractUser):
     # Opt out of AI features: content isn't indexed for semantic search or
     # used for training, and AI features are switched off for this account.
     ai_opt_out = models.BooleanField(default=False)
+    # Moderation: a suspended account can't sign in until this time passes.
+    suspended_until = models.DateTimeField(null=True, blank=True)
+    # Account deletion is delayed so a mistaken or hijacked request can be undone.
+    deletion_scheduled_at = models.DateTimeField(null=True, blank=True)
 
     # Denormalised counters (updated by signals)
     friends_count = models.PositiveIntegerField(default=0)
@@ -155,3 +159,39 @@ class MFADevice(models.Model):
     recovery_codes = models.JSONField(default=list)
     created_at = models.DateTimeField(auto_now_add=True)
     enabled_at = models.DateTimeField(null=True, blank=True)
+
+
+class ConsentRecord(models.Model):
+    """Append-only record of what the member agreed to (or withdrew), and when."""
+
+    KIND_TERMS = 'terms'
+    KIND_PRIVACY = 'privacy'
+    KIND_AI = 'ai_features'
+    KIND_CHOICES = [(KIND_TERMS, 'Terms of service'), (KIND_PRIVACY, 'Privacy policy'), (KIND_AI, 'AI features')]
+
+    user = models.ForeignKey(User, related_name='consents', on_delete=models.CASCADE)
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    version = models.CharField(max_length=20)
+    granted = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class DataExport(models.Model):
+    """A downloadable archive of everything a member has on Andromeda (POPIA/GDPR access request)."""
+
+    STATUS_PENDING = 'pending'
+    STATUS_READY = 'ready'
+    STATUS_FAILED = 'failed'
+
+    user = models.ForeignKey(User, related_name='data_exports', on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, default=STATUS_PENDING)
+    file = models.FileField(upload_to=RandomFilename('private/exports'), null=True, blank=True)
+    size_bytes = models.PositiveBigIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']

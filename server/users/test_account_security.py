@@ -174,7 +174,7 @@ class TestEmailVerification:
         with override_settings(FRONTEND_URL='https://andromeda.test'):
             r = APIClient().post('/api/auth/register/', {
                 'username': 'zola', 'email': 'zola@example.com', 'first_name': 'Zola', 'last_name': 'B',
-                'password': 'a-long-unique-pass-9', 'password2': 'a-long-unique-pass-9'}, format='json')
+                'password': PASSWORD, 'password2': PASSWORD, 'accept_terms': True}, format='json')
         assert r.status_code == 201 and r.json()['user']['email_verified'] is False
         body = mail.outbox[-1].body
         token = body.split('token=')[1].split()[0]

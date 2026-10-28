@@ -54,6 +54,7 @@ class TestRegister:
             "last_name": "Brown",
             "password": "securepass99",
             "password2": "securepass99",
+            "accept_terms": True,
         }
         response = api_client.post(url, payload, format="json")
         assert response.status_code == status.HTTP_201_CREATED

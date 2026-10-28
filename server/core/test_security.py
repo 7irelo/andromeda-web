@@ -572,8 +572,9 @@ class TestAccountSecurity:
         c = client_for(alice)
         assert c.post(reverse('me-delete'), {'password': 'wrong'}).status_code == 400
         assert User.objects.filter(pk=alice.pk).exists()
-        assert c.post(reverse('me-delete'), {'password': PASSWORD}).status_code == 204
-        assert not User.objects.filter(pk=alice.pk).exists()
+        assert c.post(reverse('me-delete'), {'password': PASSWORD}).status_code == 202
+        alice.refresh_from_db()
+        assert alice.deletion_scheduled_at is not None  # erased when the grace period ends
 
     def test_me_cannot_change_email_or_username(self, alice):
         client_for(alice).patch(reverse('me'), {'email': 'evil@x.com', 'username': 'root'}, format='json')
@@ -589,7 +590,7 @@ class TestAccountSecurity:
     def test_weak_password_rejected(self, db):
         r = APIClient().post(reverse('register'), {
             'username': 'weak', 'email': 'weak@example.com', 'first_name': 'W', 'last_name': 'P',
-            'password': 'password1', 'password2': 'password1',
+            'password': 'password1', 'password2': 'password1', 'accept_terms': True,
         })
         assert r.status_code == 400
 
