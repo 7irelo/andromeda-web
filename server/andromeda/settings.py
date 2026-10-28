@@ -354,6 +354,8 @@ WATCH_MAX_PROCESSING_PER_USER = int(os.environ.get('WATCH_MAX_PROCESSING_PER_USE
 WATCH_MAX_CAPTION_AUDIO_BYTES = 24 * 1024 * 1024
 # Signed playback links for videos that aren't on the public prefix.
 WATCH_STREAM_TOKEN_MAX_AGE = 6 * 60 * 60
+# Where browsers POST direct (presigned) video uploads: nginx proxies this path, POST only, to the bucket.
+WATCH_DIRECT_UPLOAD_URL = os.environ.get('WATCH_DIRECT_UPLOAD_URL', '/media-upload/')
 PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 # Bump when the terms or privacy policy change; consents record the version agreed to.
