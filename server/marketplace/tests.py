@@ -227,6 +227,16 @@ class TestSaved:
             client_for(alice).patch(detail(item.pk), {'title': 'Same price'}, format='json')
         assert not Notification.objects.exists()
 
+    def test_price_drop_respects_marketplace_preferences(self, alice, bob, django_capture_on_commit_callbacks):
+        from notifications.models import NotificationPreference
+        NotificationPreference.objects.create(
+            user=bob, channels={'marketplace': {'in_app': False, 'push': False, 'email': False}})
+        item = listing(alice, price=500)
+        ListingLike.objects.create(user=bob, listing=item)
+        with django_capture_on_commit_callbacks(execute=True):
+            client_for(alice).patch(detail(item.pk), {'price': '400'}, format='json')
+        assert not Notification.objects.exists()
+
     def test_no_price_drop_for_hidden_listing(self, alice, bob):
         from .tasks import notify_price_drop
         item = listing(alice, price=300, status='sold')
@@ -430,6 +440,13 @@ class TestListingAssistant:
             assert post_draft(alice, images=[evil]).status_code == 400
             assert post_draft(alice, images=[jpeg() for _ in range(5)]).status_code == 400
             assert client_for(alice).post(reverse('listing-draft'), {}, format='multipart').status_code == 400
+        call.assert_not_called()
+
+    def test_ai_opt_out_is_respected(self, alice, ai_on):
+        alice.ai_opt_out = True
+        alice.save(update_fields=['ai_opt_out'])
+        with ai_draft() as call:
+            assert post_draft(alice).status_code == 403
         call.assert_not_called()
 
     def test_ai_unavailable_is_a_friendly_503(self, alice):

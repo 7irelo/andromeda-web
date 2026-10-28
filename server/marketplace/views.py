@@ -292,6 +292,8 @@ class ListingViewSet(viewsets.ModelViewSet):
         Nothing is saved: the seller edits the draft and creates the listing as
         usual, which sends it through moderation.
         """
+        if request.user.ai_opt_out:
+            return Response({'detail': 'You have turned off AI features in your settings.'}, status=403)
         body = DraftRequestSerializer(data=request.data)
         body.is_valid(raise_exception=True)
         files = request.FILES.getlist('images')
