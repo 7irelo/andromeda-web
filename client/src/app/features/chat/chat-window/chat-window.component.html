@@ -1,10 +1,48 @@
 <div class="chat-window">
-  <!-- AI recap -->
-  <div class="catchup-bar">
+  <!-- Header -->
+  <div class="chat-header" *ngIf="room">
+    <div class="title">
+      <strong>{{ title }}</strong>
+      <span class="presence text-xs text-secondary" *ngIf="presenceLabel">
+        <span class="dot" *ngIf="presenceLabel === 'Active now' || presenceLabel.endsWith('online')"></span>{{ presenceLabel }}
+      </span>
+    </div>
+    <button mat-icon-button (click)="toggleSearch()" matTooltip="Search this chat" aria-label="Search this chat">
+      <mat-icon>search</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="room.room_type === 'group'" (click)="showSettings = !showSettings"
+            matTooltip="Group settings" aria-label="Group settings">
+      <mat-icon>settings</mat-icon>
+    </button>
     <button mat-stroked-button (click)="catchUp()" [disabled]="catchingUp">
       <mat-icon>auto_awesome</mat-icon> {{ catchingUp ? 'Summarising...' : 'Catch me up' }}
     </button>
   </div>
+
+  <div class="removed-banner" *ngIf="removed" role="alert">You're no longer a member of this chat.</div>
+
+  <!-- Search -->
+  <div class="search-panel" *ngIf="showSearch" role="search">
+    <div class="search-row">
+      <input class="msg-input" [(ngModel)]="searchQuery" placeholder="Search messages and voice transcripts"
+             (keyup.enter)="runSearch()" maxlength="100" aria-label="Search messages" />
+      <button mat-icon-button (click)="runSearch()" [disabled]="searchQuery.trim().length < 2" aria-label="Search">
+        <mat-icon>search</mat-icon>
+      </button>
+    </div>
+    <div class="text-xs text-secondary" *ngIf="searching">Searching...</div>
+    <div class="text-xs text-secondary" *ngIf="searchResults && !searchResults.length && !searching">No matches.</div>
+    <button class="search-hit" *ngFor="let r of searchResults" (click)="jumpTo(r.id)">
+      <span class="text-xs text-secondary">{{ r.sender?.full_name }} · {{ timeLabel(r.created_at) }}</span>
+      <span>{{ r.message_type === 'voice' ? 'Voice: ' + r.transcript : r.content }}</span>
+    </button>
+  </div>
+
+  <app-group-settings *ngIf="showSettings && room && room.room_type === 'group'" [room]="room"
+                      [currentUserId]="currentUser?.id ?? null" (changed)="onRoomChanged($event)"
+                      (left)="onLeft()" (closed)="showSettings = false"></app-group-settings>
+
+  <!-- AI recap -->
   <div class="catchup-panel" *ngIf="summary || catchUpError" role="region" aria-label="Chat summary">
     <button mat-icon-button class="close" (click)="summary = null; catchUpError = ''" aria-label="Close summary">
       <mat-icon>close</mat-icon>
@@ -32,22 +70,64 @@
     <div
       *ngFor="let msg of messages"
       class="message-row"
+      [id]="'msg-' + msg.id"
       [class.mine]="isMyMessage(msg)"
+      [class.highlight]="highlightId === msg.id"
     >
-      <img
-        *ngIf="!isMyMessage(msg)"
-        [src]="msg.sender?.avatar_url || 'assets/default-avatar.png'"
-        class="avatar sm"
-        [alt]="$safeNavigationMigration(msg.sender?.username)"
-      />
+      <div class="avatar-wrap" *ngIf="!isMyMessage(msg)">
+        <img [src]="msg.sender?.avatar_url || 'assets/default-avatar.png'" class="avatar sm"
+             [alt]="msg.sender?.username ?? ''" />
+        <span class="online-dot" *ngIf="isOnline(msg.sender?.id)" aria-label="online"></span>
+      </div>
       <div class="bubble-wrapper">
         <div class="sender-name text-xs text-secondary" *ngIf="!isMyMessage(msg)">
           {{ msg.sender?.full_name }}
         </div>
+
+        <button class="quote" *ngIf="msg.reply_to_data as parent" (click)="jumpTo(parent.id)"
+                [class.deleted]="parent.is_deleted">
+          <span class="quote-sender">{{ parent.sender ?? 'Deleted user' }}</span>
+          <span class="quote-text">{{ quote(parent) }}</span>
+        </button>
+
         <div class="bubble" [class.mine]="isMyMessage(msg)" [class.deleted]="msg.is_deleted">
-          {{ msg.is_deleted ? 'This message was deleted.' : msg.content }}
+          <ng-container *ngIf="msg.is_deleted; else body">message deleted</ng-container>
+          <ng-template #body>
+            <app-voice-note *ngIf="msg.message_type === 'voice'; else textBody" [message]="msg"></app-voice-note>
+            <ng-template #textBody>{{ msg.content }}</ng-template>
+          </ng-template>
         </div>
-        <div class="msg-time text-xs text-secondary">{{ timeLabel(msg.created_at) }}</div>
+
+        <div class="reaction-chips" *ngIf="msg.reactions.length">
+          <button class="chip" *ngFor="let r of msg.reactions" [class.mine]="msg.my_reaction === r.reaction"
+                  (click)="react(msg, r.reaction)" [attr.aria-label]="r.reaction + ' ' + r.count">
+            {{ emoji(r.reaction) }} {{ r.count }}
+          </button>
+        </div>
+
+        <div class="msg-meta text-xs text-secondary">
+          {{ timeLabel(msg.created_at) }}<span *ngIf="msg.is_edited && !msg.is_deleted"> · edited</span>
+        </div>
+      </div>
+
+      <div class="msg-actions" *ngIf="!msg.is_deleted && !removed">
+        <button mat-icon-button [matMenuTriggerFor]="reactMenu" aria-label="React">
+          <mat-icon>add_reaction</mat-icon>
+        </button>
+        <mat-menu #reactMenu="matMenu" class="react-menu">
+          <div class="react-row">
+            <button mat-button *ngFor="let r of reactions" (click)="react(msg, r.key)" [attr.aria-label]="r.label"
+                    [class.mine]="msg.my_reaction === r.key">{{ r.emoji }}</button>
+          </div>
+        </mat-menu>
+        <button mat-icon-button (click)="startReply(msg)" aria-label="Reply"><mat-icon>reply</mat-icon></button>
+        <button mat-icon-button *ngIf="isMyMessage(msg)" [matMenuTriggerFor]="moreMenu" aria-label="More">
+          <mat-icon>more_horiz</mat-icon>
+        </button>
+        <mat-menu #moreMenu="matMenu">
+          <button mat-menu-item *ngIf="canEdit(msg)" (click)="startEdit(msg)"><mat-icon>edit</mat-icon> Edit</button>
+          <button mat-menu-item (click)="deleteMessage(msg)"><mat-icon>delete</mat-icon> Delete</button>
+        </mat-menu>
       </div>
     </div>
 
@@ -62,24 +142,51 @@
     <div #messagesEnd></div>
   </div>
 
+  <div class="notice text-xs" *ngIf="notice" role="status">{{ notice }}</div>
+
+  <!-- Reply / edit context -->
+  <div class="compose-context" *ngIf="replyingTo || editing">
+    <mat-icon>{{ editing ? 'edit' : 'reply' }}</mat-icon>
+    <div class="ctx-text">
+      <ng-container *ngIf="editing">Editing message</ng-container>
+      <ng-container *ngIf="replyingTo">
+        Replying to <strong>{{ replyingTo.sender?.full_name }}</strong>:
+        {{ replyingTo.message_type === 'voice' ? 'Voice message' : replyingTo.content }}
+      </ng-container>
+    </div>
+    <button mat-icon-button (click)="replyingTo = null; cancelEdit()" aria-label="Cancel"><mat-icon>close</mat-icon></button>
+  </div>
+
   <!-- Input -->
-  <div class="message-input-area">
-    <button mat-icon-button>
-      <mat-icon>add_circle</mat-icon>
-    </button>
-    <input
-      class="msg-input"
-      type="text"
-      [(ngModel)]="messageText"
-      placeholder="Aa"
-      (keyup.enter)="sendMessage()"
-      (input)="onTyping()"
-    />
-    <button mat-icon-button>
-      <mat-icon>emoji_emotions</mat-icon>
-    </button>
-    <button mat-icon-button (click)="sendMessage()" [disabled]="!messageText.trim()">
-      <mat-icon color="primary">send</mat-icon>
-    </button>
+  <div class="message-input-area" *ngIf="!removed">
+    <ng-container *ngIf="!recording; else recordingBar">
+      <button mat-icon-button (click)="startRecording()" [disabled]="uploadingVoice || !!editing"
+              matTooltip="Record a voice message" aria-label="Record a voice message">
+        <mat-icon>{{ uploadingVoice ? 'hourglass_empty' : 'mic' }}</mat-icon>
+      </button>
+      <input
+        class="msg-input"
+        type="text"
+        [(ngModel)]="messageText"
+        [placeholder]="editing ? 'Edit message' : 'Aa'"
+        maxlength="5000"
+        (keyup.enter)="sendMessage()"
+        (keyup.escape)="replyingTo = null; cancelEdit()"
+        (input)="onTyping()"
+      />
+      <button mat-icon-button (click)="sendMessage()" [disabled]="!messageText.trim()"
+              [attr.aria-label]="editing ? 'Save edit' : 'Send'">
+        <mat-icon color="primary">{{ editing ? 'check' : 'send' }}</mat-icon>
+      </button>
+    </ng-container>
+    <ng-template #recordingBar>
+      <button mat-icon-button (click)="stopRecording(false)" aria-label="Discard recording">
+        <mat-icon>delete</mat-icon>
+      </button>
+      <div class="recording" role="status"><span class="rec-dot"></span> Recording {{ recordLabel }} / 5:00</div>
+      <button mat-icon-button (click)="stopRecording(true)" aria-label="Send voice message">
+        <mat-icon color="primary">send</mat-icon>
+      </button>
+    </ng-template>
   </div>
 </div>

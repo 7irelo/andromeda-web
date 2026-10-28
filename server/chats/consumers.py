@@ -1,6 +1,10 @@
 """
 WebSocket consumer for real-time chat.
 URL: ws://host/ws/chat/<room_id>/?ticket=<one-time ticket>
+
+Client frames: message, typing, read, edit, delete, react.
+Server frames: message, message_updated, reaction, typing, read, status,
+presence, room_updated, member_removed, error.
 """
 import logging
 import json
@@ -8,15 +12,23 @@ import time
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.utils import timezone
+
+from . import services
 
 logger = logging.getLogger(__name__)
 
 MAX_FRAME_BYTES = 16 * 1024
-MAX_CONTENT_CHARS = 5000
-# Token bucket: sustained 2 events/s, bursts of 10.
+MAX_CONTENT_CHARS = services.MAX_CONTENT_CHARS
+# Token bucket: sustained 2 events/s, bursts of 10. Shared by every frame type.
 RATE_PER_SECOND = 2.0
 BURST = 10
+# Outgoing events re-check membership and blocks at most this often; removals
+# also push an explicit member_removed event that closes the socket at once.
+RECHECK_SECONDS = 30
+
+
+def _int(value):
+    return int(value) if str(value).isdigit() else None
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -26,8 +38,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
-        self.room_id = self.scope['url_route']['kwargs']['room_id']
-        self.room_group_name = f'chat_{self.room_id}'
+        self.room_id = int(self.scope['url_route']['kwargs']['room_id'])
         self.user = user
         self._tokens = float(BURST)
         self._last = time.monotonic()
@@ -36,13 +47,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4003)
             return
 
+        self.room_group_name = services.group_name(self.room_id)
+        self._member = True
+        self._blocked = await self.load_blocked()
+        self._checked_at = time.monotonic()
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
+        await database_sync_to_async(services.mark_online)(self.user.id)
         await self.broadcast_status('online')
+        await self.send_json({'type': 'presence', 'online': await self.visible_online()})
 
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name') and hasattr(self, 'user'):
-            await self.broadcast_status('offline')
+            remaining = await database_sync_to_async(services.mark_offline)(self.user.id)
+            if not remaining:
+                await self.broadcast_status('offline')
             await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def broadcast_status(self, status):
@@ -64,8 +83,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self._tokens -= 1
         return True
 
+    async def send_json(self, data):
+        await self.send(text_data=json.dumps(data))
+
     async def send_error(self, code, detail):
-        await self.send(text_data=json.dumps({'type': 'error', 'code': code, 'detail': detail}))
+        await self.send_json({'type': 'error', 'code': code, 'detail': detail})
 
     async def receive(self, text_data=None, bytes_data=None):
         if not text_data or len(text_data) > MAX_FRAME_BYTES:
@@ -84,16 +106,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Membership can be revoked while connected (removed, left, blocked).
         if not await self.check_membership(self.user, self.room_id):
+            self._member = False
             await self.close(code=4003)
             return
 
-        msg_type = data.get('type', 'message')
-        if msg_type == 'message':
-            await self.handle_message(data)
-        elif msg_type == 'typing':
-            await self.handle_typing(data)
-        elif msg_type == 'read':
-            await self.handle_read(data)
+        handler = {
+            'message': self.handle_message,
+            'typing': self.handle_typing,
+            'read': self.handle_read,
+            'edit': self.handle_edit,
+            'delete': self.handle_delete,
+            'react': self.handle_react,
+        }.get(data.get('type', 'message'))
+        if handler:
+            await handler(data)
 
     async def handle_message(self, data):
         content = str(data.get('content', '')).strip()
@@ -106,22 +132,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_error('forbidden', 'You can no longer message this person.')
             return
 
-        reply_to_id = data.get('reply_to')
-        reply_to_id = int(reply_to_id) if str(reply_to_id).isdigit() else None
-        message = await self.save_message(content, reply_to_id)
-
-        await self.channel_layer.group_send(self.room_group_name, {
-            'type': 'chat_message',
-            'message_id': message.id,
-            'content': message.content,
-            'message_type': message.message_type,
-            'sender_id': self.user.id,
-            'sender_username': self.user.username,
-            'sender_avatar': self.user.avatar.url if self.user.avatar else None,
-            'reply_to': message.reply_to_id,
-            'created_at': message.created_at.isoformat(),
-        })
-        await self.send_push_notifications(message)
+        message_id, message = await self.save_message(content, _int(data.get('reply_to')))
+        await self.channel_layer.group_send(self.room_group_name, {'type': 'chat_message', 'message': message})
+        await self.send_push_notifications(message_id)
 
     async def handle_typing(self, data):
         await self.channel_layer.group_send(self.room_group_name, {
@@ -132,51 +145,128 @@ class ChatConsumer(AsyncWebsocketConsumer):
         })
 
     async def handle_read(self, data):
-        message_id = data.get('message_id')
-        if str(message_id).isdigit() and await self.mark_message_read(int(message_id)):
+        message_id = _int(data.get('message_id'))
+        if message_id and await database_sync_to_async(services.mark_read)(self.user, self.room_id, message_id):
             await self.channel_layer.group_send(self.room_group_name, {
                 'type': 'message_read',
-                'message_id': int(message_id),
+                'message_id': message_id,
                 'user_id': self.user.id,
             })
 
+    async def _run(self, action, *args):
+        """Run a shared chat action; report refusals to this socket only."""
+        try:
+            return await database_sync_to_async(action)(self.user, self.room_id, *args)
+        except services.ChatActionError as exc:
+            await self.send_error(exc.code, exc.detail)
+            return None
+
+    async def handle_edit(self, data):
+        message_id = _int(data.get('message_id'))
+        if not message_id:
+            return
+        msg = await self._run(services.edit_message, message_id, data.get('content', ''))
+        if msg is not None:
+            await self.broadcast_update(msg)
+
+    async def handle_delete(self, data):
+        message_id = _int(data.get('message_id'))
+        if not message_id:
+            return
+        msg = await self._run(services.delete_message, message_id)
+        if msg is not None:
+            await self.broadcast_update(msg)
+
+    async def handle_react(self, data):
+        message_id = _int(data.get('message_id'))
+        reaction = data.get('reaction')
+        if not message_id or not (reaction is None or isinstance(reaction, str)):
+            return
+        event = await self._run(services.set_reaction, message_id, reaction or None)
+        if event is not None:
+            await self.channel_layer.group_send(self.room_group_name, event)
+
+    async def broadcast_update(self, msg):
+        await self.channel_layer.group_send(self.room_group_name, {
+            'type': 'message_updated', 'message': await database_sync_to_async(services.payload)(msg),
+        })
+
     # ── Channel layer event handlers ──────────────────────────
 
+    async def _may_receive(self):
+        """Cheap periodic re-check so a missed removal event can't leave a socket listening."""
+        if not self._member:
+            return False
+        if time.monotonic() - self._checked_at > RECHECK_SECONDS:
+            self._checked_at = time.monotonic()
+            self._member = await self.check_membership(self.user, self.room_id)
+            self._blocked = await self.load_blocked()
+            if not self._member:
+                await self.close(code=4003)
+        return self._member
+
     async def chat_message(self, event):
-        await self.send(text_data=json.dumps({**event, 'type': 'message'}))
+        if await self._may_receive():
+            await self.send_json({'type': 'message', 'message': event['message']})
+
+    async def message_updated(self, event):
+        if await self._may_receive():
+            await self.send_json({'type': 'message_updated', 'message': event['message']})
+
+    async def message_reaction(self, event):
+        if await self._may_receive():
+            await self.send_json({**event, 'type': 'reaction'})
+
+    async def room_updated(self, event):
+        if await self._may_receive():
+            await self.send_json({'type': 'room_updated', 'room_id': self.room_id})
+
+    async def member_removed(self, event):
+        if event['user_id'] == self.user.id:
+            self._member = False
+            await self.send_json({'type': 'member_removed', 'user_id': self.user.id})
+            await self.close(code=4003)
+        elif await self._may_receive():
+            await self.send_json({'type': 'member_removed', 'user_id': event['user_id']})
 
     async def typing_indicator(self, event):
-        if event['user_id'] != self.user.id:
-            await self.send(text_data=json.dumps({**event, 'type': 'typing'}))
+        if event['user_id'] != self.user.id and event['user_id'] not in self._blocked and await self._may_receive():
+            await self.send_json({**event, 'type': 'typing'})
 
     async def message_read(self, event):
-        await self.send(text_data=json.dumps({**event, 'type': 'read'}))
+        if event['user_id'] not in self._blocked and await self._may_receive():
+            await self.send_json({**event, 'type': 'read'})
 
     async def user_status(self, event):
-        if event['user_id'] != self.user.id:
-            await self.send(text_data=json.dumps({**event, 'type': 'status'}))
+        if event['user_id'] != self.user.id and event['user_id'] not in self._blocked and await self._may_receive():
+            await self.send_json({**event, 'type': 'status'})
 
     # ── DB helpers ────────────────────────────────────────────
 
     @database_sync_to_async
     def check_membership(self, user, room_id):
-        from .models import ChatMember
-        return ChatMember.objects.filter(room_id=room_id, user=user).exists()
+        return services.is_member(room_id, user)
+
+    @database_sync_to_async
+    def load_blocked(self):
+        from core import visibility
+        return visibility.blocked_ids(self.user)
+
+    @database_sync_to_async
+    def visible_online(self):
+        return services.visible_online_ids(self.user, self.room_id)
 
     @database_sync_to_async
     def can_send(self):
-        from core import visibility
         from .models import ChatRoom
-        room = ChatRoom.objects.get(id=self.room_id)
-        if room.room_type != ChatRoom.TYPE_DIRECT:
-            return True
-        other = room.members.exclude(id=self.user.id).first()
-        return other is None or visibility.can_message(self.user, other)
+        return services.can_send(ChatRoom.objects.get(id=self.room_id), self.user)
 
     @database_sync_to_async
     def save_message(self, content, reply_to_id):
+        from django.utils import timezone
         from .models import ChatRoom, Message
-        if reply_to_id and not Message.objects.filter(id=reply_to_id, room_id=self.room_id).exists():
+        if reply_to_id and not Message.objects.filter(
+                id=reply_to_id, room_id=self.room_id, is_deleted=False).exists():
             reply_to_id = None
         msg = Message.objects.create(
             room_id=self.room_id,
@@ -186,22 +276,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             reply_to_id=reply_to_id,
         )
         ChatRoom.objects.filter(pk=self.room_id).update(updated_at=timezone.now())
-        return msg
+        return msg.id, services.payload(services.message_queryset().get(pk=msg.pk))
 
     @database_sync_to_async
-    def mark_message_read(self, message_id):
-        from .models import Message, MessageRead
-        if not Message.objects.filter(id=message_id, room_id=self.room_id).exists():
-            return False
-        MessageRead.objects.get_or_create(message_id=message_id, user=self.user)
-        return True
-
-    @database_sync_to_async
-    def send_push_notifications(self, message):
+    def send_push_notifications(self, message_id):
         try:
             from chats.tasks import notify_offline_members
             notify_offline_members.apply_async(
-                args=[message.id, self.room_id, self.user.id],
+                args=[message_id, self.room_id, self.user.id],
                 queue='messages',
             )
         except Exception:
