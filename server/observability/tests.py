@@ -109,6 +109,19 @@ class TestSentryScrubbing:
         monkeypatch.delenv('SENTRY_DSN', raising=False)
         assert errors.setup() is False
 
+    def test_init_collects_nothing_identifying(self, monkeypatch):
+        import sentry_sdk
+        seen = {}
+        monkeypatch.setenv('SENTRY_DSN', 'https://key@o1.ingest.example.invalid/1')
+        monkeypatch.setattr(errors, '_enabled', False)
+        monkeypatch.setattr(sentry_sdk, 'init', lambda **kw: seen.update(kw))
+        assert errors.setup() is True
+        dc = seen['data_collection']
+        assert dc['user_info'] is False and dc['http_bodies'] == [] and dc['stack_frame_variables'] is False
+        assert dc['cookies'] == dc['url_query_params'] == {'mode': 'off'}
+        assert seen['include_local_variables'] is False and seen['before_send'] is errors.scrub_event
+        assert not seen.get('send_default_pii')
+
 
 class TestErrorTunnel:
     DSN = 'https://publickey@o1.ingest.example.io/12345'

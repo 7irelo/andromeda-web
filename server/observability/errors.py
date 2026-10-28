@@ -1,14 +1,24 @@
 """
 Sentry error reporting. Off unless ``SENTRY_DSN`` is set.
 
-Nothing identifying leaves the server: ``send_default_pii`` is off, stack
-frames carry no local variables, and every event has its auth headers,
-cookies, query string and body stripped before it is sent.
+Nothing identifying leaves the server: automatic data collection is off
+(``DATA_COLLECTION``: the sentry-sdk 2.7x replacement for
+``send_default_pii=False``, which it deprecates, and stricter: no user info,
+cookies, headers, bodies, query params, SQL parameters, task arguments or
+local variables), and every event has its auth headers, cookies, query string
+and body stripped again before it is sent.
 """
 import os
 
 SENSITIVE_HEADERS = {'authorization', 'cookie', 'set-cookie', 'x-csrftoken', 'x-api-key', 'proxy-authorization'}
 _enabled = False
+_OFF = {'mode': 'off'}
+DATA_COLLECTION = {
+    'user_info': False, 'cookies': _OFF, 'http_headers': {'request': _OFF}, 'http_bodies': [],
+    'url_query_params': _OFF, 'graphql': {'document': False, 'variables': False},
+    'gen_ai': {'inputs': False, 'outputs': False}, 'database_query_data': False, 'queues': False,
+    'stack_frame_variables': False,
+}
 
 
 def scrub_event(event, hint=None):
@@ -48,7 +58,7 @@ def setup():
         environment=os.environ.get('SENTRY_ENVIRONMENT', 'production'),
         release=os.environ.get('SENTRY_RELEASE') or None,
         integrations=[DjangoIntegration(), CeleryIntegration()],
-        send_default_pii=False,
+        data_collection=DATA_COLLECTION,
         include_local_variables=False,
         max_request_body_size='never',
         traces_sample_rate=float(os.environ.get('SENTRY_TRACES_SAMPLE_RATE', '0')),

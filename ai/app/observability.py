@@ -146,7 +146,12 @@ def setup_errors():
         return False
     import sentry_sdk
 
+    off = {'mode': 'off'}
+    # data_collection supersedes (and is stricter than) the deprecated send_default_pii=False.
     sentry_sdk.init(dsn=dsn, environment=os.environ.get('SENTRY_ENVIRONMENT', 'production'),
-                    send_default_pii=False, include_local_variables=False, max_request_body_size='never',
+                    data_collection={'user_info': False, 'cookies': off, 'http_headers': {'request': off},
+                                     'http_bodies': [], 'url_query_params': off,
+                                     'gen_ai': {'inputs': False, 'outputs': False}, 'stack_frame_variables': False},
+                    include_local_variables=False, max_request_body_size='never',
                     traces_sample_rate=0.0, before_send=scrub_event)
     return True
