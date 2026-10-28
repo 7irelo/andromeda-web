@@ -54,10 +54,12 @@ INSTALLED_APPS = [
     'outbox.apps.OutboxConfig',
     'feedcache.apps.FeedcacheConfig',
     'imaging.apps.ImagingConfig',
+    'observability.apps.ObservabilityConfig',
 ]
 
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    'observability.request_id.RequestIdMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -319,6 +321,8 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
     SECURE_HSTS_PRELOAD = False
+    # Internal plain-HTTP callers: Prometheus scrapes and container health checks.
+    SECURE_REDIRECT_EXEMPT = [r'^metrics$', r'^api/health/$']
 
 ADMIN_URL = os.environ.get('ADMIN_URL', 'admin/')
 
@@ -449,19 +453,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ============================================================
 # Logging
 # ============================================================
+# JSON lines by default (one object per record, with the request id and, when
+# tracing, the trace id); LOG_FORMAT=text for a human-readable console.
+LOG_FORMAT = os.environ.get('LOG_FORMAT', 'json')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'request_id': {'()': 'observability.request_id.RequestIdFilter'},
+    },
     'formatters': {
+        'json': {'()': 'observability.logs.JsonFormatter'},
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {module} {process:d} [{request_id}] {message}',
             'style': '{',
         },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'json' if LOG_FORMAT == 'json' else 'verbose',
+            'filters': ['request_id'],
         },
     },
     'root': {
@@ -473,3 +485,11 @@ LOGGING = {
         'celery': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
     },
 }
+
+# ============================================================
+# Error reporting & tracing (both off unless configured)
+# ============================================================
+# SENTRY_DSN (backend) is read by observability.errors; tracing turns on when
+# OTEL_EXPORTER_OTLP_ENDPOINT is set (observability.tracing). The frontend's
+# DSN is baked in at build time; the API only relays envelopes for it.
+SENTRY_FRONTEND_DSN = os.environ.get('SENTRY_FRONTEND_DSN', '')

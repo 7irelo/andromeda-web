@@ -5,6 +5,8 @@ URL: ws://host/ws/notifications/?ticket=<one-time ticket>
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from observability import metrics as ws_metrics
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -18,9 +20,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+        ws_metrics.connected('notifications')
 
     async def disconnect(self, close_code):
         if hasattr(self, 'group_name'):
+            ws_metrics.disconnected('notifications', close_code)
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive(self, text_data=None, bytes_data=None):

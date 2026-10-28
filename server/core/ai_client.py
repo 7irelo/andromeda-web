@@ -41,13 +41,19 @@ def _token(user_id):
 
 
 def call(path, payload, user_id):
+    from observability import request_id
+
     if not enabled():
         raise AIUnavailable('AI service is not configured')
+    headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {_token(user_id)}'}
+    rid = request_id.get()
+    if rid:
+        headers[request_id.HEADER] = rid
     try:
         resp = _http.request(
             'POST', settings.AI_SERVICE_URL.rstrip('/') + path,
             body=json.dumps(payload).encode(),
-            headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {_token(user_id)}'},
+            headers=headers,
         )
     except urllib3.exceptions.HTTPError as exc:
         raise AIUnavailable(str(exc)) from exc

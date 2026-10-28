@@ -7,18 +7,29 @@ Model gateway: one interface for every model call.
   never on bad requests, which would fail the same way everywhere.
 - Meters tokens and estimated cost per job, model and user, and enforces the
   per-user daily budget before any call is made.
+- Traces every attempt as an OpenTelemetry span with the GenAI semantic
+  conventions (system, model, token usage) plus ``ai.job``, ``ai.cost_usd``
+  and ``ai.prompt_hash``. Prompts and responses never go into spans: the hash
+  is an HMAC keyed with the service secret, so it can group identical prompts
+  without being reversible by guessing.
 """
+import hashlib
+import hmac
+import json
 import logging
 import time
 from dataclasses import dataclass, field
 from typing import Protocol, TypeVar
 
+from opentelemetry import trace
+from opentelemetry.trace import SpanKind, Status, StatusCode
 from pydantic import BaseModel
 
 from . import metrics
 from .budget import Budget
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer('andromeda.ai.gateway')
 T = TypeVar('T', bound=BaseModel)
 
 
@@ -153,12 +164,53 @@ def estimate_cost(model: str, usage: Usage) -> float:
     return (usage.input_tokens * price_in + usage.output_tokens * price_out) / 1_000_000
 
 
+def prompt_hash(key: bytes, *parts) -> str:
+    """Keyed, truncated hash of the prompt for spans; the text itself is never recorded."""
+    raw = json.dumps(parts, sort_keys=True, default=str, separators=(',', ':')).encode()
+    return hmac.new(key, raw, hashlib.sha256).hexdigest()[:32]
+
+
+def _start_span(operation: str, job: str, route: Route, phash: str, attempt: int):
+    span = tracer.start_span(f'{operation} {route.model}', kind=SpanKind.CLIENT)
+    if span.is_recording():
+        span.set_attributes({
+            'gen_ai.operation.name': operation,
+            'gen_ai.system': route.provider,
+            'gen_ai.provider.name': route.provider,
+            'gen_ai.request.model': route.model,
+            'ai.job': job,
+            'ai.prompt_hash': phash,
+            'ai.attempt': attempt,
+        })
+        if route.max_tokens:
+            span.set_attribute('gen_ai.request.max_tokens', route.max_tokens)
+    return span
+
+
+def _end_span(span, *, usage: Usage | None = None, cost: float | None = None, error: str | None = None,
+              outcome: str = 'ok') -> None:
+    if span.is_recording():
+        span.set_attribute('ai.outcome', outcome)
+        if usage is not None:
+            span.set_attributes({
+                'gen_ai.usage.input_tokens': usage.input_tokens,
+                'gen_ai.usage.output_tokens': usage.output_tokens,
+                'ai.cost_usd': round(cost or 0.0, 8),
+            })
+        if error:
+            # The exception type only: provider messages can echo request content.
+            span.set_attribute('error.type', error)
+            span.set_status(Status(StatusCode.ERROR, error))
+    span.end()
+
+
 @dataclass
 class Gateway:
     providers: dict[str, Provider]
     budget: Budget
     routes: dict[str, list[Route]] = field(default_factory=lambda: ROUTES)
     breakers: dict[str, CircuitBreaker] = field(default_factory=dict)
+    prompt_hash_key: bytes = b''
 
     def _check_budget(self, job: str, user_id: int) -> None:
         if not self.budget.has_room(user_id):
@@ -189,17 +241,23 @@ class Gateway:
     async def embed(self, job: str, *, texts: list[str], user_id: int) -> EmbedResult:
         self._check_budget(job, user_id)
         last_error: Exception | None = None
+        phash = prompt_hash(self.prompt_hash_key, texts)
         for i, route, provider, breaker in self._candidates(job):
             started = time.monotonic()
+            span = _start_span('embeddings', job, route, phash, i)
             try:
-                vectors, usage = await provider.embed(route, texts)
+                # No record_exception: provider errors can echo prompt text.
+                with trace.use_span(span, end_on_exit=False, record_exception=False, set_status_on_exception=False):
+                    vectors, usage = await provider.embed(route, texts)
             except ProviderError as exc:
                 breaker.record(False)
                 metrics.REQUESTS.labels(job, route.provider, route.model, 'error').inc()
+                _end_span(span, error=type(exc).__name__, outcome='error')
                 last_error = exc
                 continue
             breaker.record(True)
             cost = self._meter(job, route, usage, time.monotonic() - started, user_id, i > 0)
+            _end_span(span, usage=usage, cost=cost)
             return EmbedResult(vectors, route.model, usage, cost)
         raise AllRoutesFailed(job) from last_error
 
@@ -207,22 +265,29 @@ class Gateway:
                          user_id: int) -> Result[T]:
         self._check_budget(job, user_id)
         last_error: Exception | None = None
+        phash = prompt_hash(self.prompt_hash_key, system, user)
         for i, route, provider, breaker in self._candidates(job):
             started = time.monotonic()
+            span = _start_span('chat', job, route, phash, i)
             try:
-                output, usage = await provider.structured(route, system, user, schema)
+                # No record_exception: provider errors can echo prompt text.
+                with trace.use_span(span, end_on_exit=False, record_exception=False, set_status_on_exception=False):
+                    output, usage = await provider.structured(route, system, user, schema)
             except Refused:
                 breaker.record(True)
                 metrics.REQUESTS.labels(job, route.provider, route.model, 'refused').inc()
+                _end_span(span, outcome='refused')
                 raise
             except ProviderError as exc:
                 breaker.record(False)
                 metrics.REQUESTS.labels(job, route.provider, route.model, 'error').inc()
                 logger.warning('Route %s/%s failed for %s: %s', route.provider, route.model, job, exc)
+                _end_span(span, error=type(exc).__name__, outcome='error')
                 last_error = exc
                 continue
             latency = time.monotonic() - started
             breaker.record(True)
             cost = self._meter(job, route, usage, latency, user_id, i > 0)
+            _end_span(span, usage=usage, cost=cost)
             return Result(output, route.model, route.provider, usage, cost, latency, fallback_used=i > 0)
         raise AllRoutesFailed(job) from last_error

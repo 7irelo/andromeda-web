@@ -17,9 +17,12 @@ from .features.speech import (DeepgramClient, SpeakRequest, SpeechUnavailable, T
 from .features.retrieval import (AskRequest, AskResult, EmbedRequest, EmbedResult, QueryRequest, QueryResult,
                                  RerankRequest, RerankResult, ask, embed, plan_query, rerank)
 from .gateway import AllRoutesFailed, BudgetExceeded, Gateway, Refused
+from .observability import RequestIdMiddleware, setup_errors, setup_logging, setup_tracing
 from .providers import AnthropicProvider, OpenAIProvider
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s %(name)s %(message)s')
+setup_logging()
+setup_errors()
+logger = logging.getLogger(__name__)
 
 
 def build_gateway() -> tuple[Gateway, OpenAIProvider | None]:
@@ -32,7 +35,8 @@ def build_gateway() -> tuple[Gateway, OpenAIProvider | None]:
         openai_provider = OpenAIProvider(s.openai_api_key.get_secret_value(), s.provider_timeout_seconds)
         providers['openai'] = openai_provider
     budget = Budget(s.daily_user_token_budget, s.redis_url, s.system_daily_token_budget, s.daily_user_audio_seconds)
-    return Gateway(providers=providers, budget=budget), openai_provider
+    return (Gateway(providers=providers, budget=budget,
+                    prompt_hash_key=s.ai_service_secret.get_secret_value().encode()), openai_provider)
 
 
 def build_speech() -> DeepgramClient | None:
@@ -49,6 +53,8 @@ async def lifespan(app: FastAPI):
 
 # No interactive docs: this is an internal service.
 app = FastAPI(title='Andromeda AI', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app.add_middleware(RequestIdMiddleware)
+setup_tracing(app)
 
 
 @app.get('/healthz')
