@@ -8,6 +8,9 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from .auth import ActingUser, acting_user
 from .budget import Budget
 from .config import get_settings
+from .features.assistant import (DraftRequest as AssistantDraftRequest, DraftResult as AssistantDraftResult,
+                                 RouteRequest, RouteResult, StepRequest, StepResult, draft as assistant_draft, route,
+                                 step)
 from .features.catchup import CatchUpRequest, CatchUpResult, catch_up
 from .features.listing import DraftRequest, DraftResult, draft
 from .features.chapters import ChaptersRequest, ChaptersResult, chapters
@@ -150,3 +153,19 @@ async def speak_endpoint(body: SpeakRequest, request: Request, user: ActingUser 
     except SpeechUnavailable:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, 'Speech is temporarily unavailable') from None
     return Response(audio, media_type='audio/mpeg')
+
+
+@app.post('/v1/assistant/route', response_model=RouteResult)
+async def assistant_route_endpoint(body: RouteRequest, request: Request, user: ActingUser = Depends(acting_user)):
+    return await _run(route(body, request.app.state.gateway, user.id), 'The model declined this request')
+
+
+@app.post('/v1/assistant/draft', response_model=AssistantDraftResult)
+async def assistant_draft_endpoint(body: AssistantDraftRequest, request: Request,
+                                   user: ActingUser = Depends(acting_user)):
+    return await _run(assistant_draft(body, request.app.state.gateway, user.id), 'The model declined to write this')
+
+
+@app.post('/v1/assistant/step', response_model=StepResult)
+async def assistant_step_endpoint(body: StepRequest, request: Request, user: ActingUser = Depends(acting_user)):
+    return await _run(step(body, request.app.state.gateway, user.id), 'The model declined this request')

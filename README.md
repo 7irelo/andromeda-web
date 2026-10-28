@@ -116,6 +116,7 @@ short-lived signed service tokens.
 | **Catch me up** | One click in a chat summarises what you missed: topics, decisions and questions for you. Every point cites real message ids, links that weren't in the chat are removed, and blocked users' messages are never sent to the model. |
 | **Smart replies** | Three short reply chips above the chat composer, on request or after a new message. Tapping fills the input, never sends. Only the open chat's latest messages are used, blocked users' messages never are, and only a keyed hash of each suggestion is logged for acceptance metrics and a sticky A/B test between models. |
 | **Help me write** | Rewrite a post or listing draft to be friendlier, more formal or shorter, fix its grammar, or translate it into English, isiZulu, Afrikaans, Sesotho or isiXhosa. The suggestion appears next to your draft with Accept / Discard. |
+| **Assistant** | A side panel that searches, summarises and drafts for you. A Haiku router sends simple requests to fixed workflows and only open-ended ones to an agent loop (Opus plans, tools run in Django as you). Posting or sending always becomes a confirmation card you approve. Runs are durable (append-only steps on a dedicated `ai` queue), every AI-initiated write is audited, and the same tools are available to external apps over MCP with scoped personal access tokens. See [`docs/ai/adr/0001-durable-assistant-runs.md`](docs/ai/adr/0001-durable-assistant-runs.md) and [`docs/ai/mcp-security.md`](docs/ai/mcp-security.md). |
 
 Guardrails include per-user daily token budgets, a cross-provider fallback,
 circuit breakers, prompt-injection delimiting and graceful degradation when
@@ -244,7 +245,7 @@ export NEO4J_BOLT_URL=bolt://neo4j:andromeda_secret@localhost:7687
 python manage.py migrate
 python manage.py seed --users 100
 python manage.py runserver
-celery -A andromeda worker -l info -Q notifications,messages,emails,default,video   # separate terminal; video needs ffmpeg
+celery -A andromeda worker -l info -Q notifications,messages,emails,default,video,ai   # separate terminal; video needs ffmpeg
 ```
 
 **Frontend**

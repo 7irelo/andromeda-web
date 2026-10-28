@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'moderation.apps.ModerationConfig',
     'retrieval.apps.RetrievalConfig',
+    'assistant.apps.AssistantConfig',
     'users.apps.UsersConfig',
     'posts.apps.PostsConfig',
     'chats.apps.ChatsConfig',
@@ -162,6 +163,7 @@ CELERY_TASK_QUEUES = {
     'messages': {},
     'emails': {},
     'video': {},  # ffmpeg transcoding; its own worker with concurrency 1
+    'ai': {},  # assistant runs; its own worker so provider outages can't starve product queues
 }
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 
@@ -188,6 +190,10 @@ CELERY_BEAT_SCHEDULE = {
     'expire-data-exports': {
         'task': 'users.tasks.expire_data_exports',
         'schedule': crontab(hour=2, minute=45),
+    },
+    'assistant-housekeeping': {
+        'task': 'assistant.tasks.housekeeping',
+        'schedule': crontab(minute='*/5'),
     },
     'watch-requeue-stuck-videos': {
         'task': 'watch.tasks.requeue_stuck_videos',
@@ -228,6 +234,8 @@ REST_FRAMEWORK = {
         'report': os.environ.get('THROTTLE_REPORT', '30/hour'),
         'export': os.environ.get('THROTTLE_EXPORT', '2/day'),
         'group_invite': os.environ.get('THROTTLE_GROUP_INVITE', '20/min'),
+        'assistant': os.environ.get('THROTTLE_ASSISTANT', '60/hour'),
+        'mcp': os.environ.get('THROTTLE_MCP', '120/min'),
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }

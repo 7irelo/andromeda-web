@@ -191,7 +191,7 @@ Start-Sleep -Seconds 2
 # ── 11. Celery worker + beat ──────────────────────────────────────────────────
 if (-not $NoCelery) {
     Log "Starting Celery worker..."
-    $WorkerCmd = "cd '$ServerDir'; celery -A andromeda worker --loglevel=info --concurrency=2 -Q notifications,messages,default,video"
+    $WorkerCmd = "cd '$ServerDir'; celery -A andromeda worker --loglevel=info --concurrency=2 -Q notifications,messages,default,video,ai"
     $WorkerProc = Start-Process powershell `
         -ArgumentList "-NoExit", "-Command", $WorkerCmd `
         -WindowStyle Normal -PassThru

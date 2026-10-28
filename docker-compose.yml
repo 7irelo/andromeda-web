@@ -251,6 +251,37 @@ services:
       retries: 3
       start_period: 30s
 
+  # Assistant runs. Their own queue and worker, so a slow or failing model
+  # provider can only back up assistant work, never notifications or chat.
+  celery_ai:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: andromeda_celery_ai
+    restart: unless-stopped
+    command: celery -A andromeda worker --loglevel=info --concurrency=4 --prefetch-multiplier=1 -O fair --task-events -Q ai -n ai@%h
+    env_file:
+      - .env
+    environment:
+      - AI_SERVICE_URL=http://ai:8100
+      - ANTHROPIC_API_KEY=
+      - OPENAI_API_KEY=
+      - DEEPGRAM_API_KEY=
+      - POSTGRES_HOST=postgres
+      - NEO4J_BOLT_URL=bolt://neo4j:${NEO4J_PASSWORD:-andromeda_secret}@neo4j:7687
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:-andromeda_secret}@rabbitmq:5672/andromeda
+    networks:
+      - andromeda_network
+    depends_on:
+      - django
+    healthcheck:
+      test: ["CMD-SHELL", "grep -qa celery /proc/1/cmdline || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   celery_beat:
     build:
       context: ./server

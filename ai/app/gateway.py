@@ -28,6 +28,7 @@ class Route:
     model: str
     max_tokens: int = 1024
     effort: str | None = 'low'
+    timeout_s: float | None = None  # per-call override of the provider timeout
 
 
 # Per-job routing. Primary first, fallbacks after. See the model-selection
@@ -50,6 +51,14 @@ ROUTES: dict[str, list[Route]] = {
                       Route('openai', 'gpt-6.1-terra', 1500, None)],
     'video.chapters': [Route('anthropic', 'claude-haiku-5-5', 1024),
                        Route('openai', 'gpt-6-luna', 1024, None)],
+    # Andromeda Assistant: a cheap router picks a fixed workflow or the agent;
+    # the agent plans on Opus, fixed workflows (answers, drafts) run on Sonnet.
+    'assistant.route': [Route('anthropic', 'claude-haiku-5-5', 512),
+                        Route('openai', 'gpt-6-luna', 512, None)],
+    'assistant.plan': [Route('anthropic', 'claude-opus-5-5', 8000, 'medium', 40.0),
+                       Route('openai', 'gpt-6.1-sol', 8000, None, 40.0)],
+    'assistant.act': [Route('anthropic', 'claude-sonnet-5-5', 4000, 'low', 30.0),
+                      Route('openai', 'gpt-6.1-terra', 4000, None, 30.0)],
     # Anthropic has no embeddings model, so this job has no cross-provider fallback.
     'search.embed': [Route('openai', 'text-embedding-3-small', 0, None)],
     # Smart replies: latency-bound, so small outputs and low effort. One job per A/B variant
@@ -75,6 +84,8 @@ PRICES = {
     'claude-opus-5-5': (4.00, 20.00),
     'gpt-6-luna': (0.10, 0.50),
     'gpt-6.1-terra': (1.00, 5.00),
+    # $2 / $10 per 1M tokens (launch pricing, 2026-09-29; checked 2026-10-28).
+    'gpt-6.1-sol': (2.00, 10.00),
     'text-embedding-3-small': (0.02, 0.0),
     'andromeda-replies-lora': (0.0, 0.0),  # self-hosted: GPU time isn't metered per token
 }
@@ -131,10 +142,37 @@ class EmbedResult:
 UserContent = str | list[dict]
 
 
+# A conversation turn for tool use, provider-neutral so a run can fail over
+# between providers mid-way:
+#   {'role': 'user', 'text': ...}
+#   {'role': 'assistant', 'text': ..., 'tool_calls': [{'id', 'name', 'arguments'}], 'native': {...} | None}
+#   {'role': 'tool', 'results': [{'call_id', 'name', 'content', 'is_error'}]}
+# 'native' is the provider's own content (e.g. Anthropic thinking blocks),
+# replayed unchanged to the same provider and ignored by the other.
+Turn = dict
+
+
+@dataclass
+class ToolCall:
+    id: str
+    name: str
+    arguments: dict
+
+
+@dataclass
+class StepOutput:
+    text: str
+    tool_calls: list[ToolCall]
+    native: dict | None
+    stop: str  # 'tool_use' | 'end'
+
+
 class Provider(Protocol):
     name: str
 
     async def structured(self, route: Route, system: str, user: UserContent, schema: type[T]) -> tuple[T, Usage]: ...
+
+    async def step(self, route: Route, system: str, turns: list[Turn], tools: list[dict]) -> tuple[StepOutput, Usage]: ...
 
 
 @dataclass
@@ -224,6 +262,33 @@ class Gateway:
             started = time.monotonic()
             try:
                 output, usage = await provider.structured(route, system, user, schema)
+            except Refused:
+                breaker.record(True)
+                metrics.REQUESTS.labels(job, route.provider, route.model, 'refused').inc()
+                raise
+            except ProviderError as exc:
+                breaker.record(False)
+                metrics.REQUESTS.labels(job, route.provider, route.model, 'error').inc()
+                logger.warning('Route %s/%s failed for %s: %s', route.provider, route.model, job, exc)
+                last_error = exc
+                continue
+            latency = time.monotonic() - started
+            breaker.record(True)
+            cost = self._meter(job, route, usage, latency, user_id, i > 0)
+            return Result(output, route.model, route.provider, usage, cost, latency, fallback_used=i > 0)
+        raise AllRoutesFailed(job) from last_error
+
+    async def step(self, job: str, *, system: str, turns: list[Turn], tools: list[dict],
+                   user_id: int) -> Result[StepOutput]:
+        """One model turn with tool use: either tool calls to execute or a final answer."""
+        self._check_budget(job, user_id)
+        last_error: Exception | None = None
+        for i, route, provider, breaker in self._candidates(job):
+            if not hasattr(provider, 'step'):
+                continue
+            started = time.monotonic()
+            try:
+                output, usage = await provider.step(route, system, turns, tools)
             except Refused:
                 breaker.record(True)
                 metrics.REQUESTS.labels(job, route.provider, route.model, 'refused').inc()
