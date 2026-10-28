@@ -10,6 +10,7 @@ from .budget import Budget
 from .config import get_settings
 from .features.catchup import CatchUpRequest, CatchUpResult, catch_up
 from .features.listing import DraftRequest, DraftResult, draft
+from .features.chapters import ChaptersRequest, ChaptersResult, chapters
 from .features.moderation import ModerationRequest, ModerationResult, moderate
 from .features.speech import (DeepgramClient, SpeakRequest, SpeechUnavailable, TranscribeRequest, TranscribeResult,
                               transcribe)
@@ -105,6 +106,11 @@ async def ask_endpoint(body: AskRequest, request: Request, user: ActingUser = De
 @app.post('/v1/listing/draft', response_model=DraftResult)
 async def listing_draft_endpoint(body: DraftRequest, request: Request, user: ActingUser = Depends(acting_user)):
     return await _run(draft(body, request.app.state.gateway, user.id), 'The model declined to describe these photos')
+
+
+@app.post('/v1/video/chapters', response_model=ChaptersResult)
+async def chapters_endpoint(body: ChaptersRequest, request: Request, user: ActingUser = Depends(acting_user)):
+    return await _run(chapters(body, request.app.state.gateway, user.id), 'The model declined to chapter this video')
 
 
 @app.post('/v1/transcribe', response_model=TranscribeResult)

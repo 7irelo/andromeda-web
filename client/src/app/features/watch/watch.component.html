@@ -1,6 +1,10 @@
 <div class="watch-page">
   <div class="watch-header">
     <h1>Watch</h1>
+    <a mat-stroked-button routerLink="/watch/history">
+      <mat-icon>history</mat-icon>
+      History
+    </a>
   </div>
 
   <div class="upload-card card">
@@ -10,6 +14,7 @@
         type="text"
         placeholder="Title (optional)"
         [(ngModel)]="uploadTitle"
+        maxlength="255"
         class="upload-input"
       />
       <textarea
@@ -17,6 +22,7 @@
         [(ngModel)]="uploadDescription"
         class="upload-input upload-textarea"
       ></textarea>
+      <mat-checkbox [(ngModel)]="uploadPublic">Public (anyone can watch it)</mat-checkbox>
       <div class="upload-actions">
         <button mat-stroked-button (click)="videoInput.click()" [disabled]="uploading">
           <mat-icon>upload_file</mat-icon>
@@ -27,29 +33,24 @@
           {{ uploading ? 'Uploading...' : 'Upload' }}
         </button>
       </div>
+      <div class="text-secondary text-xs">MP4, MOV or WebM, up to 500 MB and 20 minutes.</div>
     </div>
-    <input #videoInput type="file" hidden accept="video/*" (change)="onVideoSelected($event)" />
+    <input #videoInput type="file" hidden accept="video/mp4,video/quicktime,video/webm" (change)="onVideoSelected($event)" />
   </div>
+
+  <mat-button-toggle-group class="feed-toggle" [value]="feed" (change)="setFeed($event.value)" aria-label="Which videos">
+    <mat-button-toggle value="all">All videos</mat-button-toggle>
+    <mat-button-toggle value="subscriptions">Subscriptions</mat-button-toggle>
+  </mat-button-toggle-group>
 
   <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
 
   <div class="video-grid" *ngIf="!loading">
-    <a class="video-card" *ngFor="let v of videos" [routerLink]="'/watch/' + v.id">
-      <div class="thumbnail-wrap">
-        <img [src]="v.thumbnail || 'assets/default-thumb.png'" [alt]="v.title" class="thumbnail" />
-        <span class="duration">{{ formatDuration(v.duration) }}</span>
-      </div>
-      <div class="video-info">
-        <div class="video-title font-medium">{{ v.title }}</div>
-        <div class="text-secondary text-xs">
-          {{ v.uploader.full_name }} · {{ v.views_count | number }} views
-        </div>
-      </div>
-    </a>
+    <app-video-card *ngFor="let v of videos" [video]="v"></app-video-card>
   </div>
 
   <div *ngIf="!loading && videos.length === 0" class="empty-state">
     <mat-icon>play_circle_outline</mat-icon>
-    <p>No videos yet</p>
+    <p>{{ feed === 'subscriptions' ? 'No videos from channels you subscribe to yet' : 'No videos yet' }}</p>
   </div>
 </div>

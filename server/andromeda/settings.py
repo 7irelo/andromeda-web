@@ -161,6 +161,7 @@ CELERY_TASK_QUEUES = {
     'notifications': {},
     'messages': {},
     'emails': {},
+    'video': {},  # ffmpeg transcoding; its own worker with concurrency 1
 }
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 
@@ -179,6 +180,10 @@ CELERY_BEAT_SCHEDULE = {
     'weekly-listing-digest': {
         'task': 'notifications.tasks.send_listing_digests',
         'schedule': crontab(day_of_week='sat', hour=8, minute=0),
+    },
+    'watch-requeue-stuck-videos': {
+        'task': 'watch.tasks.requeue_stuck_videos',
+        'schedule': crontab(minute=17),
     },
 }
 
@@ -297,6 +302,15 @@ AI_SEARCH_RERANK = os.environ.get('AI_SEARCH_RERANK', 'False') == 'True'
 AI_SEARCH_REWRITE = os.environ.get('AI_SEARCH_REWRITE', 'False') == 'True'
 if AI_SERVICE_SECRET and len(AI_SERVICE_SECRET) < 32:
     raise ImproperlyConfigured('AI_SERVICE_SECRET must be at least 32 characters.')
+
+# ── Watch (video processing) ──────────────────────────────────
+WATCH_MAX_DURATION_SECONDS = int(os.environ.get('WATCH_MAX_DURATION_SECONDS', 20 * 60))
+WATCH_MAX_PROCESSING_PER_USER = int(os.environ.get('WATCH_MAX_PROCESSING_PER_USER', 3))
+# Audio sent for captions is mono 16 kHz Opus (~3 MB per 20 min); the AI
+# service refuses anything over 25 MB.
+WATCH_MAX_CAPTION_AUDIO_BYTES = 24 * 1024 * 1024
+# Signed playback links for videos that aren't on the public prefix.
+WATCH_STREAM_TOKEN_MAX_AGE = 6 * 60 * 60
 PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 

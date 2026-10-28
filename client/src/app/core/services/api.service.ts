@@ -13,7 +13,9 @@ import { AskResponse, SearchResponse, SearchType, SemanticSearchResponse, Semant
 import {
   Group, GroupBan, GroupInvite, GroupInvitePreview, GroupJoinRequest, GroupMember, GroupRole, GroupRule,
 } from '../../models/group.model';
-import { Video, VideoComment } from '../../models/video.model';
+import {
+  ChannelSubscriptionEntry, Video, VideoChannel, VideoComment, VideoDetail, VideoTranscript, WatchHistoryEntry,
+} from '../../models/video.model';
 import { Page, PageRole, PageTeamMember } from '../../models/page.model';
 
 export interface PaginatedResponse<T> {
@@ -528,8 +530,61 @@ export class ApiService {
     return this.http.get<PaginatedResponse<Video>>(`${this.API}/watch/videos/`, { params: httpParams });
   }
 
-  getVideo(id: number): Observable<Video> {
-    return this.http.get<Video>(`${this.API}/watch/videos/${id}/`);
+  getVideo(id: number): Observable<VideoDetail> {
+    return this.http.get<VideoDetail>(`${this.API}/watch/videos/${id}/`);
+  }
+
+  updateVideo(id: number, data: Partial<Pick<Video, 'title' | 'description' | 'is_public' | 'tags'>>): Observable<Video> {
+    return this.http.patch<Video>(`${this.API}/watch/videos/${id}/`, data);
+  }
+
+  deleteVideo(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/watch/videos/${id}/`);
+  }
+
+  retryVideo(id: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/watch/videos/${id}/retry/`, {});
+  }
+
+  /** WebVTT text; served with the same visibility rules as the video. */
+  getVideoCaptions(id: number): Observable<string> {
+    return this.http.get(`${this.API}/watch/videos/${id}/captions/`, { responseType: 'text' });
+  }
+
+  getVideoTranscript(id: number): Observable<VideoTranscript> {
+    return this.http.get<VideoTranscript>(`${this.API}/watch/videos/${id}/transcript/`);
+  }
+
+  saveVideoProgress(id: number, positionS: number): Observable<{ position_s: number }> {
+    return this.http.post<{ position_s: number }>(`${this.API}/watch/videos/${id}/progress/`, { position_s: positionS });
+  }
+
+  getWatchHistory(page = 1): Observable<PaginatedResponse<WatchHistoryEntry>> {
+    return this.http.get<PaginatedResponse<WatchHistoryEntry>>(`${this.API}/watch/history/?page=${page}`);
+  }
+
+  removeFromWatchHistory(videoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/watch/history/${videoId}/`);
+  }
+
+  clearWatchHistory(): Observable<void> {
+    return this.http.delete<void>(`${this.API}/watch/history/clear/`);
+  }
+
+  getVideoChannel(userId: number): Observable<VideoChannel> {
+    return this.http.get<VideoChannel>(`${this.API}/watch/channels/${userId}/`);
+  }
+
+  getChannelSubscriptions(): Observable<PaginatedResponse<ChannelSubscriptionEntry>> {
+    return this.http.get<PaginatedResponse<ChannelSubscriptionEntry>>(`${this.API}/watch/channels/`);
+  }
+
+  subscribeToChannel(userId: number): Observable<VideoChannel> {
+    return this.http.post<VideoChannel>(`${this.API}/watch/channels/${userId}/subscribe/`, {});
+  }
+
+  unsubscribeFromChannel(userId: number): Observable<VideoChannel> {
+    return this.http.delete<VideoChannel>(`${this.API}/watch/channels/${userId}/subscribe/`);
   }
 
   uploadVideo(formData: FormData): Observable<Video> {

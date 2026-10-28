@@ -242,7 +242,7 @@ export NEO4J_BOLT_URL=bolt://neo4j:andromeda_secret@localhost:7687
 python manage.py migrate
 python manage.py seed --users 100
 python manage.py runserver
-celery -A andromeda worker -l info -Q notifications,messages,emails,default   # separate terminal
+celery -A andromeda worker -l info -Q notifications,messages,emails,default,video   # separate terminal; video needs ffmpeg
 ```
 
 **Frontend**

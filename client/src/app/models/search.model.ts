@@ -25,7 +25,7 @@ export interface SemanticHit {
   type: SemanticType;
   score: number;
   matched_by: ('lexical' | 'semantic')[];
-  item: Post & Listing & Group & Page & Video;
+  item: Post & Listing & Group & Page & Omit<Video, 'status'>;
 }
 
 export interface SemanticSearchResponse {

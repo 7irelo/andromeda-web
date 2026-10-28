@@ -75,6 +75,10 @@ export class NotificationsComponent implements OnInit {
       case 'follow':
         return n.sender ? `/profile/${n.sender.username}` : null;
       case 'message': return '/chat';
+      case 'system':
+        // New uploads from channels the user subscribes to.
+        return n.extra?.['kind'] === 'new_video' && Number.isInteger(n.extra?.['video_id'])
+          ? `/watch/${n.extra['video_id']}` : null;
       default: return null;
     }
   }
