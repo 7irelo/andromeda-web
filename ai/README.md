@@ -66,28 +66,35 @@ ruff check .
 
 ```bash
 export ANTHROPIC_API_KEY=... OPENAI_API_KEY=...
-python -m evals.run_moderation --gate 0.65
+python -m evals.run_moderation --dataset moderation_v2.jsonl --gate 0.90
+python -m evals.run_moderation --dataset moderation_holdout_v1.jsonl --gate 0.85
 ```
 
-The golden set ([`evals/datasets/moderation_v1.jsonl`](evals/datasets/moderation_v1.jsonl))
-has 35 synthetic items. It covers clean posts, hard negatives (profanity,
-reclaimed language, news), scams, illegal goods, threats in English and
-isiZulu, hate speech, doxxing, borderline cases and embedded
-prompt-injection attempts.
+Two synthetic sets, both covering clean posts, hard negatives (profanity, figures of speech, sports talk,
+news, helplines), scams, illegal goods, threats, hate speech, doxxing, self-harm signals, borderline cases
+and prompt-injection attempts, in English, isiZulu and Afrikaans:
 
-Baseline (2026-10-27):
+- [`moderation_v2.jsonl`](evals/datasets/moderation_v2.jsonl) (60 items) is the **dev set** the policy is
+  tuned against.
+- [`moderation_holdout_v1.jsonl`](evals/datasets/moderation_holdout_v1.jsonl) (24 items) was written
+  *after* the policy change and is never used for tuning. Its numbers are the honest ones.
 
-| Metric | Value |
-|---|---|
-| Accuracy | 0.857 |
-| Macro-F1 | 0.709 (allow 0.87 · review 0.29 · remove 0.97) |
-| Severe misses (harmful content allowed) | 0 |
-| False removals | 0 |
-| Prompt-injection items handled correctly | 2 / 2 |
-| Escalation rate to Sonnet | 5.7% |
-| Cost | $0.32 per 1,000 items |
-| Latency | p50 2.0 s · p95 4.4 s |
+Policy v1 → v2 (2026-10-28). v2 spells out what counts as borderline (veiled threats, put-downs without
+slurs, fraud signals in listings, self-harm signals), and lets a confident escalation overrule a stage-0
+flag on harmless text such as news headlines.
 
-The `review` class is the weak spot: borderline protest language and vague
-digs are mostly allowed. That's the next thing to improve, through rubric
-examples, then distillation onto a calibrated classifier.
+| Held-out set | Policy v1 | Policy v2 |
+|---|---|---|
+| Macro-F1 | 0.831 | **0.948** |
+| Review recall | 0.75 | **0.92** |
+| Allow F1 | 0.88 | 1.00 |
+| Remove F1 | 0.80 | 0.89 |
+| Severe misses (harmful content allowed) | 0 | 0 |
+| False removals | 0 | 0 |
+
+On the dev set v2 scores macro-F1 0.965 (v1: 0.863). Cost is about $0.8 per 1,000 items, with an escalation
+rate of about 18% and p95 latency of 4–5 s. The remaining errors are judgement calls between review and
+remove (an offer asking for ID and bank details was removed rather than reviewed).
+
+The first baseline (35 items, 2026-10-27) reported review F1 0.29. It had only four review items, so that
+figure was mostly small-sample noise; the larger sets above replace it.

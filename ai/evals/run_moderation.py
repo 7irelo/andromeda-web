@@ -22,7 +22,7 @@ from app.features.moderation import ModerationRequest, moderate
 from app.gateway import Gateway
 from app.providers import AnthropicProvider, OpenAIProvider
 
-DATASET = Path(__file__).parent / 'datasets' / 'moderation_v1.jsonl'
+DATASETS = Path(__file__).parent / 'datasets'
 LABELS = ['allow', 'review', 'remove']
 
 
@@ -32,7 +32,7 @@ def f1(tp, fp, fn):
     return p, r, (2 * p * r / (p + r) if p + r else 0.0)
 
 
-async def run(concurrency: int):
+async def run(concurrency: int, dataset: Path):
     import os
     providers, stage0 = {}, None
     if os.environ.get('ANTHROPIC_API_KEY'):
@@ -41,7 +41,7 @@ async def run(concurrency: int):
         stage0 = OpenAIProvider(os.environ['OPENAI_API_KEY'], 30)
         providers['openai'] = stage0
     gateway = Gateway(providers=providers, budget=Budget(10**9))
-    rows = [json.loads(line) for line in DATASET.read_text(encoding='utf-8').splitlines() if line.strip()]
+    rows = [json.loads(line) for line in dataset.read_text(encoding='utf-8').splitlines() if line.strip()]
     sem = asyncio.Semaphore(concurrency)
 
     async def one(row):
@@ -90,8 +90,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--gate', type=float, default=None, help='Minimum macro-F1')
     ap.add_argument('--concurrency', type=int, default=4)
+    ap.add_argument('--dataset', default='moderation_v2.jsonl', help='File under evals/datasets/')
     args = ap.parse_args()
-    results = asyncio.run(run(args.concurrency))
+    results = asyncio.run(run(args.concurrency, DATASETS / args.dataset))
     summary, table, mistakes = report(results)
     out = Path(__file__).parent / 'results'
     out.mkdir(exist_ok=True)

@@ -30,9 +30,12 @@ jobs:
         id: keys
         run: |
           if [ -z "$ANTHROPIC_API_KEY" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
-      - name: Moderation eval (gate - macro-F1 >= 0.65 and zero severe misses)
+      - name: Moderation eval, dev set (gate - macro-F1 >= 0.90 and zero severe misses)
         if: steps.keys.outputs.skip != 'true'
-        run: python -m evals.run_moderation --gate 0.65
+        run: python -m evals.run_moderation --dataset moderation_v2.jsonl --gate 0.90
+      - name: Moderation eval, held-out set (gate - macro-F1 >= 0.85 and zero severe misses)
+        if: steps.keys.outputs.skip != 'true'
+        run: python -m evals.run_moderation --dataset moderation_holdout_v1.jsonl --gate 0.85
       - uses: actions/upload-artifact@v7
         if: always() && steps.keys.outputs.skip != 'true'
         with:

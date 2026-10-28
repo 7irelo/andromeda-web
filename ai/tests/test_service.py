@@ -113,9 +113,22 @@ def test_unsure_removal_escalates():
     assert [m for m, _ in a.calls] == ['claude-haiku-5-5', 'claude-sonnet-5-5']
 
 
-def test_stage_disagreement_goes_to_review():
-    a = FakeProvider('anthropic', outputs=[verdict(), verdict()])
+def test_stage_disagreement_escalates_and_unsure_goes_to_review():
+    a = FakeProvider('anthropic', outputs=[verdict(), verdict(conf=0.7)])
     res = run(moderate(ModerationRequest(content_type='comment', text='x'), gw(a), 1, FakeStage0(True, 0.6)))
+    assert res.decision == Decision.REVIEW and len(a.calls) == 2
+
+
+def test_confident_escalation_can_overrule_a_stage0_flag():
+    a = FakeProvider('anthropic', outputs=[verdict('allow', 0.9), verdict('allow', 0.95)])
+    res = run(moderate(ModerationRequest(content_type='post', text='Police arrest two suspects'), gw(a), 1,
+                       FakeStage0(True, 0.6)))
+    assert res.decision == Decision.ALLOW and any(c.startswith('stage0_overruled') for c in res.categories)
+
+
+def test_unsure_escalation_keeps_stage0_flag_for_review():
+    a = FakeProvider('anthropic', outputs=[verdict('allow', 0.9), verdict('allow', 0.6)])
+    res = run(moderate(ModerationRequest(content_type='post', text='x'), gw(a), 1, FakeStage0(True, 0.6)))
     assert res.decision == Decision.REVIEW
 
 

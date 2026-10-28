@@ -75,26 +75,43 @@ Remove (clear violations):
   including slurs used as insults
 - doxxing: someone else's ID number, home address or phone number shared without consent
 
-Review (a human should look):
-- borderline or ambiguous cases, satire that could be read as a threat, heated arguments,
-  self-harm content (to route support), suspicious but unproven sales, repetitive promotion
+Review (a human should look). Choose review, not allow, for:
+- conditional or veiled threats, and protest language that talks about damaging or shutting down places
+- put-downs aimed at a person or a group without a slur, including telling someone to leave or that
+  nobody wants them around
+- generalisations that blame a nationality or other group for social problems, short of a direct attack
+- any sign the writer may harm themselves (hopelessness, saying goodbye, giving belongings away), so
+  support can reach them
+- marketplace listings with fraud signals but no proof: price far below market, payment before seeing
+  the item, refusing to meet, vague or suspicious origin, prescription medicines
+- repetitive self-promotion, or money-making offers that ask for personal details
+- trying to find out where a named person lives or can be found
 
 Allow:
 - everything else, including strong opinions, profanity that isn't aimed at a person,
-  reclaimed language used about oneself, news reporting, and normal buying and selling
+  reclaimed language used about oneself, news reporting, sports trash talk, figures of speech
+  ("that exam killed me"), peaceful protest announcements, sharing helplines, and normal buying and selling
 
 Users write in English, isiZulu, isiXhosa, Afrikaans, Sesotho, Setswana and mixtures of them.
 Judge meaning, not keywords. Give your decision, the categories that apply ("none" if clean),
 your confidence, and one short reason."""
 
 
-def _merge(stage0: dict | None, verdict: Verdict) -> tuple[Decision, list[str]]:
+# The stronger model can overrule a stage-0 flag only when it's this sure the
+# content is fine (news headlines and sports talk trip the generic classifier).
+OVERRULE_STAGE0_AT = 0.85
+
+
+def _merge(stage0: dict | None, verdict: Verdict, final: bool = False) -> tuple[Decision, list[str]]:
     decision = Decision(verdict.decision)
     cats = [c for c in verdict.categories if c != 'none']
     if stage0 and stage0['flagged'] and decision == Decision.ALLOW:
-        # The generic classifier and the policy model disagree: let a human decide.
-        decision = Decision.REVIEW
-        cats.append(f"stage0:{stage0['top_category']}")
+        if final and verdict.confidence >= OVERRULE_STAGE0_AT:
+            cats.append(f"stage0_overruled:{stage0['top_category']}")
+        else:
+            # The generic classifier and the policy model disagree: escalate, then let a human decide.
+            decision = Decision.REVIEW
+            cats.append(f"stage0:{stage0['top_category']}")
     return decision, cats
 
 
@@ -131,7 +148,7 @@ async def moderate(req: ModerationRequest, gateway: Gateway, user_id: int, stage
             stages.append(second.model)
             total_cost += second.cost_usd
             result, model = second.output, second.model
-            decision, cats = _merge(stage0, result)
+            decision, cats = _merge(stage0, result, final=True)
     except Refused:
         # A model refusing to engage with the content is itself a strong signal.
         metrics.DECISIONS.labels('review').inc()
