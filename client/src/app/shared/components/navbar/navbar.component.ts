@@ -29,6 +29,7 @@ import { User } from '../../../models/user.model';
 export class NavbarComponent implements OnInit {
   currentUser: User | null = null;
   unreadNotifications = 0;
+  unreadChats = 0;
   searchQuery = '';
   mobileMenuOpen = false;
 
@@ -57,6 +58,8 @@ export class NavbarComponent implements OnInit {
 
     this.authService.currentUser$.subscribe((u) => (this.currentUser = u));
     this.wsService.unreadCount$.subscribe((n) => (this.unreadNotifications = n));
+    this.wsService.chatUnread$.subscribe((n) => (this.unreadChats = n));
+    this.wsService.refreshChatUnread();
     this.apiService.getUnreadCount().subscribe(({ unread_count }) => {
       this.wsService.unreadCount$.next(unread_count);
     });

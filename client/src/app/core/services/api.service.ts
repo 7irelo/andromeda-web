@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Post, Comment } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
-import { CatchUp, ChatRoom, Message } from '../../models/chat.model';
+import { CatchUp, ChatRoom, ChatUnread, Message, MessagesAfter } from '../../models/chat.model';
 import { Notification } from '../../models/notification.model';
 import { Listing, ListingCategory } from '../../models/listing.model';
 import { Group, GroupJoinRequest, GroupMember } from '../../models/group.model';
@@ -128,6 +128,75 @@ export class ApiService {
 
   markRoomRead(roomId: number): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(`${this.API}/chats/rooms/${roomId}/mark_read/`, {});
+  }
+
+  getChatRoom(roomId: number): Observable<ChatRoom> {
+    return this.http.get<ChatRoom>(`${this.API}/chats/rooms/${roomId}/`);
+  }
+
+  /** Reconnect catch-up: messages newer than the last one seen, oldest first. */
+  getRoomMessagesAfter(roomId: number, afterId: number): Observable<MessagesAfter> {
+    return this.http.get<MessagesAfter>(`${this.API}/chats/rooms/${roomId}/messages/`, {
+      params: new HttpParams().set('after_id', afterId),
+    });
+  }
+
+  searchRoomMessages(roomId: number, q: string): Observable<{ query: string; results: Message[] }> {
+    return this.http.get<{ query: string; results: Message[] }>(`${this.API}/chats/rooms/${roomId}/search/`, {
+      params: new HttpParams().set('q', q),
+    });
+  }
+
+  getChatUnread(): Observable<ChatUnread> {
+    return this.http.get<ChatUnread>(`${this.API}/chats/rooms/unread/`);
+  }
+
+  getRoomPresence(roomId: number): Observable<{ online: number[] }> {
+    return this.http.get<{ online: number[] }>(`${this.API}/chats/rooms/${roomId}/presence/`);
+  }
+
+  sendVoiceNote(roomId: number, audio: Blob, filename: string, replyTo?: number | null): Observable<Message> {
+    const form = new FormData();
+    form.append('room', String(roomId));
+    form.append('message_type', 'voice');
+    form.append('file', audio, filename);
+    if (replyTo) form.append('reply_to', String(replyTo));
+    return this.http.post<Message>(`${this.API}/chats/messages/`, form);
+  }
+
+  /** Private attachments need the auth header, so they're fetched as blobs rather than linked. */
+  getMessageFile(messageId: number): Observable<Blob> {
+    return this.http.get(`${this.API}/chats/messages/${messageId}/file/`, { responseType: 'blob' });
+  }
+
+  renameChatRoom(roomId: number, name: string): Observable<ChatRoom> {
+    return this.http.patch<ChatRoom>(`${this.API}/chats/rooms/${roomId}/rename/`, { name });
+  }
+
+  setChatRoomAvatar(roomId: number, file: File): Observable<ChatRoom> {
+    const form = new FormData();
+    form.append('avatar', file);
+    return this.http.post<ChatRoom>(`${this.API}/chats/rooms/${roomId}/avatar/`, form);
+  }
+
+  removeChatRoomAvatar(roomId: number): Observable<ChatRoom> {
+    return this.http.delete<ChatRoom>(`${this.API}/chats/rooms/${roomId}/avatar/`);
+  }
+
+  addChatMember(roomId: number, userId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/chats/rooms/${roomId}/add_member/`, { user_id: userId });
+  }
+
+  removeChatMember(roomId: number, userId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/chats/rooms/${roomId}/remove_member/`, { user_id: userId });
+  }
+
+  setChatMemberRole(roomId: number, userId: number, role: 'admin' | 'member'): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/chats/rooms/${roomId}/set_role/`, { user_id: userId, role });
+  }
+
+  leaveChatRoom(roomId: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.API}/chats/rooms/${roomId}/leave/`, {});
   }
 
   // ── Notifications ─────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { WebSocketService } from '../../core/services/websocket.service';
+import { Subscription } from 'rxjs';
 import { ChatRoom } from '../../models/chat.model';
 import { User } from '../../models/user.model';
 
@@ -17,7 +19,7 @@ import { User } from '../../models/user.model';
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./chat.component.scss']
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent implements OnInit, OnDestroy {
   rooms: ChatRoom[] = [];
   currentUser: User | null = null;
   loading = false;
@@ -27,16 +29,38 @@ export class ChatComponent implements OnInit {
   newChatQuery = '';
   newChatResults: User[] = [];
   newChatSearching = false;
+  private subs = new Subscription();
 
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
+    private wsService: WebSocketService,
     private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.currentUser = this.authService.currentUser;
     this.loadRooms();
+    // Keep the open room's preview fresh and float it to the top.
+    this.subs.add(this.wsService.chatMessage$.subscribe((m) => {
+      const room = this.rooms.find((r) => r.id === m.room);
+      if (!room) return;
+      room.last_message = m;
+      this.rooms = [room, ...this.rooms.filter((r) => r !== room)];
+    }));
+    this.subs.add(this.wsService.memberRemoved$.subscribe(() => this.loadRooms()));
+    this.subs.add(this.wsService.roomUpdated$.subscribe(() => this.loadRooms()));
+  }
+
+  ngOnDestroy(): void {
+    this.subs.unsubscribe();
+  }
+
+  preview(room: ChatRoom): string {
+    const m = room.last_message;
+    if (!m) return 'No messages yet';
+    if (m.message_type === 'voice') return 'Voice message';
+    return m.content || 'Attachment';
   }
 
   loadRooms(): void {
@@ -69,6 +93,7 @@ export class ChatComponent implements OnInit {
   }
 
   openRoom(room: ChatRoom): void {
+    room.unread_count = 0;
     this.router.navigate(['/chat', room.id]);
   }
 

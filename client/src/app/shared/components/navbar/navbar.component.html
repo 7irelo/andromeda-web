@@ -42,7 +42,12 @@
   <div class="right-actions">
     <!-- Chat -->
     <a routerLink="/chat" class="action-btn" matTooltip="Messenger" matTooltipPosition="below">
-      <mat-icon>chat</mat-icon>
+      <mat-icon
+        [matBadge]="unreadChats || null"
+        matBadgeColor="warn"
+        matBadgeSize="small"
+        [attr.aria-label]="unreadChats ? unreadChats + ' unread conversations' : null"
+      >chat</mat-icon>
     </a>
 
     <!-- Notifications -->
