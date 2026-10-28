@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { ApiService } from './api.service';
 import { Notification } from '../../models/notification.model';
+import { AssistantEvent } from '../../models/assistant.model';
 import { Message, ReactionEvent, ReactionKey, StatusEvent, TypingEvent } from '../../models/chat.model';
 
 const MAX_BACKOFF_MS = 30_000;
@@ -28,6 +29,8 @@ export class WebSocketService {
   unreadCount$ = new BehaviorSubject<number>(0);
   /** Ids of friends' new posts, for the feed's "new posts" pill. */
   feedNewPost$ = new Subject<number>();
+  /** Assistant run progress (steps, proposals, completion). */
+  assistantEvent$ = new Subject<AssistantEvent>();
   chatMessage$ = new Subject<Message>();
   typing$ = new Subject<TypingEvent>();
   chatError$ = new Subject<{ code: string; detail: string }>();
@@ -66,6 +69,11 @@ export class WebSocketService {
           // Feed events carry only a post id; they are not notifications and don't touch the badge.
           if (data?.type === 'feed.new_post') {
             if (typeof data.post_id === 'number') this.feedNewPost$.next(data.post_id);
+            return;
+          }
+          // Assistant progress: the panel refetches the run; not a notification.
+          if (data?.type === 'assistant.event') {
+            if (typeof data.run_id === 'number') this.assistantEvent$.next(data as AssistantEvent);
             return;
           }
           this.notification$.next(data);

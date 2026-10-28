@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { ApiService } from '../../../core/services/api.service';
 import { User } from '../../../models/user.model';
+import { AssistantPanelComponent } from '../../../features/assistant/assistant-panel.component';
 
 @Component({
     selector: 'app-navbar',
@@ -20,7 +21,7 @@ import { User } from '../../../models/user.model';
         CommonModule, RouterLink, RouterLinkActive,
         MatIconModule, MatBadgeModule, MatMenuModule,
         MatButtonModule, MatDividerModule, MatInputModule,
-        MatTooltipModule, FormsModule,
+        MatTooltipModule, FormsModule, AssistantPanelComponent,
     ],
     templateUrl: './navbar.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -32,6 +33,7 @@ export class NavbarComponent implements OnInit {
   unreadChats = 0;
   searchQuery = '';
   mobileMenuOpen = false;
+  assistantOpen = false;
 
   navItems = [
     { icon: 'home', label: 'Feed', route: '/feed' },

@@ -16,6 +16,7 @@ import { User } from '../../models/user.model';
 import { SecuritySettingsComponent } from './security-settings.component';
 import { NotificationSettingsComponent } from './notification-settings.component';
 import { DataSettingsComponent } from './data-settings.component';
+import { TokenSettingsComponent } from './token-settings.component';
 
 @Component({
     selector: 'app-settings',
@@ -23,7 +24,7 @@ import { DataSettingsComponent } from './data-settings.component';
         CommonModule, FormsModule, ReactiveFormsModule,
         MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
         MatSelectModule, MatSlideToggleModule, MatSnackBarModule, MatProgressSpinnerModule,
-        SecuritySettingsComponent, NotificationSettingsComponent, DataSettingsComponent,
+        SecuritySettingsComponent, NotificationSettingsComponent, DataSettingsComponent, TokenSettingsComponent,
     ],
     template: `
     <div class="settings-page">
@@ -179,6 +180,8 @@ import { DataSettingsComponent } from './data-settings.component';
       <app-security-settings></app-security-settings>
 
       <app-data-settings></app-data-settings>
+
+      <app-token-settings></app-token-settings>
 
       <!-- Danger Zone -->
       <section class="settings-section card danger-zone">

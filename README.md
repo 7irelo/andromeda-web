@@ -114,6 +114,7 @@ short-lived signed service tokens.
 |---|---|
 | **Moderation** | New posts, comments and listings are checked within seconds. OpenAI's free moderation endpoint runs first, then Claude Haiku 5.5 applies the community policy, and Claude Sonnet 5.5 is called only when Haiku is unsure. Clear violations are hidden (the author is notified), and borderline cases go to a staff queue at `/api/moderation/cases/` where every action is audit-logged. |
 | **Catch me up** | One click in a chat summarises what you missed: topics, decisions and questions for you. Every point cites real message ids, links that weren't in the chat are removed, and blocked users' messages are never sent to the model. |
+| **Assistant** | A side panel that searches, summarises and drafts for you. A Haiku router sends simple requests to fixed workflows and only open-ended ones to an agent loop (Opus plans, tools run in Django as you). Posting or sending always becomes a confirmation card you approve. Runs are durable (append-only steps on a dedicated `ai` queue), every AI-initiated write is audited, and the same tools are available to external apps over MCP with scoped personal access tokens. See [`docs/ai/adr/0001-durable-assistant-runs.md`](docs/ai/adr/0001-durable-assistant-runs.md) and [`docs/ai/mcp-security.md`](docs/ai/mcp-security.md). |
 
 Guardrails include per-user daily token budgets, a cross-provider fallback,
 circuit breakers, prompt-injection delimiting and graceful degradation when

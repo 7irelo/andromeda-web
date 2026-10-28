@@ -40,6 +40,12 @@
 
   <!-- Right Actions -->
   <div class="right-actions">
+    <!-- Assistant -->
+    <button class="action-btn" type="button" (click)="assistantOpen = !assistantOpen" matTooltip="Assistant"
+            matTooltipPosition="below" [attr.aria-pressed]="assistantOpen" aria-label="Open the assistant">
+      <mat-icon>auto_awesome</mat-icon>
+    </button>
+
     <!-- Chat -->
     <a routerLink="/chat" class="action-btn" matTooltip="Messenger" matTooltipPosition="below">
       <mat-icon
@@ -93,3 +99,5 @@
     </mat-menu>
   </div>
 </header>
+
+<app-assistant-panel *ngIf="assistantOpen" (closed)="assistantOpen = false"></app-assistant-panel>

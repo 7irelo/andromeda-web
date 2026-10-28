@@ -20,6 +20,9 @@ import { Page, PageRole, PageTeamMember } from '../../models/page.model';
 import {
   DataExportEntry, ModerationActionKind, ModerationCase, MyCase, ReportableType, ReportReason,
 } from '../../models/moderation.model';
+import {
+  AccessToken, AssistantProposal, AssistantRun, NewAccessToken, ProposalStatus, TokenScope,
+} from '../../models/assistant.model';
 
 export interface PaginatedResponse<T> {
   count: number;
@@ -701,5 +704,45 @@ export class ApiService {
 
   downloadDataExport(id: number): Observable<Blob> {
     return this.http.get(`${this.API}/auth/me/exports/${id}/download/`, { responseType: 'blob' });
+  }
+
+  // ── Assistant ──────────────────────────────────────────────────────────────
+  startAssistantRun(request: string, followUpOf: number | null = null): Observable<AssistantRun> {
+    return this.http.post<AssistantRun>(`${this.API}/assistant/runs/`, { request, follow_up_of: followUpOf });
+  }
+
+  getAssistantRuns(): Observable<AssistantRun[]> {
+    return this.http.get<AssistantRun[]>(`${this.API}/assistant/runs/`);
+  }
+
+  getAssistantRun(id: number): Observable<AssistantRun> {
+    return this.http.get<AssistantRun>(`${this.API}/assistant/runs/${id}/`);
+  }
+
+  getAssistantProposals(status: ProposalStatus = 'pending'): Observable<AssistantProposal[]> {
+    return this.http.get<AssistantProposal[]>(`${this.API}/assistant/proposals/`, { params: { status } });
+  }
+
+  /** Commits what the proposal shows. Only the signed-in owner can approve, once. */
+  approveProposal(id: number): Observable<AssistantProposal> {
+    return this.http.post<AssistantProposal>(`${this.API}/assistant/proposals/${id}/approve/`, {});
+  }
+
+  rejectProposal(id: number): Observable<AssistantProposal> {
+    return this.http.post<AssistantProposal>(`${this.API}/assistant/proposals/${id}/reject/`, {});
+  }
+
+  getAccessTokens(): Observable<AccessToken[]> {
+    return this.http.get<AccessToken[]>(`${this.API}/assistant/tokens/`);
+  }
+
+  createAccessToken(name: string, scopes: TokenScope[], expiresInDays: number, password: string):
+    Observable<NewAccessToken> {
+    return this.http.post<NewAccessToken>(`${this.API}/assistant/tokens/`,
+      { name, scopes, expires_in_days: expiresInDays, password });
+  }
+
+  revokeAccessToken(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/assistant/tokens/${id}/`);
   }
 }
