@@ -1,9 +1,8 @@
 from django.contrib.auth.password_validation import validate_password
-from django.db.models import Q
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from core import visibility
+from core import viewer_cache, visibility
 from core.validators import sanitize_image
 from imaging import variants
 from .models import User, FriendRequest
@@ -59,7 +58,8 @@ class UserSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         data = super().to_representation(obj)
         viewer = self._viewer()
-        if viewer is None or (viewer.id != obj.id and not visibility.can_view_profile(viewer, obj)):
+        if viewer is None or (viewer.id != obj.id and not visibility.can_view_profile(
+                viewer, obj, viewer_cache.relations(self))):
             allowed = set(BASIC_FIELDS + RELATIONSHIP_FIELDS)
             data = {k: v for k, v in data.items() if k in allowed}
         return data
@@ -73,31 +73,25 @@ class UserSerializer(serializers.ModelSerializer):
     def get_cover_photo_url(self, obj):
         return _absolute(self.context.get('request'), obj.cover_photo)
 
-    def _pending(self, sender, receiver):
-        return FriendRequest.objects.filter(
-            sender=sender, receiver=receiver, status=FriendRequest.STATUS_PENDING
-        ).exists()
+    # Relationship flags come from the viewer's relations, loaded once per response
+    # (core.viewer_cache), not from a query per user.
 
     def get_is_friend(self, obj):
         viewer = self._viewer()
-        if viewer and viewer.id != obj.id:
-            return FriendRequest.objects.filter(status=FriendRequest.STATUS_ACCEPTED).filter(
-                Q(sender=viewer, receiver=obj) | Q(sender=obj, receiver=viewer)
-            ).exists()
-        return False
+        return bool(viewer and viewer.id != obj.id and obj.id in viewer_cache.relations(self).friends)
 
     def get_friend_request_sent(self, obj):
         viewer = self._viewer()
-        return bool(viewer and viewer.id != obj.id and self._pending(viewer, obj))
+        return bool(viewer and viewer.id != obj.id and obj.id in viewer_cache.relations(self).sent)
 
     def get_friend_request_received(self, obj):
         viewer = self._viewer()
-        return bool(viewer and viewer.id != obj.id and self._pending(obj, viewer))
+        return bool(viewer and viewer.id != obj.id and obj.id in viewer_cache.relations(self).received)
 
     def get_is_blocked(self, obj):
         """True only when the viewer blocked this user (never reveals being blocked)."""
         viewer = self._viewer()
-        return bool(viewer and viewer.blocking_set.filter(blocked=obj).exists())
+        return bool(viewer and obj.id in viewer_cache.relations(self).i_blocked)
 
 
 class MeSerializer(UserSerializer):

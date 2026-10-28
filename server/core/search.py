@@ -39,13 +39,16 @@ def _text_filter(qs, fields, query):
 
 def visible_listings(user):
     from marketplace.models import Listing
-    return Listing.objects.filter(status__in=Listing.PUBLIC_STATUSES).exclude(moderation_status='removed').exclude(
-        seller_id__in=visibility.blocked_ids(user)).prefetch_related('images')
+    from marketplace.views import _with_ratings
+    qs = Listing.objects.filter(status__in=Listing.PUBLIC_STATUSES).exclude(moderation_status='removed').exclude(
+        seller_id__in=visibility.blocked_ids(user)).select_related('seller', 'category').prefetch_related('images')
+    # Ratings and the viewer's saved flag as subqueries, as on the listings endpoint.
+    return _with_ratings(qs, user) if user.is_authenticated else qs
 
 
 def visible_pages(user):
     from pages.models import Page
-    return Page.objects.all()
+    return Page.objects.select_related('created_by')
 
 
 def visible_videos(user):
@@ -57,8 +60,9 @@ def visible_videos(user):
 # What each searchable content type exposes to a viewer, and which text fields
 # lexical search matches. Semantic search reuses the same querysets.
 CONTENT = {
-    'posts': (lambda u: visibility.visible_posts(u).select_related('author'), ['content', 'link_title']),
-    'groups': (visibility.visible_groups, ['name', 'description']),
+    'posts': (lambda u: visibility.visible_posts(u).select_related('author', 'group', 'page', 'shared_post__author')
+              .prefetch_related('media', 'tags'), ['content', 'link_title']),
+    'groups': (lambda u: visibility.visible_groups(u).select_related('created_by'), ['name', 'description']),
     'pages': (visible_pages, ['name', 'description']),
     'listings': (visible_listings, ['title', 'description']),
     'videos': (visible_videos, ['title', 'description']),
@@ -135,5 +139,9 @@ class SearchView(APIView):
         results = {}
         for name, (finder, serializer) in types.items():
             rows = list(finder(request.user, q).distinct()[:limit])
-            results[name] = serializer(rows, many=True, context=ctx).data
+            context = ctx
+            if name == 'posts':
+                from posts.serializers import viewer_state
+                context = {**ctx, 'viewer_state': viewer_state(request.user, rows)}
+            results[name] = serializer(rows, many=True, context=context).data
         return Response({'query': q, 'results': results})
