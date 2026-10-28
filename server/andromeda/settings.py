@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'marketplace.apps.MarketplaceConfig',
     'watch.apps.WatchConfig',
     'pages.apps.PagesConfig',
+    'outbox.apps.OutboxConfig',
 ]
 
 MIDDLEWARE = [
@@ -193,7 +194,30 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'watch.tasks.requeue_stuck_videos',
         'schedule': crontab(minute=17),
     },
+    # Transactional outbox (Neo4j projection). Short expiry so ticks never pile up behind a stalled worker.
+    'outbox-drain': {
+        'task': 'outbox.tasks.drain_outbox',
+        'schedule': float(os.environ.get('OUTBOX_DRAIN_INTERVAL_SECONDS', 5)),
+        'options': {'expires': 10},
+    },
+    'outbox-purge-processed': {
+        'task': 'outbox.tasks.purge_processed',
+        'schedule': crontab(hour=4, minute=10),
+    },
+    'graph-reconcile': {
+        'task': 'outbox.tasks.reconcile_graph',
+        'schedule': crontab(hour=3, minute=40),
+    },
 }
+
+# ── Transactional outbox ──────────────────────────────────────
+OUTBOX_BATCH_SIZE = int(os.environ.get('OUTBOX_BATCH_SIZE', 200))
+OUTBOX_MAX_ATTEMPTS = int(os.environ.get('OUTBOX_MAX_ATTEMPTS', 12))
+OUTBOX_BACKOFF_BASE_SECONDS = 5
+OUTBOX_BACKOFF_MAX_SECONDS = 3600
+OUTBOX_RETENTION_DAYS = 7
+GRAPH_RECONCILE_BATCH = int(os.environ.get('GRAPH_RECONCILE_BATCH', 1000))
+
 
 # ============================================================
 # REST Framework

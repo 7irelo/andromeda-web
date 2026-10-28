@@ -16,13 +16,13 @@ def _recount_posts(author_id):
 def on_post_created(sender, instance, created, **kwargs):
     if created:
         _recount_posts(instance.author_id)
-        graph_sync.enqueue(graph_sync.sync_post, instance.id, instance.author_id)
+        graph_sync.post_created(instance.id, instance.author_id)
 
 
 @receiver(post_delete, sender=Post)
 def on_post_deleted(sender, instance, **kwargs):
     _recount_posts(instance.author_id)
-    graph_sync.enqueue(graph_sync.delete_post, instance.id)
+    graph_sync.post_deleted(instance.id)
 
 
 @receiver(post_save, sender=Like)
@@ -31,7 +31,7 @@ def on_like_created(sender, instance, created, **kwargs):
         Post.objects.filter(pk=instance.post_id).update(
             likes_count=Like.objects.filter(post_id=instance.post_id).count()
         )
-        graph_sync.enqueue(graph_sync.link_like, instance.user_id, instance.post_id)
+        graph_sync.like_added(instance.user_id, instance.post_id)
 
 
 @receiver(post_delete, sender=Like)
@@ -39,7 +39,7 @@ def on_like_deleted(sender, instance, **kwargs):
     Post.objects.filter(pk=instance.post_id).update(
         likes_count=Like.objects.filter(post_id=instance.post_id).count()
     )
-    graph_sync.enqueue(graph_sync.unlink_like, instance.user_id, instance.post_id)
+    graph_sync.like_removed(instance.user_id, instance.post_id)
 
 
 @receiver(post_save, sender=Comment)
