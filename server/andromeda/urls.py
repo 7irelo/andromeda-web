@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from assistant.mcp import MCPView
 from core.search import SearchView
+from observability.views import ErrorTunnelView
 
 
 def health_check(request):
@@ -36,6 +37,8 @@ urlpatterns = [
     path('api/assistant/', include('assistant.urls')),
     path('api/mcp/', MCPView.as_view(), name='mcp'),
     path('api/ranking/', include('ranking.urls')),
+    # Browser error reports, relayed to Sentry (same-origin, so CSP stays 'self').
+    path('api/errors/', ErrorTunnelView.as_view(), name='error-tunnel'),
 
     # OpenAPI schema + docs (admin-only outside DEBUG, see SPECTACULAR_SETTINGS)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

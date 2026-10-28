@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 from rest_framework import serializers
+from core import viewer_cache
 from core.validators import sanitize_image
 from .models import Group, GroupBan, GroupInvite, GroupJoinRequest, GroupMember, GroupRule
 from users.serializers import UserSerializer
@@ -56,24 +57,30 @@ class GroupSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return request.user if request and request.user.is_authenticated else None
 
+    # The viewer's memberships, bans and requests are loaded once per response (core.viewer_cache).
+
+    def _roles(self, user):
+        return viewer_cache.memo(self, ('group_roles', user.id), lambda: dict(
+            GroupMember.objects.filter(user=user).values_list('group_id', 'role')))
+
     def get_is_member(self, obj):
         user = self._user()
-        return bool(user) and obj.memberships.filter(user=user).exists()
+        return bool(user) and obj.id in self._roles(user)
 
     def get_my_role(self, obj):
         user = self._user()
-        if user:
-            m = obj.memberships.filter(user=user).first()
-            return m.role if m else None
-        return None
+        return self._roles(user).get(obj.id) if user else None
 
     def get_is_banned(self, obj):
         user = self._user()
-        return bool(user) and obj.bans.filter(user=user).exists()
+        return bool(user) and obj.id in viewer_cache.memo(self, ('group_bans', user.id), lambda: set(
+            GroupBan.objects.filter(user=user).values_list('group_id', flat=True)))
 
     def get_has_requested(self, obj):
         user = self._user()
-        return bool(user) and obj.join_requests.filter(user=user, status=GroupJoinRequest.STATUS_PENDING).exists()
+        return bool(user) and obj.id in viewer_cache.memo(self, ('group_requests', user.id), lambda: set(
+            GroupJoinRequest.objects.filter(user=user, status=GroupJoinRequest.STATUS_PENDING)
+            .values_list('group_id', flat=True)))
 
 
 class GroupJoinRequestSerializer(serializers.ModelSerializer):

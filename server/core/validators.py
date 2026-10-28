@@ -83,13 +83,18 @@ _VIDEO_SIGNATURES = (
 )
 
 
+def is_video_header(head):
+    """True if the first 16 bytes of a file look like MP4/MOV or WebM/Matroska."""
+    return any(head[off:off + len(sig)] == sig for off, sig in _VIDEO_SIGNATURES)
+
+
 def validate_video(upload):
     if upload.size > MAX_VIDEO_BYTES:
         raise ValidationError(f'Videos must be smaller than {MAX_VIDEO_BYTES // MB} MB.')
     upload.seek(0)
     head = upload.read(16)
     upload.seek(0)
-    if not any(head[off:off + len(sig)] == sig for off, sig in _VIDEO_SIGNATURES):
+    if not is_video_header(head):
         raise ValidationError('Unsupported video type. Use MP4, MOV or WebM.')
     return upload
 

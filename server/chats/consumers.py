@@ -13,6 +13,7 @@ import time
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from observability import metrics as ws_metrics
 from . import services
 
 logger = logging.getLogger(__name__)
@@ -53,12 +54,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self._checked_at = time.monotonic()
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
+        ws_metrics.connected('chat')
         await database_sync_to_async(services.mark_online)(self.user.id)
         await self.broadcast_status('online')
         await self.send_json({'type': 'presence', 'online': await self.visible_online()})
 
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name') and hasattr(self, 'user'):
+            ws_metrics.disconnected('chat', close_code)
             remaining = await database_sync_to_async(services.mark_offline)(self.user.id)
             if not remaining:
                 await self.broadcast_status('offline')

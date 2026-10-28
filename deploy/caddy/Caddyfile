@@ -1,0 +1,51 @@
+# Production edge: automatic HTTPS (Let's Encrypt / ZeroSSL) for {$DOMAIN},
+# HTTP -> HTTPS redirects, HSTS, and a reverse proxy to the client nginx,
+# which serves the Angular app and routes /api, /ws and media.
+#
+# Caddy sets X-Forwarded-For/-Proto/-Host itself and, with no trusted
+# proxies configured, ignores any the client sends.
+{
+	email {$ACME_EMAIL}
+	admin off
+	servers {
+		protocols h1 h2 h3
+	}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		-Server
+		-Via
+	}
+
+	# Largest upload is a 500 MB video; nginx and Django enforce the real limits.
+	request_body {
+		max_size 520MB
+	}
+
+	reverse_proxy client:80 {
+		# Long-lived WebSockets (chat, notifications).
+		stream_timeout 24h
+		stream_close_delay 5m
+	}
+
+	# Access log without credentials or WebSocket tickets.
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>headers>Authorization delete
+				request>headers>Cookie delete
+				resp_headers>Set-Cookie delete
+				request>uri query {
+					delete ticket
+				}
+			}
+		}
+	}
+}

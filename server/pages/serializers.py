@@ -3,8 +3,9 @@ import string
 
 from django.utils.text import slugify
 from rest_framework import serializers
+from core import viewer_cache
 from core.validators import sanitize_image
-from .models import Page, PageAdmin
+from .models import Page, PageAdmin, PageFollow
 from users.serializers import UserSerializer
 
 
@@ -55,8 +56,9 @@ class PageSerializer(serializers.ModelSerializer):
             return None
         if obj.created_by_id == request.user.id:
             return PageAdmin.ROLE_ADMIN
-        role = obj.admins.filter(user=request.user).values_list('role', flat=True).first()
-        return role
+        user = request.user
+        return viewer_cache.memo(self, ('page_roles', user.id), lambda: dict(
+            PageAdmin.objects.filter(user=user).values_list('page_id', 'role'))).get(obj.id)
 
     def validate_avatar(self, value):
         return sanitize_image(value) if value else value
@@ -67,7 +69,9 @@ class PageSerializer(serializers.ModelSerializer):
     def get_is_following(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return obj.followers.filter(user=request.user).exists()
+            user = request.user
+            return obj.id in viewer_cache.memo(self, ('page_follows', user.id), lambda: set(
+                PageFollow.objects.filter(user=user).values_list('page_id', flat=True)))
         return False
 
     def create(self, validated_data):

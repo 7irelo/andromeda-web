@@ -1,5 +1,6 @@
 from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
+from .uploads import DirectUploadCompleteView, DirectUploadView
 from .views import ChannelViewSet, VideoViewSet, WatchHistoryViewSet, stream
 
 router = DefaultRouter()
@@ -8,6 +9,9 @@ router.register('history', WatchHistoryViewSet, basename='watch-history')
 router.register('channels', ChannelViewSet, basename='channel')
 
 urlpatterns = [
+    # Large files go straight to object storage (presigned POST), then are checked and processed.
+    path('uploads/', DirectUploadView.as_view(), name='watch-direct-upload'),
+    path('uploads/complete/', DirectUploadCompleteView.as_view(), name='watch-direct-upload-complete'),
     path('', include(router.urls)),
     # Signed playback links: /api/watch/stream/<token>/master.m3u8 and the
     # relative rendition, segment and image paths it leads to.

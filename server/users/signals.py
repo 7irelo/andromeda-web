@@ -22,24 +22,23 @@ def sync_user_to_graph(sender, instance, update_fields=None, **kwargs):
     relevant = {'username', 'first_name', 'last_name', 'is_verified'}
     if update_fields is not None and not relevant & set(update_fields):
         return
-    graph_sync.enqueue(graph_sync.sync_user, instance.id, instance.username,
-                       instance.full_name, instance.is_verified)
+    graph_sync.user_changed(instance)
 
 
 @receiver(post_delete, sender=User)
 def remove_user_from_graph(sender, instance, **kwargs):
-    graph_sync.enqueue(graph_sync.delete_user, instance.id)
+    graph_sync.user_deleted(instance.id)
 
 
 @receiver(post_save, sender=FriendRequest)
 def on_friend_request_saved(sender, instance, **kwargs):
     if instance.status == FriendRequest.STATUS_ACCEPTED:
         recount_friends(instance.sender_id, instance.receiver_id)
-        graph_sync.enqueue(graph_sync.link_friends, instance.sender_id, instance.receiver_id)
+        graph_sync.friends_linked(instance.sender_id, instance.receiver_id)
 
 
 @receiver(post_delete, sender=FriendRequest)
 def on_friend_request_deleted(sender, instance, **kwargs):
     if instance.status == FriendRequest.STATUS_ACCEPTED:
         recount_friends(instance.sender_id, instance.receiver_id)
-        graph_sync.enqueue(graph_sync.unlink_friends, instance.sender_id, instance.receiver_id)
+        graph_sync.friends_unlinked(instance.sender_id, instance.receiver_id)

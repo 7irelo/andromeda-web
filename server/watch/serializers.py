@@ -1,7 +1,8 @@
 from rest_framework import serializers
+from core import viewer_cache
 from core.validators import sanitize_image, validate_video
 from .access import asset_url
-from .models import ChannelSubscription, Video, VideoComment, WatchProgress
+from .models import ChannelSubscription, Video, VideoComment, VideoLike, WatchProgress
 from users.serializers import UserSerializer
 
 MAX_TAGS = 10
@@ -76,7 +77,8 @@ class VideoSerializer(serializers.ModelSerializer):
     def get_is_liked(self, obj):
         user = self._user()
         if user and user.is_authenticated:
-            return obj.likes.filter(user=user).exists()
+            return obj.id in viewer_cache.memo(self, ('video_likes', user.id), lambda: set(
+                VideoLike.objects.filter(user=user).values_list('video_id', flat=True)))
         return False
 
     def get_thumbnail_url(self, obj):

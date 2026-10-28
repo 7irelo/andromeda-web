@@ -1,10 +1,11 @@
-import { APP_INITIALIZER, ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, ErrorHandler, isDevMode, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { provideServiceWorker } from '@angular/service-worker';
+import { ReportingErrorHandler } from './core/error-reporting';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,6 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     // No provideAnimations(): nothing uses @angular/animations (Material animates with CSS and
     // honours prefers-reduced-motion itself), and the engine was ~75 kB of the initial bundle.
+    { provide: ErrorHandler, useClass: ReportingErrorHandler },
     provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
     {
       // Resume the session from the HttpOnly refresh cookie before the first route guard runs.

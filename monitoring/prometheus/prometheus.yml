@@ -10,7 +10,7 @@ rule_files:
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: []
+        - targets: ["alertmanager:9093"]
 
 scrape_configs:
   # AI service: model calls, tokens, cost, latency, fallbacks
@@ -51,6 +51,11 @@ scrape_configs:
     static_configs:
       - targets: ["postgres_exporter:9187"]
     scrape_interval: 15s
+
+  # Alertmanager (notification failures show up here)
+  - job_name: alertmanager
+    static_configs:
+      - targets: ["alertmanager:9093"]
 
   # Prometheus self-monitoring
   - job_name: prometheus

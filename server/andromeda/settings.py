@@ -53,10 +53,15 @@ INSTALLED_APPS = [
     'marketplace.apps.MarketplaceConfig',
     'watch.apps.WatchConfig',
     'pages.apps.PagesConfig',
+    'outbox.apps.OutboxConfig',
+    'feedcache.apps.FeedcacheConfig',
+    'imaging.apps.ImagingConfig',
+    'observability.apps.ObservabilityConfig',
 ]
 
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    'observability.request_id.RequestIdMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -200,7 +205,37 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'watch.tasks.requeue_stuck_videos',
         'schedule': crontab(minute=17),
     },
+    # Transactional outbox (Neo4j projection). Short expiry so ticks never pile up behind a stalled worker.
+    'outbox-drain': {
+        'task': 'outbox.tasks.drain_outbox',
+        'schedule': float(os.environ.get('OUTBOX_DRAIN_INTERVAL_SECONDS', 5)),
+        'options': {'expires': 10},
+    },
+    'outbox-purge-processed': {
+        'task': 'outbox.tasks.purge_processed',
+        'schedule': crontab(hour=4, minute=10),
+    },
+    'graph-reconcile': {
+        'task': 'outbox.tasks.reconcile_graph',
+        'schedule': crontab(hour=3, minute=40),
+    },
 }
+
+# ── Transactional outbox ──────────────────────────────────────
+OUTBOX_BATCH_SIZE = int(os.environ.get('OUTBOX_BATCH_SIZE', 200))
+OUTBOX_MAX_ATTEMPTS = int(os.environ.get('OUTBOX_MAX_ATTEMPTS', 12))
+OUTBOX_BACKOFF_BASE_SECONDS = 5
+OUTBOX_BACKOFF_MAX_SECONDS = 3600
+OUTBOX_RETENTION_DAYS = 7
+GRAPH_RECONCILE_BATCH = int(os.environ.get('GRAPH_RECONCILE_BATCH', 1000))
+
+# ── Feed candidate cache (Redis lists; an accelerator, never an authority) ──
+FEEDCACHE_ENABLED = os.environ.get('FEEDCACHE_ENABLED', 'True') == 'True'
+# Authors, Pages and groups with more followers/friends/members than this are
+# merged in when the feed is read instead of being pushed to every inbox.
+FEEDCACHE_FANOUT_THRESHOLD = int(os.environ.get('FEEDCACHE_FANOUT_THRESHOLD', 1000))
+FEEDCACHE_MAX_ITEMS = int(os.environ.get('FEEDCACHE_MAX_ITEMS', 500))
+FEEDCACHE_TTL_SECONDS = int(os.environ.get('FEEDCACHE_TTL_SECONDS', 3 * 24 * 60 * 60))
 
 # ============================================================
 # REST Framework
@@ -295,6 +330,8 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
     SECURE_HSTS_PRELOAD = False
+    # Internal plain-HTTP callers: Prometheus scrapes and container health checks.
+    SECURE_REDIRECT_EXEMPT = [r'^metrics$', r'^api/health/$']
 
 ADMIN_URL = os.environ.get('ADMIN_URL', 'admin/')
 
@@ -330,6 +367,8 @@ WATCH_MAX_PROCESSING_PER_USER = int(os.environ.get('WATCH_MAX_PROCESSING_PER_USE
 WATCH_MAX_CAPTION_AUDIO_BYTES = 24 * 1024 * 1024
 # Signed playback links for videos that aren't on the public prefix.
 WATCH_STREAM_TOKEN_MAX_AGE = 6 * 60 * 60
+# Where browsers POST direct (presigned) video uploads: nginx proxies this path, POST only, to the bucket.
+WATCH_DIRECT_UPLOAD_URL = os.environ.get('WATCH_DIRECT_UPLOAD_URL', '/media-upload/')
 PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 # Bump when the terms or privacy policy change; consents record the version agreed to.
@@ -446,19 +485,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ============================================================
 # Logging
 # ============================================================
+# JSON lines by default (one object per record, with the request id and, when
+# tracing, the trace id); LOG_FORMAT=text for a human-readable console.
+LOG_FORMAT = os.environ.get('LOG_FORMAT', 'json')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'request_id': {'()': 'observability.request_id.RequestIdFilter'},
+    },
     'formatters': {
+        'json': {'()': 'observability.logs.JsonFormatter'},
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {module} {process:d} [{request_id}] {message}',
             'style': '{',
         },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'json' if LOG_FORMAT == 'json' else 'verbose',
+            'filters': ['request_id'],
         },
     },
     'root': {
@@ -470,3 +517,11 @@ LOGGING = {
         'celery': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
     },
 }
+
+# ============================================================
+# Error reporting & tracing (both off unless configured)
+# ============================================================
+# SENTRY_DSN (backend) is read by observability.errors; tracing turns on when
+# OTEL_EXPORTER_OTLP_ENDPOINT is set (observability.tracing). The frontend's
+# DSN is baked in at build time; the API only relays envelopes for it.
+SENTRY_FRONTEND_DSN = os.environ.get('SENTRY_FRONTEND_DSN', '')

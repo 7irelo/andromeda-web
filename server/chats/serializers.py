@@ -3,6 +3,7 @@ from collections import Counter
 from rest_framework import serializers
 
 from users.models import User
+from imaging import variants
 from users.serializers import BASIC_FIELDS
 from .models import ChatRoom, ChatMember, Message, MessageReaction
 
@@ -17,6 +18,7 @@ class ChatUserSerializer(serializers.ModelSerializer):
     """
 
     avatar_url = serializers.SerializerMethodField()
+    avatar_variants = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -28,6 +30,9 @@ class ChatUserSerializer(serializers.ModelSerializer):
             return None
         request = self.context.get('request')
         return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
+
+    def get_avatar_variants(self, obj):
+        return variants.urls(obj.avatar, variants.AVATAR_WIDTHS, self.context.get('request'))
 
 
 class MessageSerializer(serializers.ModelSerializer):

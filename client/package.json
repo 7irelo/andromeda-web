@@ -24,6 +24,7 @@
     "@angular/platform-browser-dynamic": "^22.2.3",
     "@angular/router": "^22.2.3",
     "@angular/service-worker": "^22.2.3",
+    "@sentry/angular": "11.7.0",
     "cropperjs": "^1.6.2",
     "hls.js": "1.7.3",
     "rxjs": "~7.8.0",
