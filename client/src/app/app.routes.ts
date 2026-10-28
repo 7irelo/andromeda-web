@@ -39,6 +39,24 @@ export const routes: Routes = [
       import('./features/feed/feed.component').then((m) => m.FeedComponent),
   },
   {
+    path: 'posts/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/posts/post-detail.component').then((m) => m.PostDetailComponent),
+  },
+  {
+    path: 'tags/:name',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/tags/tag-posts.component').then((m) => m.TagPostsComponent),
+  },
+  {
+    path: 'saved',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/saved/saved-posts.component').then((m) => m.SavedPostsComponent),
+  },
+  {
     path: 'profile/:username',
     canActivate: [authGuard],
     loadComponent: () =>

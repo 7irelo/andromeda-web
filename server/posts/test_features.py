@@ -486,7 +486,7 @@ class TestFeed:
             p = Post.objects.create(author=bob, content=f'{i} #tag', shared_post=original if i % 3 == 0 else None)
             Like.objects.create(user=alice, post=p)
         c = client_for(alice)
-        with django_assert_max_num_queries(30):
+        with django_assert_max_num_queries(25):
             r = c.get(reverse('post-list') + '?feed=true')
         assert len(r.data['results']) == 16
         assert all(p['my_reaction'] == 'like' for p in r.data['results'] if p['id'] != original.id)

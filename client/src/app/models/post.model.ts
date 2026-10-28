@@ -14,19 +14,50 @@ export interface Post {
   link_image: string;
   group: number | null;
   page: number | null;
+  /** Present when the post was published into a group. */
+  group_data?: { id: number; name: string } | null;
+  /** Present when the post was published as a page. */
+  page_data?: { id: number; name: string; username: string; avatar_url: string | null } | null;
   likes_count: number;
   comments_count: number;
   shares_count: number;
   shared_post: number | null;
-  shared_post_data: Post | null;
+  /** `{ id: null, unavailable: true }` when the original is no longer visible to you. */
+  shared_post_data: (Post & { unavailable?: boolean }) | null;
   is_edited: boolean;
   /** Only meaningful to the author: 'removed' posts are hidden from everyone else. */
   moderation_status?: 'ok' | 'review' | 'removed';
   tags: { name: string }[];
-  media: { id: number; file: string; media_type: string; order: number }[];
+  media: PostMedia[];
   my_reaction: string | null;
+  is_saved?: boolean;
+  /** Feed only: a short "Why am I seeing this?" explanation. */
+  reason?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface PostMedia {
+  id: number;
+  file: string;
+  media_type: string;
+  order: number;
+}
+
+export interface PostRevision {
+  id: number;
+  content: string;
+  created_at: string;
+}
+
+export type FeedSort = 'top' | 'latest';
+
+/** The home feed is cursor-paginated: follow `next_cursor` until it is null. */
+export interface FeedPage {
+  next: string | null;
+  next_cursor: string | null;
+  previous: string | null;
+  results: Post[];
 }
 
 export interface Comment {
@@ -36,8 +67,13 @@ export interface Comment {
   content: string;
   parent: number | null;
   likes_count: number;
+  liked?: boolean;
+  is_edited?: boolean;
+  /** True when you may delete it: your comment, a comment on your post, or you moderate the group/page. */
+  can_delete?: boolean;
   replies: Comment[];
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Reaction {
