@@ -194,3 +194,30 @@ def test_assistant_endpoints_require_token_and_degrade(client):  # noqa: F811
     headers = {'Authorization': f'Bearer {token()}'}
     assert client.post('/v1/assistant/step', json=body, headers=headers).status_code == 503
     assert client.post('/v1/assistant/route', json={'request': 'hi'}, headers=headers).status_code == 503
+
+
+# ── Eval harness ─────────────────────────────────────────────────────────────
+
+def test_assistant_eval_harness_scores_the_scripted_trajectories():
+    """Offline self-check: replaying each task's expected trajectory must score 100%."""
+    from evals.assistant_world import TOOLS as WORLD_TOOLS
+    from evals.run_assistant import evaluate, load, report
+    rows = load()
+    assert len(rows) >= 30 and len({r['id'] for r in rows}) == len(rows)
+    names = {t['name'] for t in WORLD_TOOLS}
+    assert all(set(r.get('tools', [])) <= names for r in rows)
+    summary = report(run(evaluate(rows, scripted=True)))
+    assert summary['failures'] == [] and summary['task_success'] == 1.0
+    assert summary['trajectory_quality'] == 1.0 and summary['cost_usd_per_task'] > 0
+
+
+def test_eval_scoring_catches_forbidden_and_redundant_calls():
+    from evals.run_assistant import score
+    row = {'id': 'x', 'path': 'agent', 'tools': ['search_content'], 'forbidden': ['send_message'], 'proposal': None}
+    bad = {'row': row, 'path': 'agent', 'answer': 'ok', 'steps': 3, 'cost_usd': 0.01, 'latency_s': 1,
+           'calls': [('search_content', {'query': 'a'}), ('search_content', {'query': 'a'}),
+                     ('send_message', {'to_user_id': 2, 'text': 'x'})],
+           'proposals': [{'tool': 'send_message'}]}
+    s = score(bad)
+    assert not s['success'] and not s['trajectory_ok'] and s['redundant_calls'] == 1
+    assert set(s['failed_checks']) == {'forbidden', 'end_state'}
