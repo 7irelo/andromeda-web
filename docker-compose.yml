@@ -222,7 +222,7 @@ services:
       dockerfile: Dockerfile
     container_name: andromeda_celery_video
     restart: unless-stopped
-    command: celery -A andromeda worker --loglevel=info --concurrency=1 --prefetch-multiplier=1 --task-events -Q video -n video@%h
+    command: celery -A andromeda worker --loglevel=info --concurrency=1 --prefetch-multiplier=1 -O fair --task-events -Q video -n video@%h
     env_file:
       - .env
     environment:

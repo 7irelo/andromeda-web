@@ -137,7 +137,7 @@ def hls(src, out_dir, p, target):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     maxrate, bufsize = {360: ('900k', '1800k'), 720: ('2800k', '5600k')}[target]
-    timeout = int(max(600, p.duration * 3))
+    timeout = int(max(600, p.duration * 1.5))  # 30 min for a 20 min upload
     run('ffmpeg', [
         '-nostdin', '-hide_banner', '-loglevel', 'error', '-y', *_INPUT_GUARDS, '-i', src,
         '-map', '0:v:0', '-map', '0:a:0?', '-sn', '-dn', '-map_metadata', '-1',
