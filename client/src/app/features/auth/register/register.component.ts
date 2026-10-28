@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { User } from '../../../models/user.model';
 import { ImageCropperComponent, ImageCropperResult } from '../../../shared/components/image-cropper/image-cropper.component';
+import { OnboardingComponent } from './onboarding.component';
 
 function passwordMatchValidator(control: AbstractControl) {
   const p = control.get('password');
@@ -28,7 +29,7 @@ function passwordMatchValidator(control: AbstractControl) {
     imports: [
         CommonModule, ReactiveFormsModule, RouterLink,
         MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
-        MatSnackBarModule, MatDialogModule, MatCheckboxModule,
+        MatSnackBarModule, MatDialogModule, MatCheckboxModule, OnboardingComponent,
     ],
     templateUrl: './register.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -146,6 +147,11 @@ export class RegisterComponent {
       },
       error: () => this.snackBar.open('Could not send request', 'Dismiss', { duration: 3000 }),
     });
+  }
+
+  /** After friend suggestions: interests, suggested groups and a first post (OnboardingComponent). */
+  startOnboarding(): void {
+    this.currentStep = 4;
   }
 
   finish(): void {

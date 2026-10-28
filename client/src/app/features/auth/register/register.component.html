@@ -43,8 +43,14 @@
           <mat-icon *ngIf="currentStep > 2">check</mat-icon>
         </div>
         <div class="step-line" [class.active]="currentStep >= 3"></div>
-        <div class="step-dot" [class.active]="currentStep >= 3">3</div>
+        <div class="step-dot" [class.active]="currentStep >= 3" [class.done]="currentStep > 3">
+          <span *ngIf="currentStep <= 3">3</span>
+          <mat-icon *ngIf="currentStep > 3">check</mat-icon>
+        </div>
+        <div class="step-line" [class.active]="currentStep >= 4"></div>
+        <div class="step-dot" [class.active]="currentStep >= 4">4</div>
       </div>
+      <p class="visually-hidden" aria-live="polite" i18n="@@register.stepOf">Step {{ currentStep }} of 4</p>
 
       <!-- ═══ Step 1: Account Info ═══ -->
       <div *ngIf="currentStep === 1" class="step-content fade-in-up">
@@ -195,10 +201,14 @@
           </div>
         </div>
 
-        <button mat-flat-button color="primary" class="submit-btn" (click)="finish()">
-          Get Started
+        <button mat-flat-button color="primary" class="submit-btn" (click)="startOnboarding()" i18n="@@onboarding.continue">
+          Continue
         </button>
       </div>
+
+      <!-- ═══ Step 4: Interests, groups and a first post ═══ -->
+      <app-onboarding *ngIf="currentStep === 4" [firstName]="accountForm.value.first_name ?? ''"
+                      (done)="finish()"></app-onboarding>
     </div>
   </div>
 </div>
