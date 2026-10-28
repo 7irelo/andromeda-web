@@ -1,38 +1,98 @@
 <div class="marketplace-page">
   <div class="marketplace-header">
     <h1>Marketplace</h1>
-    <button mat-flat-button color="primary" (click)="openCreateDialog()">
-      <mat-icon>add</mat-icon> Create Listing
-    </button>
+    <div class="header-actions">
+      <a mat-stroked-button routerLink="/marketplace/saved"><mat-icon>favorite_border</mat-icon> Saved</a>
+      <a mat-stroked-button routerLink="/marketplace/mine"><mat-icon>inventory_2</mat-icon> My listings</a>
+      <button mat-flat-button color="primary" (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> Create Listing
+      </button>
+    </div>
   </div>
 
   <div class="search-bar">
-    <mat-form-field appearance="outline" class="w-full">
+    <mat-form-field appearance="outline" class="search-field">
       <mat-label>Search Marketplace</mat-label>
-      <input matInput [(ngModel)]="searchQuery" (keyup.enter)="load()" placeholder="Search items..." />
+      <input matInput [(ngModel)]="searchQuery" (keyup.enter)="load()" maxlength="100" placeholder="Search items..." />
       <mat-icon matSuffix (click)="load()" style="cursor:pointer">search</mat-icon>
     </mat-form-field>
+    <mat-form-field appearance="outline" class="sort-field">
+      <mat-label>Sort</mat-label>
+      <mat-select [(ngModel)]="sort" (selectionChange)="load()">
+        <mat-option value="">{{ searchQuery ? 'Best match' : 'Newest' }}</mat-option>
+        <mat-option value="newest" *ngIf="searchQuery">Newest</mat-option>
+        <mat-option value="price_asc">Price: low to high</mat-option>
+        <mat-option value="price_desc">Price: high to low</mat-option>
+        <mat-option value="nearest" [disabled]="!hasLocation">Nearest{{ hasLocation ? '' : ' (set a location)' }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-stroked-button class="filters-toggle" (click)="showFilters = !showFilters">
+      <mat-icon>tune</mat-icon> Filters<span *ngIf="activeFilterCount"> ({{ activeFilterCount }})</span>
+    </button>
+  </div>
+
+  <div class="filters card" *ngIf="showFilters">
+    <mat-form-field appearance="outline">
+      <mat-label>Category</mat-label>
+      <mat-select [(ngModel)]="category" (selectionChange)="load()">
+        <mat-option value="">All categories</mat-option>
+        <mat-optgroup *ngFor="let top of categories" [label]="top.name">
+          <mat-option [value]="top.slug">All {{ top.name }}</mat-option>
+          <mat-option *ngFor="let child of top.children" [value]="child.slug">{{ child.name }}</mat-option>
+        </mat-optgroup>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Condition</mat-label>
+      <mat-select multiple [(ngModel)]="conditionFilter" (selectionChange)="load()">
+        <mat-option *ngFor="let c of conditions" [value]="c.value">{{ c.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div class="price-range">
+      <mat-form-field appearance="outline">
+        <mat-label>Min price</mat-label>
+        <input matInput type="number" min="0" [(ngModel)]="minPrice" (change)="load()" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Max price</mat-label>
+        <input matInput type="number" min="0" [(ngModel)]="maxPrice" (change)="load()" />
+      </mat-form-field>
+    </div>
+
+    <div class="location-filter">
+      <mat-form-field appearance="outline">
+        <mat-label>Near</mat-label>
+        <mat-select [ngModel]="myPoint ? '__me' : city" (selectionChange)="$event.value === '__me' ? useMyLocation() : pickCity($event.value)">
+          <mat-option value="">Anywhere</mat-option>
+          <mat-option value="__me" [disabled]="locating">My location</mat-option>
+          <mat-option *ngFor="let c of cities" [value]="c.name">{{ c.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" *ngIf="hasLocation">
+        <mat-label>Within</mat-label>
+        <mat-select [(ngModel)]="radiusKm" (selectionChange)="load()">
+          <mat-option [value]="null">Any distance</mat-option>
+          <mat-option *ngFor="let r of radii" [value]="r">{{ r }} km</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-spinner *ngIf="locating" diameter="20"></mat-spinner>
+    </div>
+
+    <button mat-button (click)="clearFilters()" [disabled]="!activeFilterCount">Clear filters</button>
   </div>
 
   <div *ngIf="loading" class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
 
   <div class="listings-grid" *ngIf="!loading">
-    <a class="listing-card card" *ngFor="let listing of listings" [routerLink]="'/marketplace/' + listing.id">
-      <div class="listing-image">
-        <img [src]="primaryImage(listing)" [alt]="listing.title" />
-        <span class="condition-badge" [class]="'condition-' + listing.condition">
-          {{ listing.condition === 'like_new' ? 'Like New' : (listing.condition | titlecase) }}
-        </span>
-      </div>
-      <div class="listing-info">
-        <div class="listing-price">{{ listing.currency }} {{ listing.price }}</div>
-        <div class="listing-title font-medium">{{ listing.title }}</div>
-        <div class="listing-location text-secondary text-xs">
-          <mat-icon>location_on</mat-icon>
-          {{ listing.location || 'Location not specified' }}
-        </div>
-      </div>
-    </a>
+    <app-listing-card *ngFor="let listing of listings" [listing]="listing"></app-listing-card>
+  </div>
+
+  <div class="load-more" *ngIf="!loading && nextPage">
+    <button mat-stroked-button (click)="loadMore()" [disabled]="loadingMore">
+      {{ loadingMore ? 'Loading…' : 'Load more' }}
+    </button>
   </div>
 
   <div *ngIf="!loading && listings.length === 0" class="empty-state">
@@ -41,56 +101,10 @@
   </div>
 </div>
 
-<!-- ── Create Listing Dialog ───────────────────────────────────── -->
-<div class="edit-overlay" *ngIf="isCreating" (click)="cancelCreate()"></div>
-<div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm">
-  <div class="edit-dialog-header">
-    <h2>Create Listing</h2>
-    <button mat-icon-button (click)="cancelCreate()"><mat-icon>close</mat-icon></button>
-  </div>
-
-  <div class="edit-dialog-body">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Title</mat-label>
-      <input matInput formControlName="title" placeholder="What are you selling?" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Description</mat-label>
-      <textarea matInput formControlName="description" rows="3" placeholder="Describe your item..."></textarea>
-    </mat-form-field>
-
-    <div class="edit-row">
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Price</mat-label>
-        <input matInput type="number" formControlName="price" placeholder="0.00" />
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Currency</mat-label>
-        <input matInput formControlName="currency" />
-      </mat-form-field>
-    </div>
-
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Condition</mat-label>
-      <mat-select formControlName="condition">
-        <mat-option *ngFor="let c of conditions" [value]="c.value">{{ c.label }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Location</mat-label>
-      <mat-icon matPrefix>location_on</mat-icon>
-      <input matInput formControlName="location" placeholder="City, Country" />
-    </mat-form-field>
-  </div>
-
-  <div class="edit-dialog-actions">
-    <button mat-stroked-button (click)="cancelCreate()" [disabled]="saving">Cancel</button>
-    <button mat-flat-button color="primary" (click)="saveCreate()" [disabled]="saving || createForm.invalid">
-      <mat-icon *ngIf="!saving">add</mat-icon>
-      <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
-      {{ saving ? 'Creating...' : 'Create Listing' }}
-    </button>
-  </div>
-</div>
+<app-listing-form
+  *ngIf="isCreating"
+  [categories]="categories"
+  [cities]="cities"
+  (saved)="onCreated($event)"
+  (closed)="isCreating = false"
+></app-listing-form>

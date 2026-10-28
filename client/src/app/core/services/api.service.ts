@@ -6,7 +6,9 @@ import { Post, Comment } from '../../models/post.model';
 import { User, FriendRequest } from '../../models/user.model';
 import { CatchUp, ChatRoom, Message } from '../../models/chat.model';
 import { Notification, NotificationPreferences } from '../../models/notification.model';
-import { Listing, ListingCategory } from '../../models/listing.model';
+import {
+  City, Listing, ListingCategory, ListingDraft, ListingReview, ListingStatus, MyListingCounts, SellerSummary,
+} from '../../models/listing.model';
 import { Group, GroupJoinRequest, GroupMember } from '../../models/group.model';
 import { AskResponse, SearchResponse, SearchType, SemanticSearchResponse, SemanticType } from '../../models/search.model';
 import { Video, VideoComment } from '../../models/video.model';
@@ -269,8 +271,49 @@ export class ApiService {
     return this.http.post(`${this.API}/marketplace/listings/${listingId}/upload_images/`, formData);
   }
 
-  updateListing(id: number, data: Partial<Listing>): Observable<Listing> {
+  updateListing(id: number, data: Partial<Listing> | Record<string, unknown>): Observable<Listing> {
     return this.http.patch<Listing>(`${this.API}/marketplace/listings/${id}/`, data);
+  }
+
+  setListingStatus(id: number, status: ListingStatus): Observable<Listing> {
+    return this.http.patch<Listing>(`${this.API}/marketplace/listings/${id}/`, { status });
+  }
+
+  getMyListings(status?: ListingStatus, page = 1): Observable<PaginatedResponse<Listing>> {
+    let params = new HttpParams().set('mine', 'true').set('page', page);
+    if (status) params = params.set('status', status);
+    return this.http.get<PaginatedResponse<Listing>>(`${this.API}/marketplace/listings/`, { params });
+  }
+
+  getMyListingCounts(): Observable<MyListingCounts> {
+    return this.http.get<MyListingCounts>(`${this.API}/marketplace/listings/mine/counts/`);
+  }
+
+  getSavedListings(page = 1): Observable<PaginatedResponse<Listing>> {
+    return this.http.get<PaginatedResponse<Listing>>(`${this.API}/marketplace/listings/saved/`, {
+      params: new HttpParams().set('page', page),
+    });
+  }
+
+  getListingReviews(id: number): Observable<ListingReview[]> {
+    return this.http.get<ListingReview[]>(`${this.API}/marketplace/listings/${id}/reviews/`);
+  }
+
+  reviewListing(id: number, data: { rating: number; comment?: string }): Observable<ListingReview> {
+    return this.http.post<ListingReview>(`${this.API}/marketplace/listings/${id}/reviews/`, data);
+  }
+
+  getSeller(userId: number): Observable<SellerSummary> {
+    return this.http.get<SellerSummary>(`${this.API}/marketplace/sellers/${userId}/`);
+  }
+
+  getMarketplaceCities(): Observable<City[]> {
+    return this.http.get<City[]>(`${this.API}/marketplace/cities/`);
+  }
+
+  /** Listing Assistant: photos (and an optional note) in, an AI-suggested draft out. Nothing is saved. */
+  draftListing(formData: FormData): Observable<ListingDraft> {
+    return this.http.post<ListingDraft>(`${this.API}/marketplace/listings/draft/`, formData);
   }
 
   deleteListing(id: number): Observable<void> {

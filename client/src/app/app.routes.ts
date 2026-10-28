@@ -94,6 +94,18 @@ export const routes: Routes = [
       import('./features/marketplace/marketplace.component').then((m) => m.MarketplaceComponent),
   },
   {
+    path: 'marketplace/mine',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/marketplace/my-listings/my-listings.component').then((m) => m.MyListingsComponent),
+  },
+  {
+    path: 'marketplace/saved',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/marketplace/saved-listings/saved-listings.component').then((m) => m.SavedListingsComponent),
+  },
+  {
     path: 'marketplace/:id',
     canActivate: [authGuard],
     loadComponent: () =>
