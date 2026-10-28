@@ -159,6 +159,32 @@ jobs:
       - name: Validate compose config
         run: docker compose config --quiet
 
+      - name: Validate the production overlay (only Caddy may publish ports)
+        run: |
+          echo "DOMAIN=ci.example.com" >> .env
+          echo "ACME_EMAIL=ci@example.com" >> .env
+          files="-f docker-compose.yml -f docker-compose.prod.yml"
+          profiles="--profile release --profile tools --profile observability"
+          docker compose $files $profiles config --quiet
+          published=$(docker compose $files $profiles config --format json \
+            | jq -r '.services | to_entries[] | select((.value.ports // []) | length > 0) | .key' | sort -u | xargs)
+          echo "services publishing ports: $published"
+          [ "$published" = "caddy" ] || { echo "only caddy may publish ports in production"; exit 1; }
+
+      - name: Validate Prometheus rules, Alertmanager and collector configs
+        run: |
+          docker run --rm --entrypoint promtool -v "$PWD/monitoring/prometheus:/etc/prometheus:ro" \
+            prom/prometheus:v3.2.1 check config /etc/prometheus/prometheus.yml
+          docker run --rm --entrypoint amtool -v "$PWD/monitoring/alertmanager:/etc/alertmanager:ro" \
+            prom/alertmanager:v0.34.1@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a \
+            check-config /etc/alertmanager/alertmanager.yml
+          docker run --rm -v "$PWD/monitoring/otel/collector.yml:/etc/otelcol/config.yml:ro" \
+            otel/opentelemetry-collector-contrib:0.162.0@sha256:39923a8e431bd1f57be82411999d389fcfe40857492e4365456d97a4c1f74be6 \
+            validate --config=/etc/otelcol/config.yml
+
+      - name: Lint shell scripts
+        run: shellcheck -S warning scripts/*.sh loadtest/seed.sh
+
       - name: Build all images
         run: docker compose build --parallel
 

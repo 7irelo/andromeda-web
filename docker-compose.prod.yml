@@ -1,0 +1,314 @@
+# ============================================================
+# Production overlay
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml ...
+#
+# - Caddy terminates TLS (automatic certificates, HSTS) in front of the client
+#   nginx. It is the only service with published ports: 80 and 443.
+# - Every other published port from the base file is removed (!reset), so
+#   databases, brokers, exporters and dashboards are reachable only on the
+#   internal network (reach Grafana with an SSH tunnel, docs/OPERATIONS.md).
+# - Application images come from GHCR (IMAGE_REGISTRY / IMAGE_TAG), run as
+#   non-root with read-only root filesystems, no capabilities and
+#   no-new-privileges, with memory/CPU limits and restart policies.
+# - Migrations are a one-shot release step (`migrate`, profile "release";
+#   scripts/release.sh), never part of container start-up.
+# - Backups: the `backup-tools` image (profile "tools") is used by
+#   scripts/backup.sh and scripts/restore.sh.
+#
+# Required in .env on the server (see docs/OPERATIONS.md for the full list):
+#   DOMAIN, ACME_EMAIL, SECRET_KEY, ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS,
+#   CORS_ALLOWED_ORIGINS, FRONTEND_URL, MINIO_EXTERNAL_URL and strong
+#   passwords for every service.
+# ============================================================
+
+x-hardened: &hardened
+  restart: always
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+# For services whose base definition already sets no-new-privileges.
+x-restart: &restart
+  restart: always
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+x-app: &app
+  <<: *hardened
+  image: ${IMAGE_REGISTRY:-ghcr.io/7irelo}/andromeda-server:${IMAGE_TAG:-latest}
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop:
+    - ALL
+
+x-app-env: &app-env
+  DEBUG: "False"
+  SECURE_SSL_REDIRECT: "True"
+  SECURE_HSTS_SECONDS: "31536000"
+  LOG_FORMAT: json
+  AWS_S3_URL_PROTOCOL: "https:"
+
+services:
+  # ── Edge ────────────────────────────────────────────────────
+  caddy:
+    <<: *hardened
+    image: caddy:2.11.6-alpine@sha256:d44355d3c2149dc580ce2cac735955d1c08d3d00882c30489c241aa51a5c10d9
+    container_name: andromeda_caddy
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN (the public host name) in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL (certificate notices) in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    networks:
+      - andromeda_network
+    depends_on:
+      - client
+    deploy:
+      resources:
+        limits: {cpus: "1", memory: 256M}
+
+  client:
+    <<: *hardened
+    image: ${IMAGE_REGISTRY:-ghcr.io/7irelo}/andromeda-client:${IMAGE_TAG:-latest}
+    ports: !reset []
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:   # nginx's master starts as root, binds :80 and drops to the nginx user
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    deploy:
+      resources:
+        limits: {cpus: "1", memory: 256M}
+
+  # ── Application ─────────────────────────────────────────────
+  django:
+    <<: *app
+    # Migrations and collectstatic run in the release step, not here.
+    command: uvicorn andromeda.asgi:application --host 0.0.0.0 --port 8000 --workers 4 --ws websockets --no-server-header
+    environment: *app-env
+    ports: !reset []
+    deploy:
+      resources:
+        limits: {cpus: "2", memory: 2G}
+
+  celery_worker:
+    <<: *app
+    environment: *app-env
+    deploy:
+      resources:
+        limits: {cpus: "2", memory: 2G}
+
+  celery_video:
+    <<: *hardened
+    image: ${IMAGE_REGISTRY:-ghcr.io/7irelo}/andromeda-server:${IMAGE_TAG:-latest}
+    read_only: true
+    cap_drop:
+      - ALL
+    environment: *app-env
+    # ffmpeg needs real scratch space for a 500 MB upload and its renditions, not tmpfs.
+    volumes:
+      - video_scratch:/tmp
+    deploy:
+      resources:
+        limits: {cpus: "2", memory: 3G}
+
+  celery_beat:
+    <<: *app
+    environment: *app-env
+    deploy:
+      resources:
+        limits: {cpus: "0.5", memory: 512M}
+
+  flower:
+    <<: *app
+    environment: *app-env
+    ports: !reset []
+    deploy:
+      resources:
+        limits: {cpus: "0.5", memory: 512M}
+
+  ai:
+    <<: *restart
+    image: ${IMAGE_REGISTRY:-ghcr.io/7irelo}/andromeda-ai:${IMAGE_TAG:-latest}
+    environment:
+      LOG_FORMAT: json
+    deploy:
+      resources:
+        limits: {cpus: "1", memory: 1G}
+
+  # One-shot release step: docker compose ... --profile release run --rm migrate
+  migrate:
+    <<: *app
+    container_name: andromeda_migrate
+    profiles: ["release"]
+    restart: "no"
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py check --deploy --fail-level ERROR"
+    env_file:
+      - .env
+    environment:
+      <<: *app-env
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-andromeda}:${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD}@rabbitmq:5672/andromeda
+      NEO4J_BOLT_URL: bolt://neo4j:${NEO4J_PASSWORD:?Set NEO4J_PASSWORD}@neo4j:7687
+    volumes:
+      - static_data:/app/staticfiles
+    networks:
+      - andromeda_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Data ────────────────────────────────────────────────────
+  postgres:
+    <<: *hardened
+    ports: !reset []
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    deploy:
+      resources:
+        limits: {cpus: "2", memory: 2G}
+
+  neo4j:
+    <<: *hardened
+    image: neo4j:5.26.31-community@sha256:c7d25c0eeebfe125718d58b72ed5d663c85d0479047733845eb2237c67ce8069
+    ports: !reset []
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD}
+      NEO4J_server_memory_heap_max__size: 1G
+    deploy:
+      resources:
+        limits: {cpus: "2", memory: 2G}
+
+  redis:
+    <<: *hardened
+    command: redis-server --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD} --appendonly yes
+    ports: !reset []
+    read_only: true
+    deploy:
+      resources:
+        limits: {cpus: "1", memory: 512M}
+
+  rabbitmq:
+    <<: *hardened
+    ports: !reset []
+    environment:
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD}
+    deploy:
+      resources:
+        limits: {cpus: "1", memory: 1G}
+
+  minio:
+    <<: *hardened
+    ports: !reset []
+    environment:
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
+    deploy:
+      resources:
+        limits: {cpus: "1", memory: 1G}
+
+  createbuckets:
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Monitoring (internal only) ──────────────────────────────
+  redis_exporter:
+    <<: *hardened
+    ports: !reset []
+    read_only: true
+    cap_drop:
+      - ALL
+
+  postgres_exporter:
+    <<: *hardened
+    ports: !reset []
+    read_only: true
+    cap_drop:
+      - ALL
+
+  celery_exporter:
+    <<: *restart
+
+  prometheus:
+    <<: *hardened
+    ports: !reset []
+    read_only: true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits: {cpus: "1", memory: 1G}
+
+  alertmanager:
+    <<: *restart
+    ports: !reset []
+
+  grafana:
+    <<: *hardened
+    ports: !reset []
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Set GRAFANA_PASSWORD}
+      GF_SECURITY_COOKIE_SECURE: "true"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits: {cpus: "1", memory: 512M}
+
+  otel-collector:
+    ports: !reset []
+
+  jaeger:
+    ports: !reset []
+
+  # Backup/restore tooling (pg_dump/pg_restore 15, age, mc). Used by scripts/backup.sh.
+  backup-tools:
+    build:
+      context: ./deploy/backup
+    image: andromeda-backup-tools:local
+    profiles: ["tools"]
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - andromeda_network
+
+volumes:
+  caddy_data:
+  caddy_config:
+  video_scratch:
