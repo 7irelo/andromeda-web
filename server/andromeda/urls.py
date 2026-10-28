@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/search/', SearchView.as_view(), name='search'),
     path('api/', include('retrieval.urls')),
     path('api/moderation/', include('moderation.urls')),
+    path('api/ranking/', include('ranking.urls')),
 
     # OpenAPI schema + docs (admin-only outside DEBUG, see SPECTACULAR_SETTINGS)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -52,6 +52,13 @@ export interface PostRevision {
 
 export type FeedSort = 'top' | 'latest';
 
+/** What the feed reports about a post it showed: total time ≥ 50% on screen, and whether it was opened. */
+export interface FeedEvent {
+  post: number;
+  dwell_ms?: number;
+  opened?: boolean;
+}
+
 /** The home feed is cursor-paginated: follow `next_cursor` until it is null. */
 export interface FeedPage {
   next: string | null;

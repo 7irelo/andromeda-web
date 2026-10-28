@@ -39,6 +39,11 @@ django-celery-results~=2.6
 django-prometheus~=2.4
 prometheus-client~=0.21
 
+# Feed ranking (classical ML: gradient-boosted trees + calibration)
+lightgbm~=4.7.0
+scikit-learn~=1.9.1
+numpy~=2.5.4
+
 # Media
 Pillow~=13.0
 

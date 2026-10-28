@@ -99,6 +99,8 @@
       *ngFor="let post of posts; trackBy: trackById"
       [post]="post"
       [allowHide]="true"
+      [attr.data-post-id]="post.id"
+      (click)="onCardClick(post.id)"
       (postDeleted)="onPostDeleted($event)"
       (postHidden)="onPostHidden($event)"
     ></app-post-card>

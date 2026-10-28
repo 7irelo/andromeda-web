@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'retrieval.apps.RetrievalConfig',
     'users.apps.UsersConfig',
     'posts.apps.PostsConfig',
+    'ranking.apps.RankingConfig',
     'chats.apps.ChatsConfig',
     'notifications.apps.NotificationsConfig',
     'groups.apps.GroupsConfig',
@@ -325,6 +326,29 @@ PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost')
 # Bump when the terms or privacy policy change; consents record the version agreed to.
 POLICY_VERSION = '2026-10-28'
+
+# ── Feed ranking (ranking app) ────────────────────────────────
+# Experiment 'feed_ranker': sticky per-user split between heuristic v1 and the
+# LightGBM ranker v2. RANKING_V2_ENABLED=False is the kill switch (everyone v1).
+RANKING_V2_ENABLED = os.environ.get('RANKING_V2_ENABLED', 'True') == 'True'
+RANKING_FEED_RANKER_WEIGHTS = {
+    'v1': int(os.environ.get('RANKING_WEIGHT_V1', '50')),
+    'v2': int(os.environ.get('RANKING_WEIGHT_V2', '50')),
+}
+RANKING_LOG_IMPRESSIONS = os.environ.get('RANKING_LOG_IMPRESSIONS', 'True') == 'True'
+RANKING_IMPRESSION_RETENTION_DAYS = 90
+RANKING_MODEL_CHECK_SECONDS = 60
+RANKING_EVENTS_THROTTLE = os.environ.get('THROTTLE_FEED_EVENTS', '30/min')
+CELERY_BEAT_SCHEDULE.update({
+    'ranking-purge-old-impressions': {
+        'task': 'ranking.tasks.purge_old_impressions',
+        'schedule': crontab(hour=3, minute=20),
+    },
+    'ranking-feature-psi': {
+        'task': 'ranking.tasks.compute_feature_psi',
+        'schedule': crontab(minute=40),
+    },
+})
 
 # ============================================================
 # CORS
