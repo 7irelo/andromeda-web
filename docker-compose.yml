@@ -457,7 +457,7 @@ services:
   # Prometheus & Grafana
   # ============================================================
   prometheus:
-    image: prom/prometheus:v3.2.1
+    image: prom/prometheus:v3.15.1
     container_name: andromeda_prometheus
     restart: unless-stopped
     command:
