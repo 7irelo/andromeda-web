@@ -32,8 +32,8 @@ import { timeAgo } from './time-ago';
             <input type="text" name="reply" [(ngModel)]="replyText" class="comment-field" maxlength="5000"
                    [attr.aria-label]="'Reply to ' + comment.author.full_name" placeholder="Write a reply…"
                    (keydown.escape)="replyingTo = null" #replyField />
-            <button mat-icon-button type="submit" [disabled]="!replyText.trim()" aria-label="Send reply">
-              <mat-icon>send</mat-icon>
+            <button class="icon-btn send" type="submit" [disabled]="!replyText.trim()" aria-label="Send reply">
+              <mat-icon aria-hidden="true">send</mat-icon>
             </button>
           </form>
         </div>
@@ -43,8 +43,8 @@ import { timeAgo } from './time-ago';
         <img [src]="currentUserAvatarUrl" class="avatar sm" alt="" />
         <input type="text" name="comment" [(ngModel)]="commentText" placeholder="Write a comment…"
                class="comment-field" maxlength="5000" aria-label="Write a comment" />
-        <button mat-icon-button type="submit" [disabled]="!commentText.trim()" aria-label="Send comment">
-          <mat-icon>send</mat-icon>
+        <button class="icon-btn send" type="submit" [disabled]="!commentText.trim()" aria-label="Send comment">
+          <mat-icon aria-hidden="true">send</mat-icon>
         </button>
       </form>
     </div>
@@ -69,14 +69,14 @@ import { timeAgo } from './time-ago';
             <button type="button" class="link-btn" [class.active]="c.liked" (click)="toggleLike(c)"
                     [attr.aria-pressed]="!!c.liked">Like</button>
             <button type="button" class="link-btn" (click)="startReply(top)">Reply</button>
-            <span class="text-xs text-secondary">{{ ago(c.created_at) }}</span>
-            <span class="text-xs text-secondary" *ngIf="c.is_edited">· edited</span>
-            <span class="text-xs likes" *ngIf="c.likes_count > 0" [attr.aria-label]="c.likes_count + ' likes'">
-              👍 {{ c.likes_count }}
+            <span class="meta-text">{{ ago(c.created_at) }}</span>
+            <span class="meta-text" *ngIf="c.is_edited">· edited</span>
+            <span class="likes" *ngIf="c.likes_count > 0" [attr.aria-label]="c.likes_count + ' likes'">
+              <mat-icon aria-hidden="true">thumb_up</mat-icon> {{ c.likes_count }}
             </span>
             <ng-container *ngIf="c.author.id === currentUserId || c.can_delete">
-              <button mat-icon-button class="more" [matMenuTriggerFor]="menu" aria-label="Comment options">
-                <mat-icon>more_horiz</mat-icon>
+              <button type="button" class="icon-btn" [matMenuTriggerFor]="menu" aria-label="Comment options">
+                <mat-icon aria-hidden="true">more_horiz</mat-icon>
               </button>
               <mat-menu #menu="matMenu">
                 <button mat-menu-item *ngIf="c.author.id === currentUserId" (click)="startEdit(c)">
@@ -93,29 +93,47 @@ import { timeAgo } from './time-ago';
     </ng-template>
   `,
   styles: [`
-    .comments-section { padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .comments-section { padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
     .comment { display: flex; gap: 8px; align-items: flex-start; }
     .comment-body { flex: 1; min-width: 0; }
     .comment-bubble {
-      background: var(--bg); border-radius: 14px; padding: 8px 12px; display: inline-block; max-width: 100%;
-      p { margin: 2px 0 0; font-size: 14px; }
+      display: inline-block; max-width: 100%; padding: 8px 12px; box-sizing: border-box;
+      background: var(--surface-2); border-radius: var(--radius-md);
+      p { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: var(--text-primary); }
     }
-    .author-name { font-weight: 600; font-size: 13px; color: var(--text-primary); text-decoration: none; }
-    .comment-meta { display: flex; align-items: center; gap: 10px; padding: 2px 8px; flex-wrap: wrap; }
+    .author-name {
+      font-weight: 600; font-size: 13px; color: var(--text-primary);
+      &:hover { color: var(--text-primary); text-decoration: underline; }
+    }
+    .comment-meta { display: flex; align-items: center; gap: 10px; min-height: 28px; padding: 0 4px; flex-wrap: wrap; }
+    .meta-text, .likes { font-size: 12px; color: var(--text-muted); }
+    .likes { display: inline-flex; align-items: center; gap: 3px; mat-icon { font-size: 12px; width: 12px; height: 12px; } }
     .link-btn {
-      background: none; border: none; padding: 0; cursor: pointer; font-size: 12px; font-weight: 600;
+      padding: 0; border: none; background: none; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
       color: var(--text-secondary);
       &.active { color: var(--primary); }
       &:hover, &:focus-visible { text-decoration: underline; }
+      @media (pointer: coarse), (max-width: 600px) { min-height: var(--touch-target); min-width: var(--touch-target); }
     }
-    .likes { color: var(--text-secondary); }
-    .more { width: 28px; height: 28px; padding: 2px; mat-icon { font-size: 18px; } }
-    .replies { margin-left: 40px; display: flex; flex-direction: column; gap: 8px; }
+    .icon-btn {
+      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0;
+      border: none; border-radius: var(--radius-sm); background: none; color: var(--text-secondary); cursor: pointer;
+      mat-icon { font-size: 18px; width: 18px; height: 18px; }
+      &:hover:not(:disabled) { background: var(--surface-2); color: var(--text-primary); }
+      &:disabled { color: var(--text-muted); cursor: default; }
+      &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+      &.send { width: 36px; height: 36px; color: var(--primary); }
+      &.send:disabled { color: var(--text-muted); }
+      @media (pointer: coarse), (max-width: 600px) { &, &.send { width: var(--touch-target); height: var(--touch-target); } }
+    }
+    .replies { margin-left: 40px; display: flex; flex-direction: column; gap: 10px; }
     .comment-input { display: flex; align-items: center; gap: 8px; }
     .comment-field {
-      flex: 1; border: 1px solid var(--border); background: var(--bg); color: var(--text-primary);
-      border-radius: 18px; padding: 8px 14px; font: inherit; font-size: 14px; outline: none;
-      &:focus { box-shadow: var(--shadow-glow); }
+      flex: 1; min-width: 0; height: 36px; padding: 0 12px; box-sizing: border-box; font: inherit; font-size: 13px;
+      border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-primary);
+      &::placeholder { color: var(--text-muted); }
+      &:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+      @media (max-width: 600px) { height: var(--touch-target); font-size: 16px; }
     }
   `],
 })

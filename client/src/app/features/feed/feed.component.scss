@@ -1,176 +1,73 @@
+// Feed column plus right rail. The shell's sidebar holds the navigation.
 .feed-layout {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr) 300px;
-  gap: 16px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px;
+  grid-template-columns: minmax(0, 640px) 280px;
+  justify-content: center;
   align-items: start;
+  gap: 20px;
+  padding: 20px 24px;
 
-  @media (max-width: 1100px) {
-    grid-template-columns: 240px minmax(0, 1fr);
-    .right-sidebar { display: none; }
+  @media (max-width: 959px) {
+    grid-template-columns: minmax(0, 640px);
+    .right-rail { display: none; }
   }
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    .left-sidebar { display: none; }
-  }
+  @media (max-width: 600px) { padding: 12px; }
 }
 
-.feed-main { max-width: 600px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.feed-main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 
-.sidebar-card {
-  background: var(--surface);
-  border-radius: var(--border-radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+.right-rail {
+  position: sticky;
+  top: calc(var(--header-height) + 20px);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 16px;
-}
-
-.profile-preview {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: var(--text-primary);
-  &:hover { text-decoration: none; }
-}
-
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-}
-
-.sidebar-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  margin-bottom: 4px;
-}
-
-.left-sidebar, .right-sidebar {
-  position: sticky;
-  top: 72px;
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - var(--header-height) - 40px);
   overflow-y: auto;
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
 }
 
-.sidebar-shortcuts {
-  padding: 8px !important;
-  gap: 2px !important;
+.rail-card {
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
-.shortcut-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: var(--border-radius-sm);
+.rail-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 15px;
-  transition: background .15s;
-
-  &:hover { background: var(--bg); text-decoration: none; }
-  &.shortcut-active { color: var(--primary); background: var(--primary-light); }
 }
 
-.shortcut-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  mat-icon { font-size: 20px; color: #fff; width: 20px; height: 20px; }
-}
+.loading-center { display: flex; justify-content: center; padding: 24px; }
 
-.loading-center {
-  display: flex;
-  justify-content: center;
-  padding: 24px;
-}
-
-.feed-toolbar { display: flex; gap: 6px; }
+.feed-toolbar { display: flex; gap: 4px; }
 
 .sort-btn {
-  display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border-radius: 18px;
-  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary);
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px;
+  border: 1px solid transparent; border-radius: var(--radius-sm); background: none;
+  font: inherit; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  &:hover { background: var(--surface-2); color: var(--text-primary); }
+  &.active { background: var(--primary-light); color: var(--primary); }
+  &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  @media (pointer: coarse), (max-width: 600px) { height: var(--touch-target); }
+}
+
+.new-posts-btn {
+  position: sticky; top: calc(var(--header-height) + 8px); z-index: 30; align-self: center;
+  display: inline-flex; align-items: center; gap: 4px; height: 36px; padding: 0 14px;
+  border: none; border-radius: var(--radius-sm); background: var(--primary-strong); color: var(--on-primary);
   font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
   mat-icon { font-size: 16px; width: 16px; height: 16px; }
-  @media (pointer: coarse), (max-width: 600px) { min-height: var(--touch-target); }
-  &.active { background: var(--primary-light); color: var(--primary-dark); border-color: transparent; }
+  &:hover { background: var(--primary-strong-hover); }
   &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  @media (pointer: coarse), (max-width: 600px) { height: var(--touch-target); }
 }
 
-.new-posts-pill {
-  position: sticky; top: calc(var(--header-height) + 8px); z-index: 30; align-self: center;
-  display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; border: none; border-radius: 20px;
-  background: var(--primary-strong); color: var(--on-primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
-  box-shadow: var(--shadow-md);
-  mat-icon { font-size: 18px; width: 18px; height: 18px; }
-  &:hover { background: #4338ca; }
-  &:focus-visible { outline: 3px solid var(--focus-ring-color); outline-offset: 2px; }
-}
-
-.end-message {
-  text-align: center;
-  color: var(--text-secondary);
-  padding: 24px;
-  font-size: 14px;
-}
-
-.empty-feed {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 60px 24px;
-  color: var(--text-secondary);
-  text-align: center;
-  animation: fade-in-up .4s ease;
-
-  .empty-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: var(--primary-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    mat-icon {
-      font-size: 36px;
-      width: 36px;
-      height: 36px;
-      color: var(--primary);
-    }
-  }
-
-  h3 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-  p { font-size: 14px; max-width: 280px; }
-  .empty-cta { margin-top: 4px; }
-}
-
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+.end-message { padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted); }
 
 // A real box for the IntersectionObserver that measures dwell (custom elements default to inline).
-app-post-card {
-  display: block;
-}
+app-post-card { display: block; }

@@ -13,7 +13,7 @@ import {
 } from '../../../models/assist.model';
 
 /**
- * "✨ Help me write": rewrite a draft in another tone, fix its grammar, shorten
+ * "Help me write": rewrite a draft in another tone, fix its grammar, shorten
  * it or translate it. The suggestion is shown next to the draft with Accept /
  * Discard; it never replaces the author's text by itself. Hidden when the user
  * has turned AI off.
@@ -24,10 +24,10 @@ import {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <ng-container *ngIf="enabled">
-      <button mat-button type="button" class="assist-btn" [matMenuTriggerFor]="assistMenu"
+      <button type="button" class="assist-btn" [matMenuTriggerFor]="assistMenu"
               [disabled]="!canAssist || loading" aria-label="Help me write">
         <mat-spinner *ngIf="loading" diameter="16"></mat-spinner>
-        <span *ngIf="!loading" aria-hidden="true">✨</span>
+        <mat-icon *ngIf="!loading" aria-hidden="true">auto_awesome</mat-icon>
         {{ loading ? 'Writing…' : 'Help me write' }}
       </button>
       <mat-menu #assistMenu="matMenu">
@@ -43,7 +43,7 @@ import {
       <p class="assist-error text-xs" *ngIf="error" role="alert">{{ error }}</p>
 
       <div class="assist-suggestion" *ngIf="suggestion !== null" role="region" aria-label="Suggested text">
-        <div class="assist-label text-xs"><mat-icon>auto_awesome</mat-icon> Suggestion: check it before you use it</div>
+        <div class="assist-label text-xs"><mat-icon aria-hidden="true">auto_awesome</mat-icon> Suggestion: check it before you use it</div>
         <p class="assist-text">{{ suggestion }}</p>
         <p class="text-xs text-secondary" *ngIf="truncated">The suggestion was cut short.</p>
         <div class="assist-actions">
@@ -55,15 +55,24 @@ import {
   `,
   styles: [`
     :host { display: block; }
-    .assist-btn { border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
-    .assist-error { color: var(--danger); margin: 4px 0 0; }
+    .assist-btn {
+      display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border: none;
+      border-radius: var(--radius-sm); background: none; font: inherit; font-size: 13px; font-weight: 500;
+      color: var(--primary); cursor: pointer;
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      &:hover:not(:disabled) { background: var(--primary-light); }
+      &:disabled { color: var(--text-muted); cursor: default; }
+      &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+      @media (pointer: coarse), (max-width: 600px) { height: var(--touch-target); }
+    }
+    .assist-error { color: var(--danger-text); margin: 4px 0 0; }
     .assist-suggestion {
-      margin-top: 8px; padding: 10px 12px; border: 1px dashed var(--primary); border-radius: 10px;
-      background: var(--primary-light);
+      margin-top: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md);
+      background: var(--surface-2);
     }
     .assist-label { display: flex; align-items: center; gap: 4px; color: var(--primary); font-weight: 600; }
     .assist-label mat-icon { font-size: 14px; width: 14px; height: 14px; }
-    .assist-text { white-space: pre-wrap; word-break: break-word; margin: 6px 0; font-size: 14px; }
+    .assist-text { white-space: pre-wrap; word-break: break-word; margin: 6px 0; font-size: 13px; line-height: 1.5; color: var(--text-primary); }
     .assist-actions { display: flex; justify-content: flex-end; gap: 8px; }
   `],
 })

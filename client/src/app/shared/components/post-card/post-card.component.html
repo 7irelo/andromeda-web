@@ -1,8 +1,8 @@
 <article class="post-card" [attr.aria-labelledby]="'post-author-' + post.id">
   <!-- Header -->
   <div class="moderation-notice" *ngIf="post.moderation_status === 'removed'" role="status">
-    <mat-icon>visibility_off</mat-icon>
-    Only you can see this post. It was removed for breaking the community guidelines.
+    <mat-icon aria-hidden="true">visibility_off</mat-icon>
+    <span>Only you can see this post. It was removed for breaking the community guidelines.</span>
   </div>
   <div class="post-header">
     <ng-container *ngIf="post.page_data as page; else personHeader">
@@ -31,50 +31,27 @@
       </div>
     </ng-template>
     <ng-template #meta>
-      <span class="post-time text-secondary text-xs">
+      <span class="post-meta">
+        <ng-container *ngIf="!post.page_data">
+          <span class="handle">&#64;{{ post.author.username }}</span>
+          <span aria-hidden="true">·</span>
+        </ng-container>
         <a [routerLink]="'/posts/' + post.id" class="time-link">{{ ago(post.created_at) }}</a>
+        <span aria-hidden="true">·</span>
         <mat-icon class="privacy-icon" [attr.aria-label]="'Audience: ' + post.privacy">{{ privacyIcon }}</mat-icon>
-        <button *ngIf="post.is_edited" type="button" class="edited-badge" (click)="toggleHistory()"
-                [attr.aria-expanded]="showHistory" title="See edit history">· edited</button>
+        <ng-container *ngIf="post.is_edited">
+          <span aria-hidden="true">·</span>
+          <button type="button" class="edited-badge" (click)="toggleHistory()"
+                  [attr.aria-expanded]="showHistory" title="See edit history">edited</button>
+        </ng-container>
       </span>
     </ng-template>
-
-    <button mat-icon-button [matMenuTriggerFor]="postMenu" class="menu-btn" aria-label="Post options">
-      <mat-icon>more_horiz</mat-icon>
-    </button>
-    <mat-menu #postMenu="matMenu">
-      <a mat-menu-item [routerLink]="'/posts/' + post.id">
-        <mat-icon>open_in_new</mat-icon> Open post
-      </a>
-      <button mat-menu-item *ngIf="isOwner" (click)="startEdit()">
-        <mat-icon>edit</mat-icon> Edit post
-      </button>
-      <button mat-menu-item *ngIf="post.is_edited" (click)="toggleHistory()">
-        <mat-icon>history</mat-icon> Edit history
-      </button>
-      <button mat-menu-item (click)="toggleSave()">
-        <mat-icon>{{ post.is_saved ? 'bookmark_remove' : 'bookmark_add' }}</mat-icon>
-        {{ post.is_saved ? 'Unsave post' : 'Save post' }}
-      </button>
-      <button mat-menu-item *ngIf="post.reason" (click)="showReason = true">
-        <mat-icon>help_outline</mat-icon> Why am I seeing this?
-      </button>
-      <button mat-menu-item *ngIf="allowHide && !isOwner" (click)="hide()">
-        <mat-icon>visibility_off</mat-icon> Hide from feed
-      </button>
-      <button mat-menu-item *ngIf="isOwner" (click)="deletePost()">
-        <mat-icon color="warn">delete</mat-icon> Delete
-      </button>
-      <button mat-menu-item *ngIf="!isOwner" (click)="report()">
-        <mat-icon>flag</mat-icon> Report
-      </button>
-    </mat-menu>
   </div>
 
   <div class="reason-notice" *ngIf="showReason && post.reason" role="status">
-    <mat-icon>info</mat-icon>
+    <mat-icon aria-hidden="true">info</mat-icon>
     <span>{{ post.reason }}</span>
-    <button mat-icon-button (click)="showReason = false" aria-label="Dismiss"><mat-icon>close</mat-icon></button>
+    <button type="button" class="action-btn" (click)="showReason = false" aria-label="Dismiss"><mat-icon aria-hidden="true">close</mat-icon></button>
   </div>
 
   <!-- Content -->
@@ -85,8 +62,7 @@
 
     <ng-template #editForm>
       <form class="edit-form" (ngSubmit)="saveEdit()">
-        <label class="sr-only" [for]="'edit-' + post.id">Edit post</label>
-        <textarea [id]="'edit-' + post.id" name="content" [(ngModel)]="editText" rows="4" maxlength="10000"
+        <textarea aria-label="Edit post" name="content" [(ngModel)]="editText" rows="4" maxlength="10000"
                   class="edit-textarea" (keydown.escape)="editing = false"></textarea>
         <ul class="edit-media" *ngIf="editMedia.length" aria-label="Images, in display order">
           <li *ngFor="let m of editMedia; let i = index; let last = last">
@@ -155,59 +131,81 @@
     </div>
   </div>
 
-  <!-- Counts -->
-  <div class="post-counts" *ngIf="post.likes_count > 0 || post.comments_count > 0 || post.shares_count > 0">
-    <span *ngIf="post.likes_count > 0" class="text-secondary text-sm">
-      👍 {{ post.likes_count }}
-    </span>
-    <button type="button" *ngIf="post.comments_count > 0" class="count-btn text-secondary text-sm" (click)="toggleComments()">
-      {{ post.comments_count }} {{ post.comments_count === 1 ? 'Comment' : 'Comments' }}
-    </button>
-    <span *ngIf="post.shares_count > 0" class="text-secondary text-sm">
-      {{ post.shares_count }} {{ post.shares_count === 1 ? 'Share' : 'Shares' }}
-    </span>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- Actions -->
+  <!-- Actions: each button carries its own count -->
   <div class="post-actions">
     <!-- Like with reactions -->
     <div class="reaction-wrapper" (mouseleave)="showReactions = false">
       <button
+        type="button"
         class="action-btn"
         [class.reacted]="!!post.my_reaction"
         [attr.aria-pressed]="!!post.my_reaction"
+        [attr.aria-label]="reactLabel"
+        [title]="reactLabel"
         (click)="react(post.my_reaction || 'like')"
         (mouseenter)="showReactions = true"
       >
-        <span *ngIf="post.my_reaction">
+        <span *ngIf="post.my_reaction && post.my_reaction !== 'like'; else likeIcon" class="reaction-emoji" aria-hidden="true">
           {{ reactionByType[post.my_reaction || '']?.emoji }}
         </span>
-        <mat-icon *ngIf="!post.my_reaction">thumb_up_off_alt</mat-icon>
-        <span>{{ reactionByType[post.my_reaction || '']?.label || 'Like' }}</span>
+        <ng-template #likeIcon>
+          <mat-icon aria-hidden="true">{{ post.my_reaction ? 'thumb_up' : 'thumb_up_off_alt' }}</mat-icon>
+        </ng-template>
+        <span *ngIf="post.likes_count > 0">{{ post.likes_count }}</span>
       </button>
       <div class="reactions-popup" *ngIf="showReactions">
-        <button *ngFor="let r of reactions" (click)="react(r.type)" class="reaction-btn" [title]="r.label" [attr.aria-label]="r.label">
+        <button type="button" *ngFor="let r of reactions" (click)="react(r.type)" class="reaction-btn" [title]="r.label" [attr.aria-label]="r.label">
           {{ r.emoji }}
         </button>
       </div>
     </div>
 
-    <button class="action-btn" (click)="toggleComments()" [attr.aria-expanded]="showComments">
-      <mat-icon>chat_bubble_outline</mat-icon>
-      <span>Comment</span>
+    <button type="button" class="action-btn" (click)="toggleComments()" [attr.aria-expanded]="showComments"
+            [attr.aria-label]="commentLabel" [title]="commentLabel">
+      <mat-icon aria-hidden="true">chat_bubble_outline</mat-icon>
+      <span *ngIf="post.comments_count > 0">{{ post.comments_count }}</span>
     </button>
 
-    <button class="action-btn" (click)="share()">
-      <mat-icon>share</mat-icon>
-      <span>Share</span>
+    <button type="button" class="action-btn" (click)="share()" [attr.aria-label]="shareLabel" [title]="shareLabel">
+      <mat-icon aria-hidden="true">share</mat-icon>
+      <span *ngIf="post.shares_count > 0">{{ post.shares_count }}</span>
     </button>
+
+    <button type="button" class="action-btn menu-btn" [matMenuTriggerFor]="postMenu" aria-label="Post options">
+      <mat-icon aria-hidden="true">more_horiz</mat-icon>
+    </button>
+    <mat-menu #postMenu="matMenu">
+      <a mat-menu-item [routerLink]="'/posts/' + post.id">
+        <mat-icon>open_in_new</mat-icon> Open post
+      </a>
+      <button mat-menu-item *ngIf="isOwner" (click)="startEdit()">
+        <mat-icon>edit</mat-icon> Edit post
+      </button>
+      <button mat-menu-item *ngIf="post.is_edited" (click)="toggleHistory()">
+        <mat-icon>history</mat-icon> Edit history
+      </button>
+      <button mat-menu-item (click)="toggleSave()">
+        <mat-icon>{{ post.is_saved ? 'bookmark_remove' : 'bookmark_add' }}</mat-icon>
+        {{ post.is_saved ? 'Unsave post' : 'Save post' }}
+      </button>
+      <button mat-menu-item *ngIf="post.reason" (click)="showReason = true">
+        <mat-icon>help_outline</mat-icon> Why am I seeing this?
+      </button>
+      <button mat-menu-item *ngIf="allowHide && !isOwner" (click)="hide()">
+        <mat-icon>visibility_off</mat-icon> Hide from feed
+      </button>
+      <button mat-menu-item *ngIf="isOwner" (click)="deletePost()">
+        <mat-icon color="warn">delete</mat-icon> Delete
+      </button>
+      <button mat-menu-item *ngIf="!isOwner" (click)="report()">
+        <mat-icon>flag</mat-icon> Report
+      </button>
+    </mat-menu>
   </div>
 
   <!-- Comments Section -->
   <ng-container *ngIf="showComments">
-    <div class="divider"></div>
+    <div class="comments-divider"></div>
     <app-post-comments [post]="post" (countChange)="post.comments_count = $event"></app-post-comments>
   </ng-container>
 </article>

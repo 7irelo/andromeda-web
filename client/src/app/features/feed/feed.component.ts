@@ -1,9 +1,9 @@
 import {
   AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, QueryList,
-  ViewChildren, inject,
+  ViewChild, ViewChildren, inject,
 } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,7 +27,7 @@ const FLUSH_MS = 10_000;
 @Component({
     selector: 'app-feed',
     imports: [
-        CommonModule, NgOptimizedImage, RouterLink, RouterLinkActive, MatProgressSpinnerModule, MatButtonModule,
+        CommonModule, RouterLink, MatProgressSpinnerModule, MatButtonModule,
         MatIconModule, MatSnackBarModule, PostCardComponent, CreatePostComponent, UserCardComponent,
         EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
@@ -49,6 +49,9 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   private cursor: string | null = null;
   private request?: Subscription;
   private wsSub?: Subscription;
+  private composeSub?: Subscription;
+
+  @ViewChild(CreatePostComponent) private composer?: CreatePostComponent;
 
   // Dwell / open reporting: the ranker's training signal.
   @ViewChildren(PostCardComponent, { read: ElementRef }) private cards?: QueryList<ElementRef<HTMLElement>>;
@@ -58,6 +61,8 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   private cardsSub?: Subscription;
   private flushTimer?: ReturnType<typeof setInterval>;
   private zone = inject(NgZone);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   constructor(
     private apiService: ApiService,
@@ -83,6 +88,15 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // The sidebar's "New Post" links here with ?compose=1. Clearing the param lets the link work again.
+    this.composeSub = this.route.queryParamMap.subscribe((params) => {
+      if (!params.has('compose')) return;
+      setTimeout(() => this.composer?.open());
+      this.router.navigate([], {
+        relativeTo: this.route, queryParams: { compose: null }, queryParamsHandling: 'merge', replaceUrl: true,
+      });
+    });
+
     if (typeof IntersectionObserver === 'undefined' || !this.cards) return;
     this.observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
@@ -102,6 +116,7 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cardsSub?.unsubscribe();
     if (this.flushTimer) clearInterval(this.flushTimer);
     this.wsSub?.unsubscribe();
+    this.composeSub?.unsubscribe();
     this.request?.unsubscribe();
   }
 

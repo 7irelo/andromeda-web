@@ -2,7 +2,6 @@ import { Component, ElementRef, Input, OnDestroy, OnInit, Output, EventEmitter, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -35,7 +34,7 @@ interface DraftImage {
 
 @Component({
     selector: 'app-create-post',
-    imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDialogModule,
+    imports: [CommonModule, FormsModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule,
         ComposeAssistComponent],
     template: `
     <div class="create-post card">
@@ -111,15 +110,15 @@ interface DraftImage {
 
       <div class="create-actions" *ngIf="expanded">
         <div class="media-btns">
-          <button mat-button class="media-btn" (click)="imageInput.click()" [disabled]="images.length >= maxImages || !!videoFile">
-            <mat-icon style="color:#45bd62">photo_library</mat-icon> Photos
+          <button type="button" class="tool-btn" (click)="imageInput.click()" [disabled]="images.length >= maxImages || !!videoFile">
+            <mat-icon aria-hidden="true">photo_library</mat-icon> Photos
           </button>
-          <button mat-button class="media-btn" (click)="videoInput.click()" [disabled]="images.length > 0">
-            <mat-icon style="color:#f02849">videocam</mat-icon> Video
+          <button type="button" class="tool-btn" (click)="videoInput.click()" [disabled]="images.length > 0">
+            <mat-icon aria-hidden="true">videocam</mat-icon> Video
           </button>
         </div>
         <button
-          mat-flat-button color="primary"
+          type="button"
           class="post-btn"
           (click)="submit()"
           [disabled]="(!content.trim() && !images.length && !videoFile) || loading"
@@ -135,83 +134,84 @@ interface DraftImage {
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
-    .create-post { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .create-post { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
     .create-top { display: flex; align-items: flex-start; gap: 10px; }
-    .textarea-wrapper { flex: 1; position: relative; }
+    .textarea-wrapper { flex: 1; min-width: 0; position: relative; }
     .post-textarea {
-      width: 100%;
-      border: none;
-      background: var(--bg);
-      border-radius: 20px;
-      padding: 10px 16px;
-      font-size: 15px;
-      resize: none;
-      outline: none;
-      font-family: inherit;
-      color: var(--text-primary);
-      min-height: 42px;
-      box-sizing: border-box;
-      &::placeholder { color: var(--text-secondary); }
-      &:focus-visible { box-shadow: var(--shadow-glow); }
+      display: block; width: 100%; min-height: 40px; padding: 9px 12px; box-sizing: border-box; resize: none;
+      font: inherit; font-size: 14px; line-height: 20px; color: var(--text-primary);
+      background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      &::placeholder { color: var(--text-muted); }
+      &:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; background: var(--surface); }
+      @media (max-width: 600px) { min-height: var(--touch-target); font-size: 16px; }
     }
-    .textarea-wrapper.expanded .post-textarea { border-radius: 8px; min-height: 80px; }
+    .textarea-wrapper.expanded .post-textarea { min-height: 80px; }
     .mention-list {
       position: absolute; left: 0; right: 0; top: 100%; z-index: 20; margin: 4px 0 0; padding: 4px;
-      list-style: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-      box-shadow: var(--shadow-md); max-height: 240px; overflow-y: auto;
-      li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+      list-style: none; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      max-height: 240px; overflow-y: auto;
+      li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; }
       li.active, li:hover { background: var(--primary-light); }
-      .m-name { font-weight: 600; font-size: 14px; }
-      .m-user { color: var(--text-secondary); font-size: 13px; }
+      .m-name { font-weight: 600; font-size: 13px; color: var(--text-primary); }
+      .m-user { color: var(--text-secondary); font-size: 12px; }
       .avatar.xs { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
     }
     .draft-images { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
     .draft-images li { position: relative; width: 104px; cursor: grab; }
     .draft-images li.dragging { opacity: .5; }
-    .draft-images img { width: 104px; height: 104px; object-fit: cover; border-radius: 8px; display: block; border: 1px solid var(--border); }
+    .draft-images img {
+      display: block; width: 104px; height: 104px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    }
     .order-badge {
-      position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px;
-      border-radius: 10px; padding: 0 6px; line-height: 18px;
+      position: absolute; top: 4px; left: 4px; padding: 0 6px; line-height: 18px; font-size: 11px; font-weight: 600;
+      color: var(--on-primary); background: var(--primary-strong); border-radius: var(--radius-sm);
     }
     .thumb-actions {
       display: flex; justify-content: space-between; margin-top: 2px;
       button {
-        border: none; background: var(--bg); border-radius: 4px; cursor: pointer; width: 24px; height: 24px; padding: 0;
-        display: flex; align-items: center; justify-content: center; color: var(--text-primary);
-        &:disabled { opacity: .35; cursor: default; }
+        display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0;
+        border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+        color: var(--text-primary); cursor: pointer;
+        &:disabled { color: var(--text-muted); cursor: default; }
         &:focus-visible { outline: 2px solid var(--primary); }
         mat-icon { font-size: 16px; width: 16px; height: 16px; }
       }
     }
-    .image-preview-wrap {
-      position: relative;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
+    .image-preview-wrap { position: relative; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
     .preview-img { width: 100%; max-height: 240px; object-fit: cover; display: block; }
     .remove-preview {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: rgba(0,0,0,.6);
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
+      position: absolute; top: 8px; right: 8px; display: flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      background: var(--surface); color: var(--text-primary); cursor: pointer;
       mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      @media (pointer: coarse), (max-width: 600px) { width: var(--touch-target); height: var(--touch-target); }
     }
-    .error { color: var(--danger); font-size: 13px; margin: 0; }
+    .error { color: var(--danger-text); font-size: 13px; margin: 0; }
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-    .create-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; }
-    .media-btns { display: flex; gap: 4px; }
-    .media-btn { border-radius: 8px; }
-    .post-btn { min-width: 80px; display: flex; align-items: center; gap: 6px; }
+    .create-actions {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      border-top: 1px solid var(--border); padding-top: 10px;
+    }
+    .media-btns { display: flex; gap: 2px; min-width: 0; }
+    .tool-btn {
+      display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 8px; border: none;
+      border-radius: var(--radius-sm); background: none; font: inherit; font-size: 13px; font-weight: 500;
+      color: var(--text-secondary); cursor: pointer;
+      mat-icon { font-size: 18px; width: 18px; height: 18px; }
+      &:hover:not(:disabled) { background: var(--surface-2); color: var(--text-primary); }
+      &:disabled { color: var(--text-muted); cursor: default; }
+      &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+      @media (pointer: coarse), (max-width: 600px) { height: var(--touch-target); }
+    }
+    .post-btn {
+      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 72px; height: 34px;
+      padding: 0 14px; border: none; border-radius: var(--radius-sm); background: var(--primary-strong);
+      color: var(--on-primary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+      &:hover:not(:disabled) { background: var(--primary-strong-hover); }
+      &:disabled { opacity: .5; cursor: default; }
+      &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+      @media (pointer: coarse), (max-width: 600px) { height: var(--touch-target); }
+    }
   `]
 })
 export class CreatePostComponent implements OnInit, OnDestroy {
@@ -262,6 +262,13 @@ export class CreatePostComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.mentionSub?.unsubscribe();
     this.clearMedia();
+  }
+
+  /** Bring the composer into view, expanded and ready to type (the shell's "New Post"). */
+  open(): void {
+    this.expanded = true;
+    this.textarea?.nativeElement.scrollIntoView({ block: 'center' });
+    this.textarea?.nativeElement.focus({ preventScroll: true });
   }
 
   // ── Mentions ────────────────────────────────────────────────────────────

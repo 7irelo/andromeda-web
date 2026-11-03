@@ -17,12 +17,12 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="post-detail">
-      <a routerLink="/feed" class="back"><mat-icon>arrow_back</mat-icon> Back to feed</a>
+      <a routerLink="/feed" class="back"><mat-icon aria-hidden="true">arrow_back</mat-icon> Back to feed</a>
       <div *ngIf="loading" class="center"><mat-spinner diameter="36"></mat-spinner></div>
       <app-post-card *ngIf="post && !loading" [post]="post" [expandComments]="true"
                      (postDeleted)="onDeleted()"></app-post-card>
       <section *ngIf="unavailable" class="card unavailable" role="status">
-        <mat-icon>lock</mat-icon>
+        <mat-icon aria-hidden="true">lock</mat-icon>
         <h1>This post isn't available</h1>
         <p class="text-secondary">It may have been deleted, or you may not have permission to see it.</p>
         <a mat-flat-button color="primary" routerLink="/feed">Go to your feed</a>
@@ -34,14 +34,22 @@ import { PostCardComponent } from '../../shared/components/post-card/post-card.c
     </div>
   `,
   styles: [`
-    .post-detail { max-width: 640px; margin: 16px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
-    .back { display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary); text-decoration: none; font-size: 14px; }
+    .post-detail { max-width: 640px; margin: 0 auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+    .back {
+      align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 28px;
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      &:hover { color: var(--text-primary); text-decoration: none; }
+      @media (pointer: coarse), (max-width: 600px) { min-height: var(--touch-target); }
+    }
     .center { display: flex; justify-content: center; padding: 32px; }
     .unavailable {
       padding: 32px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
-      h1 { font-size: 20px; margin: 0; }
-      mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--text-muted); }
+      h1 { font-size: 18px; font-weight: 600; margin: 0; color: var(--text-primary); }
+      p { margin: 0 0 8px; font-size: 13px; }
+      mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--text-muted); }
     }
+    @media (max-width: 600px) { .post-detail { padding: 12px; } }
   `],
 })
 export class PostDetailComponent implements OnInit, OnDestroy {
