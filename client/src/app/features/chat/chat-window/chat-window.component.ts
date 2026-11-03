@@ -495,9 +495,16 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
   }
 
   private scrollToBottom(): void {
-    try {
-      this.messagesEnd.nativeElement.scrollIntoView({ behavior: 'smooth' });
-    } catch {}
+    const area = this.messagesEnd?.nativeElement.closest('.messages-area');
+    if (!area) return;
+    // Off-screen messages only estimate their height (content-visibility), so the real bottom
+    // moves as they lay out: jump, then settle over the next two frames.
+    const jump = () => { area.scrollTop = area.scrollHeight; };
+    jump();
+    requestAnimationFrame(() => {
+      jump();
+      requestAnimationFrame(jump);
+    });
   }
 
   timeLabel(dateStr: string): string {
