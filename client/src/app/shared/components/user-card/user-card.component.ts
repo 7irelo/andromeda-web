@@ -14,8 +14,8 @@ import { User } from '../../../models/user.model';
       <a [routerLink]="'/profile/' + user.username" class="user-info">
         <img [ngSrc]="user.avatar_url || 'assets/default-avatar.png'" width="40" height="40" class="avatar md" alt="" />
         <div>
-          <div class="font-semibold text-sm">{{ user.full_name }}</div>
-          <div class="text-secondary" style="font-size:12px">{{ user.friends_count }} mutual friends</div>
+          <div class="user-name">{{ user.full_name }}</div>
+          <div class="user-meta">{{ user.friends_count }} mutual friends</div>
         </div>
       </a>
       <div class="user-actions">
@@ -31,10 +31,18 @@ import { User } from '../../../models/user.model';
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
-    .user-card { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; gap: 8px; }
-    .user-info { display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; flex: 1; }
-    .user-actions { display: flex; align-items: center; gap: 4px; }
-    .small-btn { height: 30px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+    .user-card { display: flex; align-items: center; justify-content: space-between; padding: var(--space-2) 0; gap: var(--space-2); }
+    .user-info { display: flex; align-items: center; gap: var(--space-2); min-width: 0; text-decoration: none; color: var(--text-primary); flex: 1; }
+    .user-info:hover { color: var(--text-primary); }
+    .user-info > div { min-width: 0; }
+    .user-name { overflow: hidden; font-size: var(--font-size-sm); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .user-meta { font-size: var(--font-size-xs); color: var(--text-muted); }
+    .user-actions { display: flex; flex: none; align-items: center; gap: var(--space-1); }
+    .small-btn { --mat-button-outlined-container-height: 32px; font-size: var(--font-size-xs); }
+    @media (max-width: 600px) {
+      .small-btn { --mat-button-outlined-container-height: 44px; }
+      .user-actions { --mat-icon-button-state-layer-size: 44px; }
+    }
   `]
 })
 export class UserCardComponent {

@@ -29,11 +29,15 @@ type VoiceState = 'idle' | 'connecting' | 'live';
     </div>
   `,
   styles: [`
-    .voice { padding: 8px 12px; border-bottom: 1px solid var(--border, rgba(127, 127, 127, .3)); }
-    .talk { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; cursor: pointer;
-      border-radius: 22px; border: 1px solid var(--border, rgba(127, 127, 127, .4)); background: transparent; color: inherit; }
-    .talk.live { background: var(--primary-strong, #1d4ed8); color: #fff; }
-    .hint, .line, .message { margin: 8px 0 0; font-size: 13px; }
+    .voice { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+    .talk { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-3);
+      font: inherit; font-size: var(--font-size-sm); font-weight: 500; color: var(--text-primary); cursor: pointer;
+      border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: transparent; }
+    .talk:hover:not(:disabled) { background: var(--surface-2); }
+    .talk.live, .talk.live:hover:not(:disabled) { background: var(--primary-strong); border-color: var(--primary-strong); color: var(--on-primary); }
+    .talk mat-icon { width: 18px; height: 18px; font-size: 18px; }
+    .hint, .line, .message { margin: var(--space-2) 0 0; font-size: var(--font-size-sm); color: var(--text-secondary); }
+    .line strong { font-weight: 600; color: var(--text-primary); }
   `],
 })
 export class VoiceChatComponent implements OnDestroy {

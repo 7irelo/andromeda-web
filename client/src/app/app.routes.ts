@@ -5,9 +5,12 @@ import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
   {
+    // The public front page; guestGuard sends signed-in visitors to the feed.
     path: '',
-    redirectTo: 'feed',
     pathMatch: 'full',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./features/landing/landing.component').then((m) => m.LandingComponent),
   },
   {
     path: 'login',

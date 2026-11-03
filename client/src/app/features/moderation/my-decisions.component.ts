@@ -2,26 +2,23 @@ import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
+import { EmptyStateComponent } from '../../shared/components/states';
 import { MyCase } from '../../models/moderation.model';
 
 /** What was removed from the member's account, why, and a one-time appeal. */
 @Component({
     selector: 'app-my-decisions',
-    imports: [CommonModule, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule,
-      MatSnackBarModule],
+    imports: [CommonModule, FormsModule, MatButtonModule, MatSnackBarModule, EmptyStateComponent],
     template: `
     <div class="page">
       <h1>Moderation decisions</h1>
-      <p class="text-secondary">Content of yours that was removed for breaking the community guidelines.
+      <p class="intro">Content of yours that was removed for breaking the community guidelines.
         You can ask a person to look at each decision again once.</p>
-      <p class="text-secondary" *ngIf="loaded && !cases.length">Nothing has been removed from your account.</p>
+      <app-empty-state *ngIf="loaded && !cases.length" icon="task_alt" title="Nothing has been removed from your account."></app-empty-state>
       <section class="card item" *ngFor="let c of cases">
-        <div class="text-secondary text-sm">{{ c.content_type | titlecase }} · {{ c.created_at | date:'mediumDate' }}
+        <div class="meta">{{ c.content_type | titlecase }} · {{ c.created_at | date:'mediumDate' }}
           <span *ngIf="c.categories.length"> · {{ c.categories.join(', ') }}</span></div>
         <blockquote>{{ c.snapshot || '(no text)' }}</blockquote>
         <ng-container *ngIf="c.appeal; else canAppeal">
@@ -32,22 +29,36 @@ import { MyCase } from '../../models/moderation.model';
           </p>
         </ng-container>
         <ng-template #canAppeal>
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Why should we look again? (optional)</mat-label>
-            <textarea matInput rows="2" maxlength="1000" [(ngModel)]="messages[c.id]"></textarea>
-          </mat-form-field>
-          <button mat-stroked-button (click)="appeal(c)">Appeal</button>
+          <div class="field">
+            <label [attr.for]="'appeal-' + c.id">Why should we look again? (optional)</label>
+            <textarea [id]="'appeal-' + c.id" rows="2" maxlength="1000" [(ngModel)]="messages[c.id]"></textarea>
+          </div>
+          <div><button mat-stroked-button (click)="appeal(c)">Appeal</button></div>
         </ng-template>
       </section>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
-    .page { max-width: 720px; margin: 0 auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 12px; }
-    h1 { font-size: 22px; margin: 0; }
-    .item { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-    blockquote { margin: 0; padding: 8px 12px; border-left: 3px solid rgba(0,0,0,.2); white-space: pre-wrap; word-break: break-word; }
-    .status { margin: 0; font-weight: 500; }
+    .page { max-width: 720px; margin: 0 auto; padding: var(--space-6) var(--space-4); display: flex; flex-direction: column;
+      gap: var(--space-3); }
+    .page h1 { margin: 0; font-size: var(--font-size-xl); font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
+    .intro { margin: 0; font-size: var(--font-size-base); color: var(--text-secondary); }
+    .item { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+    .meta { font-size: var(--font-size-xs); color: var(--text-muted); }
+    blockquote { margin: 0; padding: var(--space-2) var(--space-3); font-size: var(--font-size-base); color: var(--text-primary);
+      white-space: pre-wrap; word-break: break-word; background: var(--surface-2); border-radius: var(--radius-sm); }
+    .status { margin: 0; font-size: var(--font-size-sm); font-weight: 500; color: var(--text-primary); }
+    .field { display: flex; flex-direction: column; gap: var(--space-1); }
+    .field label { font-size: var(--font-size-sm); font-weight: 500; color: var(--text-primary); }
+    .field textarea { width: 100%; padding: var(--space-2) var(--space-3); font: inherit; font-size: var(--font-size-base);
+      color: var(--text-primary); resize: vertical; background: var(--surface); border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm); }
+    .field textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+    @media (max-width: 600px) {
+      .page { padding: var(--space-4); --mat-button-outlined-container-height: 44px; }
+      .field textarea { font-size: 16px; }
+    }
   `]
 })
 export class MyDecisionsComponent implements OnInit {
