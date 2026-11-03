@@ -24,7 +24,7 @@ import {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <ng-container *ngIf="enabled">
-      <button mat-button type="button" class="assist-btn" [matMenuTriggerFor]="assistMenu"
+      <button type="button" class="assist-btn" [matMenuTriggerFor]="assistMenu"
               [disabled]="!canAssist || loading" aria-label="Help me write">
         <mat-spinner *ngIf="loading" diameter="16"></mat-spinner>
         <mat-icon *ngIf="!loading" aria-hidden="true">auto_awesome</mat-icon>
@@ -55,23 +55,25 @@ import {
   `,
   styles: [`
     :host { display: block; }
-    .assist-btn { border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: var(--space-2);
-      font-size: var(--font-size-sm); }
-    .assist-btn mat-icon { width: 16px; height: 16px; font-size: 16px; margin: 0; }
-    .assist-error { color: var(--danger-text); margin: var(--space-1) 0 0; }
+    .assist-btn {
+      display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border: none;
+      border-radius: var(--radius-sm); background: none; font: inherit; font-size: 13px; font-weight: 500;
+      color: var(--primary); cursor: pointer;
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      &:hover:not(:disabled) { background: var(--primary-light); }
+      &:disabled { color: var(--text-muted); cursor: default; }
+      &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+      @media (pointer: coarse), (max-width: 600px) { height: var(--touch-target); }
+    }
+    .assist-error { color: var(--danger-text); margin: 4px 0 0; }
     .assist-suggestion {
-      margin-top: var(--space-2); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md);
+      margin-top: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md);
       background: var(--surface-2);
     }
-    .assist-label { display: flex; align-items: center; gap: var(--space-1); color: var(--primary); font-weight: 600; }
+    .assist-label { display: flex; align-items: center; gap: 4px; color: var(--primary); font-weight: 600; }
     .assist-label mat-icon { font-size: 14px; width: 14px; height: 14px; }
-    .assist-text { white-space: pre-wrap; word-break: break-word; margin: var(--space-2) 0; font-size: var(--font-size-base);
-      color: var(--text-primary); }
-    .assist-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
-    @media (max-width: 600px) {
-      :host { --mat-button-filled-container-height: 44px; --mat-button-outlined-container-height: 44px;
-        --mat-button-text-container-height: 44px; }
-    }
+    .assist-text { white-space: pre-wrap; word-break: break-word; margin: 6px 0; font-size: 13px; line-height: 1.5; color: var(--text-primary); }
+    .assist-actions { display: flex; justify-content: flex-end; gap: 8px; }
   `],
 })
 export class ComposeAssistComponent implements OnDestroy {

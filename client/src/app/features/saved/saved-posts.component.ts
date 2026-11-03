@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../core/services/api.service';
 import { Post } from '../../models/post.model';
@@ -12,17 +11,14 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
 /** Your saved posts, most recently saved first. Only you can see this list. */
 @Component({
   selector: 'app-saved-posts',
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, PostCardComponent,
+  imports: [CommonModule, RouterLink, MatButtonModule, MatProgressSpinnerModule, PostCardComponent,
     EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="saved-page">
-      <header class="card saved-header">
-        <mat-icon aria-hidden="true">bookmark</mat-icon>
-        <div>
-          <h1>Saved</h1>
-          <p class="text-secondary text-sm">Only you can see what you've saved.</p>
-        </div>
+      <header class="page-header">
+        <h1>Saved</h1>
+        <p>Only you can see what you've saved.</p>
       </header>
       <app-post-card *ngFor="let p of posts; trackBy: trackById" [post]="p"
                      (savedChange)="onSavedChange($event)" (postDeleted)="remove($event)"></app-post-card>
@@ -37,14 +33,14 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
     </div>
   `,
   styles: [`
-    .saved-page { max-width: 640px; margin: 16px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
-    .saved-header {
-      display: flex; align-items: center; gap: 16px; padding: 16px 20px;
-      h1 { margin: 0; font-size: 22px; } p { margin: 2px 0 0; }
-      mat-icon { color: var(--primary); font-size: 32px; width: 32px; height: 32px; }
+    .saved-page { max-width: 640px; margin: 0 auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+    .page-header {
+      padding-bottom: 4px; overflow-wrap: anywhere;
+      h1 { margin: 0; font-size: 20px; font-weight: 600; line-height: 28px; color: var(--text-primary); }
+      p { margin: 2px 0 0; font-size: 13px; color: var(--text-secondary); }
     }
     .center { display: flex; justify-content: center; padding: 24px; }
-    .empty { padding: 24px; text-align: center; color: var(--text-secondary); }
+    @media (max-width: 600px) { .saved-page { padding: 12px; } }
   `],
 })
 export class SavedPostsComponent implements OnInit {

@@ -18,12 +18,9 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="tag-page">
-      <header class="card tag-header">
-        <span class="hash" aria-hidden="true">#</span>
-        <div>
-          <h1>#{{ tag }}</h1>
-          <p class="text-secondary text-sm" *ngIf="count !== null">{{ count }} {{ count === 1 ? 'post' : 'posts' }}</p>
-        </div>
+      <header class="page-header">
+        <h1>#{{ tag }}</h1>
+        <p *ngIf="count !== null">{{ count }} {{ count === 1 ? 'post' : 'posts' }}</p>
       </header>
       <app-post-card *ngFor="let p of posts; trackBy: trackById" [post]="p" (postDeleted)="onDeleted($event)"></app-post-card>
       <app-skeleton *ngIf="loading && posts.length === 0" variant="post" [count]="2"></app-skeleton>
@@ -35,14 +32,14 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
     </div>
   `,
   styles: [`
-    .tag-page { max-width: 640px; margin: 16px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
-    .tag-header { display: flex; align-items: center; gap: 16px; padding: 16px 20px; h1 { margin: 0; font-size: 22px; } p { margin: 2px 0 0; } }
-    .hash {
-      width: 48px; height: 48px; border-radius: 50%; background: var(--primary-light); color: var(--primary);
-      display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700;
+    .tag-page { max-width: 640px; margin: 0 auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+    .page-header {
+      padding-bottom: 4px; overflow-wrap: anywhere;
+      h1 { margin: 0; font-size: 20px; font-weight: 600; line-height: 28px; color: var(--text-primary); }
+      p { margin: 2px 0 0; font-size: 13px; color: var(--text-secondary); }
     }
     .center { display: flex; justify-content: center; padding: 24px; }
-    .empty { padding: 24px; text-align: center; color: var(--text-secondary); }
+    @media (max-width: 600px) { .tag-page { padding: 12px; } }
   `],
 })
 export class TagPostsComponent implements OnInit, OnDestroy {

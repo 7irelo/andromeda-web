@@ -178,6 +178,24 @@ export class PostCardComponent implements OnInit {
     }
   }
 
+  /** Icon-only action buttons: the visible count is part of the accessible name. */
+  private withCount(label: string, count: number): string {
+    return count > 0 ? `${label} (${count})` : label;
+  }
+
+  get reactLabel(): string {
+    const label = this.reactionByType[this.post.my_reaction || '']?.label ?? $localize`:@@post.like:Like`;
+    return this.withCount(label, this.post.likes_count);
+  }
+
+  get commentLabel(): string {
+    return this.withCount($localize`:@@post.comment:Comment`, this.post.comments_count);
+  }
+
+  get shareLabel(): string {
+    return this.withCount($localize`:@@post.share:Share`, this.post.shares_count);
+  }
+
   get privacyIcon(): string {
     return { public: 'public', friends: 'group', private: 'lock' }[this.post.privacy] ?? 'public';
   }
