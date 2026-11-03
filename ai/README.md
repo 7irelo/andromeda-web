@@ -159,3 +159,28 @@ labels on borderline content are the obvious next step.
 
 A false hit shows results for the wrong city or product, so the threshold favours none over more savings. Plans that
 name a person are never cached. The threshold was picked on this same small set, so watch `ai_query_cache_total`.
+
+### Realtime voice
+
+`python -m evals.run_voice --engine realtime` streams synthesised speech at real-time pace and times each stage.
+Only the speech-to-speech engine has run live. The cascaded engine (Flux → Haiku → Aura-2), which is the default, has
+only been tested against fakes, because no `DEEPGRAM_API_KEY` was available. Run it with `--engine cascaded`, and set
+`VOICE_ENGINE=realtime` to use speech-to-speech instead.
+
+Turn detection dominated latency. Results for gpt-realtime-2.1-mini, 10 turns each:
+
+| Turn detection | Speech end → first audio, p50 / p95 | Turn detected → first audio, p50 | Interruptions detected |
+|---|---|---|---|
+| Semantic VAD (default eagerness) | 6.5 s / 7.8 s | 0.69 s | 4/5 |
+| Semantic VAD (high eagerness) | 2.7 s / 4.8 s | 0.68 s | 4/5 |
+| **Silence, 500 ms (used)** | 1.7 s / 2.4 s | 0.75 s | 4/5 |
+
+- **This misses the plan's 800 ms target.** With 500 ms of silence to wait for, the target leaves about 300 ms for
+  everything else, and the model alone takes 0.75 s. Shortening the silence would cut members off mid-sentence.
+- Silence detection may also end a turn at a long pause, which the semantic modes were better placed to avoid. That
+  wasn't measured, since the test phrases have no long pauses.
+- Mean WER was 0.05 at about $0.01 per turn. Clean synthetic speech is a best case: it says nothing about South African
+  accents or code-switching, which need recordings of real people.
+- Times exclude the browser's network and playback, and any trailing silence in the synthesised audio counts against
+  the engine. Ten turns is a small sample.
+- The test had no tools and no echo from speakers, and the browser client hasn't been tried with a real microphone.

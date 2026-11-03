@@ -335,12 +335,13 @@ class RealtimeEngine(Engine):
         except (OSError, websockets.WebSocketException) as exc:
             raise VoiceUnavailable(type(exc).__name__) from exc
         pcm = {'type': 'audio/pcm', 'rate': SAMPLE_RATE}
+        # Silence-based turn detection: semantic VAD waited 2.7-6.5 s after speech ended (evals/run_voice.py).
         await self._send({'type': 'session.update', 'session': {
             'type': 'realtime',
             'output_modalities': ['audio'],
             'instructions': SYSTEM,
             'audio': {
-                'input': {'format': pcm, 'turn_detection': {'type': 'semantic_vad'},
+                'input': {'format': pcm, 'turn_detection': {'type': 'server_vad', 'silence_duration_ms': 500},
                           'transcription': {'model': REALTIME_TRANSCRIBE_MODEL}},
                 'output': {'format': pcm, 'voice': 'marin'},
             },

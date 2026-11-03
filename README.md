@@ -131,6 +131,7 @@ Models are chosen per job, with a cross-provider fallback for each:
 | **Help me write** | Claude Haiku 5.5 | Rewrite a draft to be friendlier, more formal or shorter, fix grammar, or translate into English, isiZulu, Afrikaans, Sesotho or isiXhosa. You accept or discard. |
 | **Listing assistant** | Claude Sonnet 5.5 (vision) | Drafts a title, description, category and condition from your photos. |
 | **Voice & video** | Deepgram Nova-3 / Aura-2 | Voice-note transcripts, video captions (WebVTT) and AI chapters. |
+| **Realtime voice** | Deepgram Flux → Claude Haiku 5.5 → Aura-2, or gpt-realtime-2.1-mini | Talk to the assistant hands-free and interrupt it at any time. Audio passes through Django and the AI service, never straight from the browser to a provider. Voice can look things up as you, but can't post or send. |
 | **Assistant** | Haiku router, Opus 5.5 planner, Sonnet 5.5 | Searches, summarises and drafts. Tools run in Django as you; posting or sending always becomes a confirmation card you approve. Runs are durable (append-only steps on a dedicated queue) and every AI-initiated write is audited. The same tools are exposed over MCP with scoped, revocable personal access tokens. See [ADR 0001](docs/ai/adr/0001-durable-assistant-runs.md) and [MCP security](docs/ai/mcp-security.md). |
 | **Feed ranking** | LightGBM | 17 point-in-time features, calibrated engagement probability, a sticky A/B test against the heuristic ranker with a kill switch, and PSI drift alerts. |
 
@@ -145,6 +146,8 @@ injection screening and graceful degradation when a provider is down.
 | Moderation, held-out set (24 items, never tuned on) | macro-F1 **0.948**, review recall 0.92, 0 severe misses, 0 false removals, ~$0.8 per 1,000 items |
 | Retrieval, 30 golden queries | recall@10: lexical 0.10 → hybrid **0.968** (p50 0.38 s); 0 visibility leaks |
 | Distilled moderation student (Opus-labelled) | decides 21–30% of traffic alone at ~$0.001 per 1,000 items, but let one borderline item through per set, so it ships **off** |
+| Realtime voice, speech-to-speech engine (10 synthetic turns) | speech end to first audio p50 **1.7 s**, which misses the 800 ms target; WER 0.05; interruption detected 4/5 times; about $0.01 per turn. The Deepgram engine hasn't been run live |
+| Rewrite cache (35 query pairs) | 0 false hits on 20 near misses at threshold 0.94, 27% hit rate |
 | Feed ranker (synthetic engagement only) | AUC 0.705 vs 0.629 for the heuristic, ECE 0.010 |
 
 ---
