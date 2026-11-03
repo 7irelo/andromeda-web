@@ -4,11 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { City, LISTING_CONDITIONS, Listing, ListingCategory } from '../../models/listing.model';
@@ -22,13 +18,12 @@ type Sort = 'newest' | 'price_asc' | 'price_desc' | 'nearest' | '';
     selector: 'app-marketplace',
     imports: [
         CommonModule, RouterLink, FormsModule,
-        MatIconModule, MatButtonModule, MatInputModule, MatProgressSpinnerModule,
-        MatFormFieldModule, MatSelectModule, MatSnackBarModule, ListingCardComponent, ListingFormComponent,
+        MatIconModule, MatProgressSpinnerModule, MatSnackBarModule, ListingCardComponent, ListingFormComponent,
         EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     templateUrl: './marketplace.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrls: ['./marketplace.component.scss']
+    styleUrls: ['./ui.scss', './marketplace.component.scss']
 })
 export class MarketplaceComponent implements OnInit {
   listings: Listing[] = [];
@@ -125,6 +120,23 @@ export class MarketplaceComponent implements OnInit {
       },
       error: () => (this.loadingMore = false),
     });
+  }
+
+  selectCategory(slug: string): void {
+    this.category = slug;
+    this.load();
+  }
+
+  /** A top-level chip stays selected while one of its sub-categories is the filter. */
+  isCategoryActive(top: ListingCategory): boolean {
+    return this.category === top.slug || !!top.children?.some((c) => c.slug === this.category);
+  }
+
+  toggleCondition(value: string): void {
+    this.conditionFilter = this.conditionFilter.includes(value)
+      ? this.conditionFilter.filter((c) => c !== value)
+      : [...this.conditionFilter, value];
+    this.load();
   }
 
   useMyLocation(): void {

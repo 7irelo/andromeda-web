@@ -1,0 +1,201 @@
+// Shared controls for the Marketplace and Watch pages: compact, flat, tokens only.
+// Each component that uses these lists this file in styleUrls.
+
+.ui-page {
+  box-sizing: border-box;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-6);
+  font-size: var(--font-size-base);
+}
+
+.ui-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+
+  h1 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--text-primary);
+  }
+}
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: 36px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-primary);
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  transition: background var(--motion-fast);
+
+  &:hover:not(:disabled) { color: var(--text-primary); text-decoration: none; background: var(--surface-2); }
+  &:disabled { cursor: default; opacity: .55; }
+
+  mat-icon { flex: none; width: 18px; height: 18px; font-size: 18px; }
+  mat-spinner { --mat-progress-spinner-active-indicator-color: currentColor; }
+}
+
+.ui-btn-primary {
+  color: var(--on-primary);
+  background: var(--primary-strong);
+  border-color: var(--primary-strong);
+
+  &:hover:not(:disabled) { color: var(--on-primary); background: var(--primary-strong-hover); }
+}
+
+.ui-btn-ghost {
+  background: none;
+  border-color: transparent;
+}
+
+.ui-btn-danger { color: var(--danger-text); }
+.ui-btn.is-on { color: var(--primary); }
+
+.ui-icon-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+
+  &:hover:not(:disabled) { color: var(--text-primary); text-decoration: none; background: var(--surface-2); }
+  &:disabled { cursor: default; opacity: .55; }
+
+  mat-icon { width: 20px; height: 20px; font-size: 20px; }
+}
+
+.ui-control {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+
+  &::placeholder { color: var(--text-muted); }
+  &:focus { border-color: var(--primary); outline: 1px solid var(--primary); outline-offset: 0; }
+  &.ng-invalid.ng-touched { border-color: var(--danger-text); }
+}
+
+textarea.ui-control {
+  padding: 8px 10px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ui-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+
+  input { flex: none; width: 16px; height: 16px; margin: 0; accent-color: var(--primary-strong); }
+}
+
+.ui-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ui-chip {
+  flex: none;
+  min-height: 30px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--text-primary);
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+
+  &:hover { background: var(--surface-2); }
+
+  &[aria-pressed='true'] {
+    font-weight: 600;
+    color: var(--on-primary);
+    background: var(--primary-strong);
+    border-color: var(--primary-strong);
+  }
+}
+
+.ui-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.ui-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 0 var(--space-2);
+}
+
+.ui-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border-radius: 6px;
+}
+
+@media (max-width: 1100px) {
+  .ui-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+// Phones: 44px touch targets, and 16px text so iOS doesn't zoom into a focused field.
+@media (max-width: 600px) {
+  .ui-page { padding: var(--space-4); }
+  .ui-btn, .ui-chip { min-height: var(--touch-target); }
+  .ui-icon-btn { width: var(--touch-target); height: var(--touch-target); }
+  .ui-control { min-height: var(--touch-target); font-size: var(--font-size-lg); }
+  .ui-check { min-height: var(--touch-target); }
+  .ui-grid { gap: var(--space-3); }
+  .ui-grid-single { grid-template-columns: minmax(0, 1fr); }
+}

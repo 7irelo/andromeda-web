@@ -2,10 +2,8 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../../core/services/api.service';
@@ -19,17 +17,18 @@ type Tab = ListingStatus | 'all';
 @Component({
     selector: 'app-my-listings',
     imports: [
-        CommonModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, MatProgressSpinnerModule,
+        CommonModule, RouterLink, MatIconModule, MatMenuModule,
         MatSnackBarModule, MatTabsModule, ListingFormComponent,
         EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     template: `
-    <div class="page">
-      <div class="page-header">
-        <a mat-icon-button routerLink="/marketplace" aria-label="Back to Marketplace"><mat-icon>arrow_back</mat-icon></a>
+    <div class="ui-page">
+      <div class="ui-head">
+        <a class="ui-icon-btn" routerLink="/marketplace" aria-label="Back to Marketplace"><mat-icon aria-hidden="true">arrow_back</mat-icon></a>
         <h1>My listings</h1>
-        <span class="spacer"></span>
-        <button mat-flat-button color="primary" (click)="creating = true"><mat-icon>add</mat-icon> Create Listing</button>
+        <button class="ui-btn ui-btn-primary" type="button" (click)="creating = true">
+          <mat-icon aria-hidden="true">add</mat-icon> <span i18n="@@marketplace.listItem">List Item</span>
+        </button>
       </div>
 
       <mat-tab-group [selectedIndex]="tabIndex" (selectedIndexChange)="selectTab($event)" mat-stretch-tabs="false">
@@ -41,19 +40,19 @@ type Tab = ListingStatus | 'all';
 
       <div class="rows" *ngIf="!loading && failedPage !== 1">
         <div class="row card" *ngFor="let l of listings">
-          <a [routerLink]="'/marketplace/' + l.id" class="thumb" tabindex="-1" aria-hidden="true"><img [src]="image(l)" alt="" width="76" height="76" loading="lazy" /></a>
+          <a [routerLink]="'/marketplace/' + l.id" class="thumb" tabindex="-1" aria-hidden="true"><img [src]="image(l)" alt="" width="72" height="72" loading="lazy" /></a>
           <div class="info">
-            <a [routerLink]="'/marketplace/' + l.id" class="title font-semibold">{{ l.title }}</a>
-            <div class="price">{{ l.currency }} {{ l.price }}</div>
-            <div class="meta text-secondary text-xs">
-              <span class="pill" [ngClass]="'pill-' + l.status">{{ l.status | titlecase }}</span>
+            <a [routerLink]="'/marketplace/' + l.id" class="title">{{ l.title }}</a>
+            <div class="price">{{ l.price | currency:l.currency:'symbol-narrow':'1.0-2' }}</div>
+            <div class="meta">
+              <span class="ui-tag" [ngClass]="'status-' + l.status">{{ l.status | titlecase }}</span>
               <span>{{ l.views_count }} views · {{ l.likes_count }} saves</span>
               <span *ngIf="l.rating.count">· ★ {{ l.rating.average | number:'1.1-1' }} ({{ l.rating.count }})</span>
             </div>
           </div>
           <div class="actions">
-            <button mat-stroked-button (click)="editing = l"><mat-icon>edit</mat-icon> Edit</button>
-            <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More actions"><mat-icon>more_vert</mat-icon></button>
+            <button class="ui-btn" type="button" (click)="editing = l"><mat-icon aria-hidden="true">edit</mat-icon> Edit</button>
+            <button class="ui-icon-btn" type="button" [matMenuTriggerFor]="menu" aria-label="More actions"><mat-icon aria-hidden="true">more_vert</mat-icon></button>
             <mat-menu #menu="matMenu">
               <button mat-menu-item *ngIf="l.status === 'active'" (click)="setStatus(l, 'reserved')">
                 <mat-icon>bookmark_added</mat-icon> Mark reserved
@@ -72,12 +71,12 @@ type Tab = ListingStatus | 'all';
         <app-empty-state *ngIf="!listings.length" icon="inventory_2"
                          [title]="tab === 'all' ? 'You have no listings yet' : 'Nothing ' + tab + ' yet'"
                          message="Sell something you no longer need.">
-          <button mat-flat-button color="primary" type="button" (click)="creating = true">Create Listing</button>
+          <button class="ui-btn ui-btn-primary" type="button" (click)="creating = true" i18n="@@marketplace.listItem">List Item</button>
         </app-empty-state>
 
         <app-error-state *ngIf="failedPage && failedPage > 1" [compact]="true" (retry)="load(failedPage)"></app-error-state>
-        <div class="load-more" *ngIf="nextPage && !failedPage">
-          <button mat-stroked-button (click)="load(nextPage)">Load more</button>
+        <div class="ui-more" *ngIf="nextPage && !failedPage">
+          <button class="ui-btn" type="button" (click)="load(nextPage)">Load more</button>
         </div>
       </div>
     </div>
@@ -86,28 +85,33 @@ type Tab = ListingStatus | 'all';
                       (saved)="onSaved()" (closed)="creating = false; editing = null"></app-listing-form>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../ui.scss'],
     styles: [`
-    .page { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
-    .page-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .page-header h1 { font-size: 24px; font-weight: 800; margin: 0; }
-    .spacer { flex: 1; }
-    .rows { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-    .row { display: flex; align-items: center; gap: 14px; padding: 10px; }
-    .thumb img { width: 76px; height: 76px; object-fit: cover; border-radius: 10px; display: block; }
-    .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-    .title { color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .price { font-weight: 700; color: var(--primary); }
-    .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-    .pill { padding: 1px 8px; border-radius: 999px; background: var(--bg-secondary); font-weight: 600; }
-    .pill-active { background: var(--success-light); color: var(--success); }
-    .pill-reserved { background: var(--warning-light); color: var(--warning); }
-    .pill-sold { background: #e0e7ff; color: #4338ca; }
-    .actions { display: flex; align-items: center; gap: 4px; }
-    @media (max-width: 560px) { .row { flex-wrap: wrap; } .actions { width: 100%; justify-content: flex-end; } }
-    .loading-center { display: flex; justify-content: center; padding: 48px; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; padding: 48px; color: var(--text-secondary); }
-    .empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: .3; }
-    .load-more { display: flex; justify-content: center; padding: 16px; }
+    .rows { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+    .row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); }
+    .thumb { flex: none; }
+    .thumb img { display: block; width: 72px; height: 72px; object-fit: cover; border-radius: var(--radius-sm); }
+    .info { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+    .title {
+      overflow: hidden; font-size: var(--font-size-base); font-weight: 600; color: var(--text-primary);
+      text-decoration: none; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .title:hover { color: var(--text-primary); text-decoration: underline; }
+    .price { font-size: var(--font-size-sm); font-weight: 600; color: var(--text-primary); }
+    .meta {
+      display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) 6px;
+      font-size: var(--font-size-xs); color: var(--text-muted);
+    }
+    .status-active { color: var(--success); background: var(--success-light); }
+    .status-reserved { color: var(--warning); background: var(--warning-light); }
+    .status-sold { color: var(--primary); background: var(--primary-light); }
+    .actions { display: flex; flex: none; align-items: center; gap: var(--space-1); }
+    @media (max-width: 600px) {
+      .row { flex-wrap: wrap; }
+      .info { flex-basis: calc(100% - 84px); }
+      .title { min-height: var(--touch-target); line-height: var(--touch-target); }
+      .actions { width: 100%; justify-content: flex-end; }
+    }
   `]
 })
 export class MyListingsComponent implements OnInit {

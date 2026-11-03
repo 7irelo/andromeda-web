@@ -2,7 +2,6 @@ import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, ChangeDetec
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -17,60 +16,60 @@ const POLL_MS = 10_000;
 
 @Component({
     selector: 'app-video-player',
-    imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+    imports: [CommonModule, RouterLink, FormsModule, MatIconModule, MatProgressSpinnerModule,
               MatSnackBarModule],
     template: `
-    <div class="player-page" *ngIf="video">
+    <div class="ui-page player-page" *ngIf="video">
       <div class="player-shell" *ngIf="video.status === 'ready'; else notReady">
         <video #player controls playsinline preload="metadata" class="video-player"
                [attr.poster]="video.thumbnail_url"></video>
         <div class="player-error" *ngIf="playbackError">{{ playbackError }}</div>
       </div>
       <ng-template #notReady>
-        <div class="state-card" *ngIf="video.status === 'processing'">
+        <div class="state-card card" *ngIf="video.status === 'processing'">
           <mat-spinner diameter="32"></mat-spinner>
           <div>
-            <div class="font-semibold">Processing your video</div>
-            <div class="text-secondary text-sm">This page updates when it's ready to watch.</div>
+            <div class="strong">Processing your video</div>
+            <div class="muted">This page updates when it's ready to watch.</div>
           </div>
         </div>
-        <div class="state-card failed" *ngIf="video.status === 'failed'">
-          <mat-icon>error_outline</mat-icon>
+        <div class="state-card card failed" *ngIf="video.status === 'failed'">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
           <div>
-            <div class="font-semibold">We couldn't process this video</div>
-            <div class="text-secondary text-sm">{{ video.failure_reason }}</div>
+            <div class="strong">We couldn't process this video</div>
+            <div class="muted">{{ video.failure_reason }}</div>
           </div>
-          <button mat-stroked-button *ngIf="isOwner" (click)="retry()">Try again</button>
+          <button class="ui-btn" type="button" *ngIf="isOwner" (click)="retry()">Try again</button>
         </div>
       </ng-template>
 
       <div class="video-meta">
         <h1>
-          <mat-icon class="lock" *ngIf="!video.is_public" title="Only you can see this">lock</mat-icon>{{ video.title }}
+          <mat-icon class="lock" *ngIf="!video.is_public" title="Only you can see this">lock</mat-icon><span>{{ video.title }}</span>
         </h1>
         <div class="meta-row">
-          <span class="text-secondary">{{ video.views_count | number }} views · {{ video.created_at | date: 'mediumDate' }}</span>
+          <span class="muted">{{ video.views_count | number }} views · {{ video.created_at | date: 'mediumDate' }}</span>
           <div class="actions">
-            <button mat-button (click)="like()" [class.liked]="video.is_liked" [disabled]="video.status !== 'ready'">
-              <mat-icon>{{ video.is_liked ? 'thumb_up' : 'thumb_up_off_alt' }}</mat-icon>
+            <button class="ui-btn" type="button" (click)="like()" [class.is-on]="video.is_liked" [disabled]="video.status !== 'ready'">
+              <mat-icon aria-hidden="true">{{ video.is_liked ? 'thumb_up' : 'thumb_up_off_alt' }}</mat-icon>
               {{ video.likes_count | number }}
             </button>
-            <button mat-button *ngIf="isOwner" (click)="toggleVisibility()">
-              <mat-icon>{{ video.is_public ? 'public' : 'lock' }}</mat-icon>
+            <button class="ui-btn" type="button" *ngIf="isOwner" (click)="toggleVisibility()">
+              <mat-icon aria-hidden="true">{{ video.is_public ? 'public' : 'lock' }}</mat-icon>
               {{ video.is_public ? 'Public' : 'Private' }}
             </button>
           </div>
         </div>
 
-        <div class="uploader-card">
+        <div class="uploader-card card">
           <a [routerLink]="'/watch/channel/' + video.uploader.id" class="uploader-link">
             <img [src]="video.uploader.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="video.uploader.username" />
             <div>
-              <div class="font-semibold">{{ video.uploader.full_name || video.uploader.username }}</div>
-              <div class="text-secondary text-sm">{{ video.channel.subscribers_count | number }} subscribers</div>
+              <div class="strong">{{ video.uploader.full_name || video.uploader.username }}</div>
+              <div class="muted">{{ video.channel.subscribers_count | number }} subscribers</div>
             </div>
           </a>
-          <button *ngIf="!isOwner" mat-flat-button [color]="video.channel.is_subscribed ? undefined : 'primary'"
+          <button *ngIf="!isOwner" class="ui-btn" [class.ui-btn-primary]="!video.channel.is_subscribed" type="button"
                   (click)="toggleSubscribe()" [disabled]="subscribing">
             {{ video.channel.is_subscribed ? 'Subscribed' : 'Subscribe' }}
           </button>
@@ -88,12 +87,12 @@ const POLL_MS = 10_000;
         </div>
 
         <div class="transcript-block" *ngIf="video.has_transcript">
-          <button mat-button (click)="toggleTranscript()">
-            <mat-icon>subject</mat-icon> {{ transcript === null ? 'Show transcript' : 'Hide transcript' }}
+          <button class="ui-btn" type="button" (click)="toggleTranscript()">
+            <mat-icon aria-hidden="true">subject</mat-icon> {{ transcript === null ? 'Show transcript' : 'Hide transcript' }}
           </button>
           <p class="transcript" *ngIf="transcript !== null">{{ transcript }}</p>
         </div>
-        <div class="text-secondary text-xs" *ngIf="video.captions_status === 'pending'">Captions are being generated.</div>
+        <div class="muted small" *ngIf="video.captions_status === 'pending'">Captions are being generated.</div>
       </div>
 
       <!-- Comments -->
@@ -101,24 +100,20 @@ const POLL_MS = 10_000;
         <h3>{{ comments.length }} {{ comments.length === 1 ? 'Comment' : 'Comments' }}</h3>
 
         <div class="comment-input">
-          <input
-            type="text"
-            [(ngModel)]="commentText"
-            placeholder="Add a comment..."
-            (keyup.enter)="submitComment()"
-            class="comment-field"
-          />
-          <button mat-icon-button (click)="submitComment()" [disabled]="!commentText.trim()">
-            <mat-icon>send</mat-icon>
+          <input class="ui-control" type="text" [(ngModel)]="commentText" placeholder="Add a comment..."
+                 aria-label="Add a comment" i18n-aria-label="@@watch.addComment" (keyup.enter)="submitComment()" />
+          <button class="ui-btn ui-btn-primary send" type="button" (click)="submitComment()" [disabled]="!commentText.trim()"
+                  aria-label="Post comment" i18n-aria-label="@@watch.postComment">
+            <mat-icon aria-hidden="true">send</mat-icon>
           </button>
         </div>
 
         <div class="comment" *ngFor="let c of comments">
           <img [src]="c.author.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="c.author.username" />
-          <div class="comment-bubble">
+          <div class="comment-body">
             <a [routerLink]="'/profile/' + c.author.username" class="author-name">{{ c.author.full_name }}</a>
+            <span class="muted small">{{ timeAgo(c.created_at) }}</span>
             <p>{{ c.content }}</p>
-            <span class="text-xs text-secondary">{{ timeAgo(c.created_at) }}</span>
           </div>
         </div>
       </div>
@@ -127,67 +122,67 @@ const POLL_MS = 10_000;
     <div class="loading-center" *ngIf="!video && !notFound">
       <mat-spinner diameter="40"></mat-spinner>
     </div>
-    <div class="loading-center text-secondary" *ngIf="notFound">This video isn't available.</div>
+    <div class="loading-center muted" *ngIf="notFound">This video isn't available.</div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../marketplace/ui.scss'],
     styles: [`
-    .player-page { max-width: 900px; margin: 0 auto; padding: 16px; }
-    .player-shell { position: relative; }
-    .video-player { width: 100%; border-radius: 12px; background: #000; max-height: 506px; display: block; }
+    .player-page { max-width: 960px; }
+    .player-shell { position: relative; overflow: hidden; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+    .video-player { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 70vh; }
     .player-error {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      color: #fff; background: rgba(0, 0, 0, 0.7); border-radius: 12px; padding: 16px; text-align: center;
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: var(--space-4);
+      color: var(--text-primary); text-align: center; background: var(--surface);
     }
-    .state-card {
-      display: flex; align-items: center; gap: 16px; padding: 24px; border-radius: 12px;
-      background: var(--surface-2); border: 1px solid var(--border);
+    .state-card { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); padding: var(--space-6); }
+    .state-card > div { flex: 1 1 200px; min-width: 0; }
+    .state-card.failed mat-icon { color: var(--danger-text); }
+    .strong { font-size: var(--font-size-sm); font-weight: 600; color: var(--text-primary); }
+    .muted { font-size: var(--font-size-sm); color: var(--text-secondary); }
+    .small { font-size: var(--font-size-xs); color: var(--text-muted); }
+    .video-meta { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) 0; }
+    h1 {
+      display: flex; align-items: flex-start; gap: var(--space-1); margin: 0;
+      font-size: var(--font-size-xl); font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere;
     }
-    .state-card.failed mat-icon { color: #c62828; }
-    .state-card button { margin-left: auto; }
-    .video-meta { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; }
-    h1 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-    .lock { color: var(--text-secondary); }
-    .meta-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .actions { display: flex; gap: 4px; }
-    .liked { color: var(--primary); }
-    .uploader-card {
-      display: flex; align-items: center; justify-content: space-between;
-      background: var(--surface-2); border-radius: 12px; padding: 12px 16px;
-      border: 1px solid var(--border);
-    }
-    .uploader-link { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
-    .uploader-link:hover { text-decoration: none; }
-    .description { color: var(--text-secondary); line-height: 1.6; white-space: pre-line; }
-    .chapters { display: flex; flex-direction: column; gap: 4px; }
+    h1 span { min-width: 0; }
+    .lock { flex: none; color: var(--text-muted); }
+    .meta-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+    .actions { display: flex; gap: var(--space-2); }
+    .uploader-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+    .uploader-link { display: flex; align-items: center; gap: var(--space-3); min-width: 0; color: inherit; text-decoration: none; }
+    .uploader-link:hover { color: inherit; text-decoration: none; }
+    .description { margin: 0; line-height: 1.6; color: var(--text-secondary); white-space: pre-line; overflow-wrap: anywhere; }
+    .chapters { display: flex; flex-direction: column; gap: 2px; }
+    .chapters h3 { margin-bottom: var(--space-1); }
     .chapter {
-      display: flex; gap: 12px; align-items: baseline; text-align: left; width: 100%;
-      background: none; border: 1px solid transparent; border-radius: 8px; padding: 8px 10px;
-      color: var(--text-primary); font: inherit; cursor: pointer;
+      display: flex; align-items: baseline; gap: var(--space-3); width: 100%; min-height: var(--touch-target); padding: var(--space-2) 10px;
+      font: inherit; font-size: var(--font-size-sm); color: var(--text-primary); text-align: left; cursor: pointer;
+      background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
     }
     .chapter:hover { background: var(--surface-2); }
-    .chapter.active { border-color: var(--primary); background: var(--surface-2); }
-    .chapter-time { color: var(--primary); font-variant-numeric: tabular-nums; min-width: 48px; }
+    .chapter.active { background: var(--primary-light); border-color: var(--primary); }
+    .chapter-time { min-width: 48px; color: var(--primary); font-variant-numeric: tabular-nums; }
     .transcript {
-      max-height: 280px; overflow-y: auto; white-space: pre-line; line-height: 1.6;
-      color: var(--text-secondary); background: var(--surface-2); border-radius: 8px; padding: 12px;
+      max-height: 280px; padding: var(--space-3); margin: var(--space-2) 0 0; overflow-y: auto; line-height: 1.6;
+      color: var(--text-secondary); white-space: pre-line; background: var(--surface-2); border-radius: var(--radius-sm);
     }
-    .comments-section { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
-    h3 { font-size: 16px; font-weight: 700; }
-    .comment-input { display: flex; align-items: center; gap: 8px; }
-    .comment-field {
-      flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 20px;
-      padding: 10px 16px; font-size: 14px; outline: none; color: var(--text-primary);
-    }
-    .comment-field:focus { border-color: var(--primary); }
-    .comment-field::placeholder { color: var(--text-secondary); }
-    .comment { display: flex; gap: 10px; }
-    .comment-bubble {
-      background: var(--bg); border-radius: 18px; padding: 10px 14px; flex: 1; font-size: 14px;
-    }
-    .author-name { font-weight: 600; font-size: 13px; color: var(--text-primary); text-decoration: none; display: block; }
-    .author-name:hover { text-decoration: underline; }
-    .comment-bubble p { margin-top: 2px; }
+    .comments-section { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+    h3 { margin: 0; font-size: var(--font-size-base); font-weight: 600; }
+    .comment-input { display: flex; align-items: center; gap: var(--space-2); }
+    .send { flex: none; width: 36px; padding: 0; }
+    .comment { display: flex; gap: var(--space-3); font-size: var(--font-size-sm); }
+    .comment-body { flex: 1; min-width: 0; }
+    .author-name { margin-right: var(--space-1); font-weight: 600; color: var(--text-primary); text-decoration: none; }
+    .author-name:hover { color: var(--text-primary); text-decoration: underline; }
+    .comment-body p { margin: 2px 0 0; color: var(--text-secondary); overflow-wrap: anywhere; }
     .loading-center { display: flex; justify-content: center; padding: 60px; }
+    @media (max-width: 600px) {
+      .send { width: var(--touch-target); }
+      .uploader-link { min-height: var(--touch-target); }
+      .author-name { display: inline-flex; align-items: center; min-height: var(--touch-target); }
+      .uploader-card .ui-btn { flex: 1 1 100%; }
+    }
   `]
 })
 export class VideoPlayerComponent implements OnInit, OnDestroy {

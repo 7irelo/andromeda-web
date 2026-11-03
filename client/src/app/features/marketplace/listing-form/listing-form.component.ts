@@ -6,11 +6,6 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subscription, of, switchMap } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../../core/services/api.service';
@@ -45,8 +40,7 @@ export function apiError(err: HttpErrorResponse, fallback: string): string {
 @Component({
     selector: 'app-listing-form',
     imports: [
-        CommonModule, ReactiveFormsModule, MatIconModule, MatButtonModule, MatInputModule, MatFormFieldModule,
-        MatSelectModule, MatCheckboxModule, MatProgressSpinnerModule, MatSnackBarModule, ComposeAssistComponent,
+        CommonModule, ReactiveFormsModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule, ComposeAssistComponent,
         ModalDialogDirective,
     ],
     template: `
@@ -55,7 +49,7 @@ export function apiError(err: HttpErrorResponse, fallback: string): string {
          [dialogLabel]="listing ? 'Edit listing' : 'Create listing'" (dismiss)="close()">
       <div class="edit-dialog-header">
         <h2>{{ listing ? 'Edit listing' : 'Create listing' }}</h2>
-        <button mat-icon-button (click)="close()" aria-label="Close"><mat-icon>close</mat-icon></button>
+        <button class="ui-icon-btn" type="button" (click)="close()" aria-label="Close"><mat-icon aria-hidden="true">close</mat-icon></button>
       </div>
 
       <div class="edit-dialog-body">
@@ -65,71 +59,71 @@ export function apiError(err: HttpErrorResponse, fallback: string): string {
           <div class="photo" *ngFor="let p of previews; let i = index">
             <img [src]="p" alt="" />
             <button type="button" class="remove-photo" (click)="removePhoto(i)" aria-label="Remove photo">
-              <mat-icon>close</mat-icon>
+              <span class="remove-icon"><mat-icon aria-hidden="true">close</mat-icon></span>
             </button>
           </div>
           <label class="photo add-photo" *ngIf="existingImages.length + files.length < maxImages">
-            <mat-icon>add_a_photo</mat-icon>
+            <mat-icon aria-hidden="true">add_a_photo</mat-icon>
             <span class="text-xs">Add photos</span>
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden
+            <input type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp,image/gif" multiple
                    (change)="addPhotos($event)" />
           </label>
         </div>
 
         <div class="assistant" *ngIf="!listing">
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Anything the photos don't show? (optional)</mat-label>
-            <input matInput formControlName="hint" maxlength="500" placeholder="e.g. 128GB, bought 2024, comes with charger" />
-          </mat-form-field>
-          <button mat-stroked-button type="button" (click)="fillFromPhotos()" [disabled]="!files.length || drafting">
-            <mat-icon *ngIf="!drafting">auto_awesome</mat-icon>
-            <mat-spinner *ngIf="drafting" diameter="18"></mat-spinner>
-            {{ drafting ? 'Looking at your photos…' : 'Fill in from photos' }}
-          </button>
-          <span class="text-xs text-secondary" *ngIf="!files.length">Add a photo first.</span>
+          <label class="ui-field">
+            Anything the photos don't show? (optional)
+            <input class="ui-control" formControlName="hint" maxlength="500" placeholder="e.g. 128GB, bought 2024, comes with charger" />
+          </label>
+          <div class="assistant-action">
+            <button class="ui-btn" type="button" (click)="fillFromPhotos()" [disabled]="!files.length || drafting">
+              <mat-icon *ngIf="!drafting" aria-hidden="true">auto_awesome</mat-icon>
+              <mat-spinner *ngIf="drafting" diameter="18"></mat-spinner>
+              {{ drafting ? 'Looking at your photos…' : 'Fill in from photos' }}
+            </button>
+            <span class="text-xs text-secondary" *ngIf="!files.length">Add a photo first.</span>
+          </div>
           <p class="ai-note text-xs" *ngIf="aiFields.size">
-            <mat-icon>auto_awesome</mat-icon>
+            <mat-icon aria-hidden="true">auto_awesome</mat-icon>
             Fields marked AI-suggested were filled in from your photos. Check them before you post.
           </p>
         </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Title</mat-label>
-          <input matInput formControlName="title" maxlength="255" placeholder="What are you selling?" />
-          <span matSuffix class="ai-chip" *ngIf="aiFields.has('title')">AI-suggested</span>
-        </mat-form-field>
+        <label class="ui-field">
+          <span class="field-label">Title *<span class="ai-chip" *ngIf="aiFields.has('title')">AI-suggested</span></span>
+          <input class="ui-control" formControlName="title" maxlength="255" placeholder="What are you selling?"
+                 aria-required="true" [attr.aria-invalid]="invalid('title')" />
+        </label>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="4" placeholder="Describe your item..."></textarea>
-          <mat-hint *ngIf="aiFields.has('description')" class="ai-chip">AI-suggested</mat-hint>
-        </mat-form-field>
+        <label class="ui-field">
+          <span class="field-label">Description *<span class="ai-chip" *ngIf="aiFields.has('description')">AI-suggested</span></span>
+          <textarea class="ui-control" formControlName="description" rows="4" placeholder="Describe your item..."
+                    aria-required="true" [attr.aria-invalid]="invalid('description')"></textarea>
+        </label>
         <app-compose-assist [text]="form.value.description" kind="listing"
                             (accepted)="form.patchValue({ description: $event })"></app-compose-assist>
 
         <div class="edit-row">
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Category</mat-label>
-            <mat-select formControlName="category_id">
-              <mat-option [value]="null">None</mat-option>
-              <mat-optgroup *ngFor="let top of categories" [label]="top.name">
-                <mat-option [value]="top.id">All {{ top.name }}</mat-option>
-                <mat-option *ngFor="let child of top.children" [value]="child.id">{{ child.name }}</mat-option>
-              </mat-optgroup>
-            </mat-select>
-            <mat-hint *ngIf="aiFields.has('category_id')" class="ai-chip">AI-suggested</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Condition</mat-label>
-            <mat-select formControlName="condition">
-              <mat-option *ngFor="let c of conditions" [value]="c.value">{{ c.label }}</mat-option>
-            </mat-select>
-            <mat-hint *ngIf="aiFields.has('condition')" class="ai-chip">AI-suggested</mat-hint>
-          </mat-form-field>
+          <label class="ui-field">
+            <span class="field-label">Category<span class="ai-chip" *ngIf="aiFields.has('category_id')">AI-suggested</span></span>
+            <select class="ui-control" formControlName="category_id">
+              <option [ngValue]="null">None</option>
+              <optgroup *ngFor="let top of categories" [label]="top.name">
+                <option [ngValue]="top.id">All {{ top.name }}</option>
+                <option *ngFor="let child of top.children" [ngValue]="child.id">{{ child.name }}</option>
+              </optgroup>
+            </select>
+          </label>
+          <label class="ui-field">
+            <span class="field-label">Condition *<span class="ai-chip" *ngIf="aiFields.has('condition')">AI-suggested</span></span>
+            <select class="ui-control" formControlName="condition" aria-required="true">
+              <option *ngFor="let c of conditions" [ngValue]="c.value">{{ c.label }}</option>
+            </select>
+          </label>
         </div>
 
         <div class="price-suggestion" *ngIf="suggestion">
-          <mat-icon>insights</mat-icon>
+          <mat-icon aria-hidden="true">insights</mat-icon>
           <div>
             <div class="font-semibold">
               Similar items go for {{ suggestion.currency }} {{ suggestion.low | number:'1.0-0' }}
@@ -140,49 +134,52 @@ export function apiError(err: HttpErrorResponse, fallback: string): string {
               {{ suggestion.based_on }} similar listing{{ suggestion.based_on === 1 ? '' : 's' }}.
             </div>
           </div>
-          <button mat-button type="button" (click)="useMedian()">Use median</button>
+          <button class="ui-btn" type="button" (click)="useMedian()">Use median</button>
         </div>
-        <p class="text-xs text-secondary" *ngIf="drafted && !suggestion">
+        <p class="drafted-note text-xs text-secondary" *ngIf="drafted && !suggestion">
           Not enough similar listings yet to suggest a price.
         </p>
 
         <div class="edit-row">
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Price</mat-label>
-            <input matInput type="number" min="0" formControlName="price" placeholder="0.00" />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Currency</mat-label>
-            <input matInput formControlName="currency" maxlength="3" />
-          </mat-form-field>
+          <label class="ui-field">
+            Price *
+            <input class="ui-control" type="number" min="0" formControlName="price" placeholder="0.00"
+                   aria-required="true" [attr.aria-invalid]="invalid('price')" />
+          </label>
+          <label class="ui-field">
+            Currency *
+            <input class="ui-control" formControlName="currency" maxlength="3"
+                   aria-required="true" [attr.aria-invalid]="invalid('currency')" />
+          </label>
         </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Location</mat-label>
-          <mat-icon matPrefix>location_on</mat-icon>
-          <input matInput formControlName="location" placeholder="Suburb, City" list="listing-cities" />
+        <label class="ui-field">
+          Location
+          <input class="ui-control" formControlName="location" placeholder="Suburb, City" list="listing-cities"
+                 aria-describedby="listing-location-hint" />
           <datalist id="listing-cities">
             <option *ngFor="let c of cities" [value]="c.name"></option>
           </datalist>
-          <mat-hint>Buyers see the area, never your exact position.</mat-hint>
-        </mat-form-field>
+        </label>
+        <span class="field-hint" id="listing-location-hint">Buyers see the area, never your exact position.</span>
 
-        <mat-checkbox [checked]="!!point" (change)="togglePreciseLocation($event.checked)" [disabled]="locating">
+        <label class="ui-check">
+          <input type="checkbox" [checked]="!!point" (change)="togglePreciseLocation($any($event.target).checked)" [disabled]="locating" />
           Use my current location for distance search (rounded to about 1 km)
-        </mat-checkbox>
+        </label>
 
-        <mat-form-field appearance="outline" class="w-full" *ngIf="listing">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <label class="ui-field" *ngIf="listing">
+          Status
+          <select class="ui-control" formControlName="status">
+            <option *ngFor="let s of statuses" [ngValue]="s.value">{{ s.label }}</option>
+          </select>
+        </label>
       </div>
 
       <div class="edit-dialog-actions">
-        <button mat-stroked-button (click)="close()" [disabled]="saving">Cancel</button>
-        <button mat-flat-button color="primary" (click)="save()" [disabled]="saving || form.invalid">
-          <mat-icon *ngIf="!saving">{{ listing ? 'save' : 'add' }}</mat-icon>
+        <button class="ui-btn" type="button" (click)="close()" [disabled]="saving">Cancel</button>
+        <button class="ui-btn ui-btn-primary" type="button" (click)="save()" [disabled]="saving || form.invalid">
+          <mat-icon *ngIf="!saving" aria-hidden="true">{{ listing ? 'save' : 'add' }}</mat-icon>
           <mat-spinner *ngIf="saving" diameter="18"></mat-spinner>
           {{ saving ? 'Saving…' : (listing ? 'Save changes' : 'Create listing') }}
         </button>
@@ -190,58 +187,73 @@ export function apiError(err: HttpErrorResponse, fallback: string): string {
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../ui.scss'],
     styles: [`
-    .edit-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; backdrop-filter: blur(2px); }
+    .edit-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, .45); }
     .edit-dialog {
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101;
-      width: min(600px, 95vw); max-height: 92vh; overflow-y: auto; padding: 0;
+      position: fixed; top: 50%; left: 50%; z-index: 101; transform: translate(-50%, -50%);
+      box-sizing: border-box; width: min(600px, calc(100vw - 16px)); max-height: 92vh; padding: 0; overflow-y: auto;
     }
     .edit-dialog-header {
-      display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 2;
+      position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
+      padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+      background: var(--surface); border-bottom: 1px solid var(--border);
     }
-    .edit-dialog-header h2 { font-size: 18px; font-weight: 700; margin: 0; }
-    .edit-dialog-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 8px; }
-    .edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 520px) { .edit-row { grid-template-columns: 1fr; } }
+    .edit-dialog-header h2 { margin: 0; font-size: var(--font-size-lg); font-weight: 600; }
+    .edit-dialog-body { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-5); }
+    .edit-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
     .edit-dialog-actions {
-      display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--border);
-      position: sticky; bottom: 0; background: var(--surface);
+      position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: var(--space-2);
+      padding: var(--space-3) var(--space-5); background: var(--surface); border-top: 1px solid var(--border);
     }
-    .w-full { width: 100%; }
-    .photos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .field-label { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+    .field-hint { margin-top: calc(var(--space-2) * -1); font-size: var(--font-size-xs); color: var(--text-muted); }
+    .drafted-note { margin: 0; }
+    .photos { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .photo {
-      position: relative; width: 84px; height: 84px; border-radius: 10px; overflow: hidden;
-      border: 1px solid var(--border); background: var(--surface-2);
+      position: relative; box-sizing: border-box; width: 84px; height: 84px; overflow: hidden;
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
     }
-    .photo img { width: 100%; height: 100%; object-fit: cover; }
+    .photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
     .add-photo {
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-      cursor: pointer; color: var(--primary); border-style: dashed;
+      color: var(--primary); cursor: pointer; border: 1px dashed var(--border-strong);
     }
+    .add-photo:focus-within { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
     .remove-photo {
-      position: absolute; top: 2px; right: 2px; border: 0; border-radius: 50%; width: 22px; height: 22px;
-      background: rgba(0,0,0,.6); color: #fff; cursor: pointer; display: flex; align-items: center;
-      justify-content: center; padding: 0;
+      position: absolute; top: 0; right: 0; display: flex; align-items: flex-start; justify-content: flex-end;
+      width: var(--touch-target); height: var(--touch-target); padding: var(--space-1); cursor: pointer; background: none; border: 0;
     }
-    .remove-photo mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .remove-icon {
+      display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+      color: var(--text-primary); background: var(--surface); border: 1px solid var(--border); border-radius: 50%;
+    }
+    .remove-icon mat-icon { width: 14px; height: 14px; font-size: 14px; }
     .assistant {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px;
-      border: 1px dashed var(--primary); border-radius: 12px; margin-bottom: 8px;
+      display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3);
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md);
     }
-    .assistant mat-form-field { flex-basis: 100%; }
-    .ai-note { display: flex; align-items: center; gap: 4px; margin: 0; flex-basis: 100%; color: var(--primary); }
-    .ai-note mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .assistant-action { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+    .ai-note { display: flex; align-items: center; gap: var(--space-1); margin: 0; color: var(--primary); }
+    .ai-note mat-icon { flex: none; width: 14px; height: 14px; font-size: 14px; }
     .ai-chip {
-      font-size: 11px; font-weight: 600; color: var(--primary); background: var(--primary-light);
-      padding: 2px 8px; border-radius: 999px; margin-right: 8px; white-space: nowrap;
+      padding: 1px 6px; font-size: 11px; font-weight: 600; color: var(--primary); white-space: nowrap;
+      background: var(--primary-light); border-radius: 6px;
     }
     .price-suggestion {
-      display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px;
-      background: var(--primary-light); margin-bottom: 8px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-3);
+      font-size: var(--font-size-sm); background: var(--primary-light); border-radius: var(--radius-md);
     }
-    .price-suggestion > div { flex: 1; }
+    .price-suggestion > div { flex: 1 1 180px; min-width: 0; }
     .price-suggestion mat-icon { color: var(--primary); }
+    .price-suggestion .ui-btn mat-icon { color: inherit; }
+    @media (max-width: 600px) {
+      .edit-dialog-header { padding-left: var(--space-4); }
+      .edit-dialog-body { padding: var(--space-4); }
+      .edit-dialog-actions { padding: var(--space-3) var(--space-4); }
+      .edit-row { grid-template-columns: minmax(0, 1fr); }
+      .edit-dialog-actions .ui-btn { flex: 1; }
+    }
   `]
 })
 export class ListingFormComponent implements OnInit, OnDestroy {
@@ -302,6 +314,12 @@ export class ListingFormComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subs.forEach((s) => s.unsubscribe());
     this.previews.forEach((p) => URL.revokeObjectURL(p));
+  }
+
+  /** For aria-invalid: only once the user has been in the field, as Material did. */
+  invalid(name: string): boolean {
+    const control = this.form.get(name);
+    return !!control && control.invalid && control.touched;
   }
 
   addPhotos(event: Event): void {

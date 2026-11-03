@@ -1,9 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
 import { Listing } from '../../../models/listing.model';
 import { ListingCardComponent } from '../listing-card/listing-card.component';
@@ -11,49 +9,38 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
 
 @Component({
     selector: 'app-saved-listings',
-    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, ListingCardComponent,
+    imports: [CommonModule, RouterLink, MatIconModule, ListingCardComponent,
         EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     template: `
-    <div class="page">
-      <div class="page-header">
-        <a mat-icon-button routerLink="/marketplace" aria-label="Back to Marketplace"><mat-icon>arrow_back</mat-icon></a>
+    <div class="ui-page">
+      <div class="ui-head">
+        <a class="ui-icon-btn" routerLink="/marketplace" aria-label="Back to Marketplace"><mat-icon aria-hidden="true">arrow_back</mat-icon></a>
         <h1>Saved listings</h1>
       </div>
-      <p class="text-secondary text-sm">We'll let you know when a seller drops the price on something you saved.</p>
+      <p class="intro">We'll let you know when a seller drops the price on something you saved.</p>
 
-      <app-skeleton *ngIf="loading" variant="grid" [count]="4" class="grid"></app-skeleton>
+      <app-skeleton *ngIf="loading" variant="grid" [count]="3"></app-skeleton>
       <app-error-state *ngIf="!loading && failedPage === 1" (retry)="load(1)"></app-error-state>
 
-      <div class="grid" *ngIf="!loading && failedPage !== 1">
-        <div class="cell" *ngFor="let l of listings">
-          <app-listing-card [listing]="l"></app-listing-card>
-          <button mat-button class="unsave" (click)="unsave(l)" [attr.aria-label]="'Remove ' + l.title + ' from saved'"><mat-icon aria-hidden="true">favorite</mat-icon> Remove</button>
-        </div>
+      <div class="ui-grid" *ngIf="!loading && failedPage !== 1">
+        <app-listing-card *ngFor="let l of listings" [listing]="l" (savedChange)="onSavedChange(l, $event)"></app-listing-card>
       </div>
 
       <app-empty-state *ngIf="!loading && !failedPage && !listings.length" icon="favorite_border" title="Nothing saved yet"
                        message="Tap Save on a listing to keep track of it.">
-        <a mat-stroked-button routerLink="/marketplace">Browse Marketplace</a>
+        <a class="ui-btn" routerLink="/marketplace">Browse Marketplace</a>
       </app-empty-state>
 
       <app-error-state *ngIf="failedPage > 1" [compact]="true" (retry)="load(failedPage)"></app-error-state>
-      <div class="load-more" *ngIf="nextPage && !failedPage">
-        <button mat-stroked-button (click)="load(nextPage)">Load more</button>
+      <div class="ui-more" *ngIf="nextPage && !failedPage">
+        <button class="ui-btn" type="button" (click)="load(nextPage)">Load more</button>
       </div>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../ui.scss'],
     styles: [`
-    .page { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
-    .page-header { display: flex; align-items: center; gap: 8px; }
-    .page-header h1 { font-size: 24px; font-weight: 800; margin: 0; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; margin-top: 12px; }
-    .cell { display: flex; flex-direction: column; gap: 4px; }
-    .unsave { align-self: flex-start; color: var(--danger); }
-    .loading-center { display: flex; justify-content: center; padding: 48px; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; padding: 64px 24px; color: var(--text-secondary); }
-    .empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: .3; }
-    .load-more { display: flex; justify-content: center; padding: 16px; }
+    .intro { margin: 0 0 var(--space-4); font-size: var(--font-size-sm); color: var(--text-secondary); }
   `]
 })
 export class SavedListingsComponent implements OnInit {
@@ -85,9 +72,7 @@ export class SavedListingsComponent implements OnInit {
     });
   }
 
-  unsave(l: Listing): void {
-    this.api.likeListing(l.id).subscribe((res) => {
-      if (!res.liked) this.listings = this.listings.filter((x) => x.id !== l.id);
-    });
+  onSavedChange(l: Listing, saved: boolean): void {
+    if (!saved) this.listings = this.listings.filter((x) => x.id !== l.id);
   }
 }
