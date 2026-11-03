@@ -1,0 +1,35 @@
+{"a": "couch for sale in Durban", "b": "couches for sale Durban", "same_intent": true, "synthetic": true}
+{"a": "second hand couch durban", "b": "used couch in durban", "same_intent": true, "synthetic": true}
+{"a": "running clubs in Joburg", "b": "running club Johannesburg", "same_intent": true, "synthetic": true}
+{"a": "braai this weekend", "b": "braai on the weekend", "same_intent": true, "synthetic": true}
+{"a": "cheap fridge", "b": "affordable fridge", "same_intent": true, "synthetic": true}
+{"a": "how to fix load shedding inverter", "b": "fixing an inverter for load shedding", "same_intent": true, "synthetic": true}
+{"a": "jobs in Cape Town", "b": "Cape Town jobs", "same_intent": true, "synthetic": true}
+{"a": "kids soccer coaching", "b": "soccer coaching for kids", "same_intent": true, "synthetic": true}
+{"a": "wedding photographers", "b": "photographers for weddings", "same_intent": true, "synthetic": true}
+{"a": "best bunny chow", "b": "the best bunny chow", "same_intent": true, "synthetic": true}
+{"a": "apartment to rent Pretoria", "b": "apartments for rent in Pretoria", "same_intent": true, "synthetic": true}
+{"a": "gym near Sandton", "b": "gyms near sandton", "same_intent": true, "synthetic": true}
+{"a": "videos about hiking", "b": "hiking videos", "same_intent": true, "synthetic": true}
+{"a": "post about the taxi strike", "b": "posts about taxi strike", "same_intent": true, "synthetic": true}
+{"a": "mountain bike for sale", "b": "mountain bikes for sale", "same_intent": true, "synthetic": true}
+{"a": "couch for sale in Durban", "b": "couch for sale in Joburg", "same_intent": false, "synthetic": true}
+{"a": "running clubs in Joburg", "b": "running clubs in Cape Town", "same_intent": false, "synthetic": true}
+{"a": "iPhone 13", "b": "iPhone 14", "same_intent": false, "synthetic": true}
+{"a": "cheap fridge", "b": "cheap freezer", "same_intent": false, "synthetic": true}
+{"a": "jobs in Cape Town", "b": "jobs in Port Elizabeth", "same_intent": false, "synthetic": true}
+{"a": "buy a car", "b": "sell a car", "same_intent": false, "synthetic": true}
+{"a": "dog for adoption", "b": "cat for adoption", "same_intent": false, "synthetic": true}
+{"a": "apartment to rent Pretoria", "b": "apartment to buy Pretoria", "same_intent": false, "synthetic": true}
+{"a": "events this week", "b": "events last week", "same_intent": false, "synthetic": true}
+{"a": "mens running shoes", "b": "womens running shoes", "same_intent": false, "synthetic": true}
+{"a": "kids soccer coaching", "b": "kids rugby coaching", "same_intent": false, "synthetic": true}
+{"a": "2 bedroom flat", "b": "3 bedroom flat", "same_intent": false, "synthetic": true}
+{"a": "Toyota Hilux 2018", "b": "Toyota Hilux 2021", "same_intent": false, "synthetic": true}
+{"a": "wedding photographers", "b": "wedding caterers", "same_intent": false, "synthetic": true}
+{"a": "gym near Sandton", "b": "gym near Rosebank", "same_intent": false, "synthetic": true}
+{"a": "free couch", "b": "couch under R5000", "same_intent": false, "synthetic": true}
+{"a": "posts about the taxi strike", "b": "posts about the teachers strike", "same_intent": false, "synthetic": true}
+{"a": "hiking videos", "b": "hiking groups", "same_intent": false, "synthetic": true}
+{"a": "mountain bike for sale", "b": "motorbike for sale", "same_intent": false, "synthetic": true}
+{"a": "best bunny chow", "b": "best biryani", "same_intent": false, "synthetic": true}

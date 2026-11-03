@@ -145,3 +145,17 @@ The two items it let through were borderline "review" cases, a veiled threat abo
 a put-down aimed at a group, not severe harm. That still misses the bar, so the stage stays off.
 `MODERATION_STUDENT_PATH` turns it on once a retrained student meets that bar on the held-out set. More teacher
 labels on borderline content are the obvious next step.
+
+### Search-rewrite cache
+
+`python -m evals.run_query_cache` measures false hits on 35 synthetic query pairs (embeddings only):
+
+| Threshold | Same-intent hit rate | False hits (of 20) |
+|---|---|---|
+| 0.88 | 87% | 3 |
+| 0.92 | 40% | 1 |
+| **0.94 (used)** | 27% | 0 |
+| 0.96 | 0% | 0 |
+
+A false hit shows results for the wrong city or product, so the threshold favours none over more savings. Plans that
+name a person are never cached. The threshold was picked on this same small set, so watch `ai_query_cache_total`.

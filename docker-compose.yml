@@ -24,7 +24,7 @@ services:
       retries: 5
 
   neo4j:
-    image: neo4j:5-community
+    image: neo4j:5.26.31-community@sha256:c7d25c0eeebfe125718d58b72ed5d663c85d0479047733845eb2237c67ce8069
     container_name: andromeda_neo4j
     restart: unless-stopped
     environment:
@@ -50,7 +50,7 @@ services:
       start_period: 60s
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
     container_name: andromeda_redis
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret} --appendonly yes
@@ -67,7 +67,7 @@ services:
       retries: 5
 
   rabbitmq:
-    image: rabbitmq:3-management-alpine
+    image: rabbitmq:3-management-alpine@sha256:606d8c0d6b3c18d1da9afc53bc7cdb2a8d5486df91b5a9830e9e07626c9ae281
     container_name: andromeda_rabbitmq
     restart: unless-stopped
     environment:

@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 from .. import metrics
 from ..gateway import EMBEDDING_DIMS, Gateway
 from ..guardrails import UNTRUSTED_NOTICE, clean_text, looks_like_injection, redact_pii, strip_foreign_urls, untrusted
+from .query_cache import QueryCache
 
 ContentType = Literal['posts', 'listings', 'groups', 'pages', 'videos']
 MAX_EMBED_TEXTS = 64
@@ -77,9 +78,17 @@ REWRITE_SYSTEM = f"""You turn a social-network search box query into a search pl
 - "author": only when the query names who wrote something ("Thandi's post about ...")."""
 
 
-async def plan_query(req: QueryRequest, gateway: Gateway, user_id: int) -> QueryResult:
+async def plan_query(req: QueryRequest, gateway: Gateway, user_id: int, cache: QueryCache | None = None) -> QueryResult:
     plan = QueryPlan(query=clean_text(req.q, 200), types=[])
     rewritten = False
+    original = None
+    if req.rewrite and cache is not None:
+        original = (await gateway.embed('search.embed', texts=[req.q], user_id=user_id)).vectors[0]
+        hit = cache.get(req.q, original)
+        metrics.QUERY_CACHE.labels(hit[1] if hit else 'miss').inc()
+        if hit:
+            cached_plan, cached_vector = hit[0]
+            return QueryResult(plan=cached_plan, vector=cached_vector, rewritten=True)
     if req.rewrite:
         res = await gateway.structured('search.rewrite', system=REWRITE_SYSTEM,
                                        user=untrusted(req.q, 200, kind='search_query'),
@@ -91,6 +100,8 @@ async def plan_query(req: QueryRequest, gateway: Gateway, user_id: int) -> Query
     # original keeps intent if the rewrite drifted.
     text = req.q if not rewritten or plan.query == req.q else f'{req.q}\n{plan.query}'
     emb = await gateway.embed('search.embed', texts=[text], user_id=user_id)
+    if original is not None and not plan.author:
+        cache.put(req.q, original, (plan, emb.vectors[0]))
     return QueryResult(plan=plan, vector=emb.vectors[0], rewritten=rewritten)
 
 

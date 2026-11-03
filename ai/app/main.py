@@ -16,6 +16,7 @@ from .features.listing import DraftRequest, DraftResult, draft
 from .features.chapters import ChaptersRequest, ChaptersResult, chapters
 from .features import distilled
 from .features.compose import ComposeRequest, ComposeResult, rewrite
+from .features.query_cache import QueryCache
 from .features.moderation import ModerationRequest, ModerationResult, moderate
 from .features.replies import RepliesRequest, RepliesResult, suggest
 from .features.speech import (DeepgramClient, SpeakRequest, SpeechUnavailable, TranscribeRequest, TranscribeResult,
@@ -57,6 +58,7 @@ def build_speech() -> DeepgramClient | None:
 async def lifespan(app: FastAPI):
     app.state.gateway, app.state.moderation_stage0 = build_gateway()
     app.state.speech = build_speech()
+    app.state.query_cache = QueryCache()
     app.state.moderation_student = distilled.load(get_settings().moderation_student_path)
     yield
 
@@ -107,7 +109,7 @@ async def embed_endpoint(body: EmbedRequest, request: Request, user: ActingUser 
 
 @app.post('/v1/search/plan', response_model=QueryResult)
 async def search_plan_endpoint(body: QueryRequest, request: Request, user: ActingUser = Depends(acting_user)):
-    return await _run(plan_query(body, request.app.state.gateway, user.id))
+    return await _run(plan_query(body, request.app.state.gateway, user.id, request.app.state.query_cache))
 
 
 @app.post('/v1/search/rerank', response_model=RerankResult)
