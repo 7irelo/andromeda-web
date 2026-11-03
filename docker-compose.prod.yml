@@ -61,7 +61,7 @@ services:
   # ── Edge ────────────────────────────────────────────────────
   caddy:
     <<: *hardened
-    image: caddy:2.11.6-alpine@sha256:d44355d3c2149dc580ce2cac735955d1c08d3d00882c30489c241aa51a5c10d9
+    image: caddy:2.11.7-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5
     container_name: andromeda_caddy
     environment:
       DOMAIN: ${DOMAIN:?Set DOMAIN (the public host name) in .env}
