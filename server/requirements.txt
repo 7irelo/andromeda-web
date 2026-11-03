@@ -58,7 +58,7 @@ Pillow~=13.0
 
 # Utilities
 python-decouple~=3.8
-django-filter~=25.1
+django-filter~=26.2
 django-storages~=1.14
 boto3~=1.37
 
