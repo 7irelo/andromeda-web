@@ -17,7 +17,7 @@ drf-spectacular~=0.28.0
 # ASGI + WebSockets (Django Channels)
 channels~=4.2
 channels-redis~=4.2
-uvicorn[standard]~=0.34
+uvicorn[standard]~=0.54
 websockets~=14.0
 
 # Database
