@@ -121,6 +121,11 @@ remove (an offer asking for ID and bank details was removed rather than reviewed
 The first baseline (35 items, 2026-10-27) reported review F1 0.29. It had only four review items, so that
 figure was mostly small-sample noise; the larger sets above replace it.
 
+**Language coverage is thin.** The held-out score is almost entirely English: 22 of its 24 items are English (21
+correct), with one isiZulu and one Afrikaans item (both correct). That can't support any claim about moderation
+quality in those languages. Each run now reports `by_language`, but the set needs real isiZulu, Afrikaans and
+code-switched examples, written or checked by native speakers, before those numbers mean anything.
+
 ### Distilled first pass (optional, off by default)
 
 [`distill/`](distill/) trains a small classifier from a frontier teacher: 636 synthetic posts

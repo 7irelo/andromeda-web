@@ -54,6 +54,19 @@ async def run(concurrency: int, dataset: Path):
     return await asyncio.gather(*(one(r) for r in rows))
 
 
+def by_language(results):
+    """Accuracy and mistakes per language, so a weak language can't hide in the overall score."""
+    langs = {}
+    for row, res, _ in results:
+        entry = langs.setdefault(row.get('lang', 'unknown'), {'items': 0, 'correct': 0, 'severe_misses': 0})
+        entry['items'] += 1
+        entry['correct'] += row['expected'] == res.decision.value
+        entry['severe_misses'] += row['expected'] == 'remove' and res.decision.value == 'allow'
+    for entry in langs.values():
+        entry['accuracy'] = round(entry['correct'] / entry['items'], 3)
+    return langs
+
+
 def report(results):
     confusion = Counter((row['expected'], res.decision.value) for row, res, _ in results)
     lines = ['| label | precision | recall | F1 |', '|---|---|---|---|']
@@ -79,6 +92,7 @@ def report(results):
         'latency_p50_s': round(latencies[len(latencies) // 2], 2),
         'latency_p95_s': round(latencies[int(len(latencies) * 0.95) - 1], 2),
         'degraded': sum(1 for _, res, _ in results if res.degraded),
+        'by_language': by_language(results),
     }
     mistakes = [f"- {row['id']} expected **{row['expected']}**, got **{res.decision.value}** "
                 f"({', '.join(res.categories) or 'none'}): {res.reason}"
