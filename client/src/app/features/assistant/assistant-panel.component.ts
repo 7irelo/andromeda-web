@@ -4,6 +4,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { VoiceChatComponent } from './voice-chat.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -26,7 +27,7 @@ const TYPE_ICONS: Record<string, string> = {
  */
 @Component({
   selector: 'app-assistant-panel',
-  imports: [CommonModule, FormsModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+  imports: [CommonModule, FormsModule, RouterLink, VoiceChatComponent, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
     MatTooltipModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
@@ -36,6 +37,7 @@ const TYPE_ICONS: Record<string, string> = {
       <h2>Assistant</h2>
       <button mat-icon-button (click)="closed.emit()" aria-label="Close assistant"><mat-icon>close</mat-icon></button>
     </header>
+    <app-voice-chat></app-voice-chat>
 
     <div class="conversation" #scroller>
       <p class="hint" *ngIf="!runs.length && !external.length">

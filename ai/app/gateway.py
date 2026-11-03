@@ -55,6 +55,9 @@ ROUTES: dict[str, list[Route]] = {
                        Route('openai', 'gpt-6-luna', 512, None)],
     'search.rerank': [Route('anthropic', 'claude-haiku-5-5', 1024),
                       Route('openai', 'gpt-6-luna', 1024, None)],
+    # Speech: short replies, first words as fast as possible.
+    'voice.reply': [Route('anthropic', 'claude-haiku-5-5', 400, 'low', 15.0),
+                    Route('openai', 'gpt-6-luna', 400, None, 15.0)],
     'ask.answer': [Route('anthropic', 'claude-sonnet-5-5', 2048),
                    Route('openai', 'gpt-6.1-terra', 2048, None)],
     # Vision: reading brands, models and wear from photos needs the stronger model.
@@ -340,6 +343,50 @@ class Gateway:
             breaker.record(True)
             cost = self._meter(job, route, usage, latency, user_id, i > 0)
             _end_span(span, usage=usage, cost=cost)
+            return Result(output, route.model, route.provider, usage, cost, latency, fallback_used=i > 0)
+        raise AllRoutesFailed(job) from last_error
+
+    async def stream_step(self, job: str, *, system: str, turns: list[Turn], tools: list[dict], user_id: int,
+                          on_text) -> Result[StepOutput]:
+        """
+        Like step(), passing text to ``on_text`` as it arrives. Falls over to the next
+        route only before any text was sent, so the member never hears two answers.
+        """
+        self._check_budget(job, user_id)
+        last_error: Exception | None = None
+        for i, route, provider, breaker in self._candidates(job):
+            if not hasattr(provider, 'step'):
+                continue
+            sent = False
+
+            async def forward(text: str) -> None:
+                nonlocal sent
+                sent = True
+                await on_text(text)
+
+            started = time.monotonic()
+            try:
+                if hasattr(provider, 'stream_step'):
+                    output, usage = await provider.stream_step(route, system, turns, tools, forward)
+                else:
+                    output, usage = await provider.step(route, system, turns, tools)
+                    if output.text:
+                        await forward(output.text)
+            except Refused:
+                breaker.record(True)
+                metrics.REQUESTS.labels(job, route.provider, route.model, 'refused').inc()
+                raise
+            except ProviderError as exc:
+                breaker.record(False)
+                metrics.REQUESTS.labels(job, route.provider, route.model, 'error').inc()
+                logger.warning('Route %s/%s failed for %s: %s', route.provider, route.model, job, exc)
+                if sent:
+                    raise
+                last_error = exc
+                continue
+            latency = time.monotonic() - started
+            breaker.record(True)
+            cost = self._meter(job, route, usage, latency, user_id, i > 0)
             return Result(output, route.model, route.provider, usage, cost, latency, fallback_used=i > 0)
         raise AllRoutesFailed(job) from last_error
 

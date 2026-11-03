@@ -145,6 +145,38 @@ class AnthropicProvider:
             if exc.status_code >= 500 or exc.status_code == 529:
                 raise ProviderError(f'HTTP {exc.status_code}') from exc
             raise
+        return self._step_output(route, msg)
+
+    async def stream_step(self, route: Route, system: str, turns: list[Turn], tools: list[dict],
+                          on_text) -> tuple[StepOutput, Usage]:
+        kwargs = {}
+        if route.effort:
+            kwargs['output_config'] = {'effort': route.effort}
+        if tools:
+            kwargs['tools'] = [{'name': t['name'], 'description': t['description'], 'input_schema': t['input_schema']}
+                               for t in tools]
+        if route.timeout_s:
+            kwargs['timeout'] = route.timeout_s
+        try:
+            async with self.client.messages.stream(
+                model=route.model,
+                max_tokens=route.max_tokens,
+                system=[{'type': 'text', 'text': system, 'cache_control': {'type': 'ephemeral'}}],
+                messages=_anthropic_turns(turns),
+                **kwargs,
+            ) as stream:
+                async for text in stream.text_stream:
+                    await on_text(text)
+                msg = await stream.get_final_message()
+        except _TRANSIENT_ANTHROPIC as exc:
+            raise ProviderError(type(exc).__name__) from exc
+        except anthropic.APIStatusError as exc:
+            if exc.status_code >= 500 or exc.status_code == 529:
+                raise ProviderError(f'HTTP {exc.status_code}') from exc
+            raise
+        return self._step_output(route, msg)
+
+    def _step_output(self, route: Route, msg) -> tuple[StepOutput, Usage]:
         if msg.stop_reason == 'refusal':
             raise Refused(getattr(msg.stop_details, 'category', None) or 'refusal')
         if msg.stop_reason == 'max_tokens':

@@ -12,3 +12,4 @@ opentelemetry-sdk==1.45.1
 opentelemetry-exporter-otlp-proto-http==1.45.1
 opentelemetry-instrumentation-fastapi==0.66b1
 sentry-sdk==2.72.0
+websockets~=14.0

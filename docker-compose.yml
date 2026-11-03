@@ -163,6 +163,7 @@ services:
       # Tracing and error reporting stay off while these are empty (docs/OPERATIONS.md).
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       - OTEL_SERVICE_NAME=andromeda-api
+      - VOICE_ENGINE=${VOICE_ENGINE:-cascaded}
       # Provider keys live only in the ai service.
       - ANTHROPIC_API_KEY=
       - OPENAI_API_KEY=

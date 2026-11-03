@@ -347,6 +347,8 @@ WEB_PUSH_ALLOWED_HOSTS = ['fcm.googleapis.com', 'updates.push.services.mozilla.c
 
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', '')
 AI_SERVICE_SECRET = os.environ.get('AI_SERVICE_SECRET', '')
+# 'cascaded' (Deepgram Flux -> Claude -> Aura-2) or 'realtime' (OpenAI speech-to-speech).
+VOICE_ENGINE = os.environ.get('VOICE_ENGINE', 'cascaded')
 AI_MODERATION_ENABLED = os.environ.get('AI_MODERATION_ENABLED', 'True') == 'True'
 AI_SEARCH_ENABLED = os.environ.get('AI_SEARCH_ENABLED', 'True') == 'True'
 # Listwise LLM rerank of the fused top results. Off by default: in the

@@ -10,6 +10,7 @@ from channels.security.websocket import AllowedHostsOriginValidator
 from chats.middleware import TicketAuthMiddleware
 from chats.routing import websocket_urlpatterns as chat_ws
 from notifications.routing import websocket_urlpatterns as notification_ws
+from assistant.routing import websocket_urlpatterns as voice_ws
 from observability.tracing import wrap_websockets
 
 django_asgi_app = get_asgi_application()
@@ -18,7 +19,7 @@ application = ProtocolTypeRouter({
     'http': django_asgi_app,
     'websocket': wrap_websockets(AllowedHostsOriginValidator(
         TicketAuthMiddleware(
-            URLRouter(chat_ws + notification_ws)
+            URLRouter(chat_ws + notification_ws + voice_ws)
         )
     )),
 })

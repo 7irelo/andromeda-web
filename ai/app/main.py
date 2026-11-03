@@ -1,11 +1,12 @@
+import json
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import PlainTextResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-from .auth import ActingUser, acting_user
+from .auth import ActingUser, acting_user, verify_token
 from .budget import Budget
 from .config import get_settings
 from .features.assistant import (DraftRequest as AssistantDraftRequest, DraftResult as AssistantDraftResult,
@@ -14,7 +15,7 @@ from .features.assistant import (DraftRequest as AssistantDraftRequest, DraftRes
 from .features.catchup import CatchUpRequest, CatchUpResult, catch_up
 from .features.listing import DraftRequest, DraftResult, draft
 from .features.chapters import ChaptersRequest, ChaptersResult, chapters
-from .features import distilled
+from .features import distilled, voice
 from .features.compose import ComposeRequest, ComposeResult, rewrite
 from .features.query_cache import QueryCache
 from .features.moderation import ModerationRequest, ModerationResult, moderate
@@ -149,6 +150,58 @@ async def transcribe_endpoint(body: TranscribeRequest, request: Request, user: A
         return await transcribe(body, request.app.state.speech, request.app.state.gateway.budget, user.id)
     except SpeechUnavailable:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, 'Speech is temporarily unavailable') from None
+
+
+@app.websocket('/v1/voice')
+async def voice_endpoint(ws: WebSocket, engine: str = 'cascaded'):
+    """Realtime voice. Only Django connects here, with the same service token as every other call."""
+    settings = get_settings()
+    scheme, _, token = ws.headers.get('authorization', '').partition(' ')
+    try:
+        if scheme.lower() != 'bearer':
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+        user = verify_token(token, settings)
+    except HTTPException:
+        await ws.close(code=4401)
+        return
+    gateway = ws.app.state.gateway
+    if not gateway.budget.has_audio_room(user.id) or not gateway.budget.has_room(user.id):
+        await ws.close(code=4429)
+        return
+    await ws.accept()
+
+    class Peer:
+        send_json = staticmethod(ws.send_json)
+        send_bytes = staticmethod(ws.send_bytes)
+
+    async def receive():
+        message = await ws.receive()
+        if message['type'] == 'websocket.disconnect':
+            return None
+        if message.get('bytes') is not None:
+            return message['bytes']
+        return json.loads(message.get('text') or '{}')
+
+    def secret(key):
+        return key.get_secret_value() if key else None
+
+    try:
+        start = await ws.receive_json()
+        tools = start.get('tools') if isinstance(start, dict) else None
+        built = voice.build_engine(engine, Peer, gateway, user.id, tools if isinstance(tools, list) else [],
+                                   deepgram_key=secret(settings.deepgram_api_key),
+                                   openai_key=secret(settings.openai_api_key))
+    except voice.VoiceUnavailable:
+        await ws.close(code=4503)
+        return
+    except (WebSocketDisconnect, ValueError):
+        return
+    outcome = await voice.run_session(built, receive, gateway.budget)
+    if outcome != 'closed':
+        try:
+            await ws.close(code=4000, reason=outcome)
+        except RuntimeError:
+            pass  # already closed
 
 
 @app.post('/v1/speak')
