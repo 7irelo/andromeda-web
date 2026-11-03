@@ -207,6 +207,11 @@ html {
 .mat-warn {
   --mat-sys-primary: var(--mat-sys-error);
   --mat-sys-on-primary: var(--mat-sys-on-error);
+  // The solid indigo fill above would otherwise make destructive buttons look ordinary.
+  --mat-button-filled-container-color: #dc2626;
+  --mat-button-filled-label-text-color: #fff;
+  --mat-button-outlined-label-text-color: var(--danger-text);
+  --mat-button-text-label-text-color: var(--danger-text);
 }
 .mat-accent {
   --mat-sys-primary: var(--mat-sys-tertiary);
