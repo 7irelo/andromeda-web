@@ -13,7 +13,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
     template: `
     <article class="legal card" *ngIf="page === 'privacy'">
       <h1>Privacy policy</h1>
-      <p class="text-secondary">Version 2026-10-28</p>
+      <p class="version">Version 2026-10-28</p>
 
       <h2>What we keep</h2>
       <ul>
@@ -54,7 +54,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
     <article class="legal card" *ngIf="page === 'terms'">
       <h1>Terms of use</h1>
-      <p class="text-secondary">Version 2026-10-28</p>
+      <p class="version">Version 2026-10-28</p>
 
       <h2>Your account</h2>
       <p>Keep your password private and turn on two-factor sign-in if you can. You're responsible for what's shared from
@@ -80,11 +80,21 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
-    .legal { max-width: 760px; margin: 24px auto; padding: 32px; line-height: 1.6; }
-    h1 { font-size: 26px; margin: 0 0 4px; }
-    h2 { font-size: 17px; margin: 24px 0 8px; }
-    ul { padding-left: 20px; }
-    @media (max-width: 600px) { .legal { margin: 0; padding: 20px 16px; border-radius: 0; } }
+    .legal { max-width: 720px; margin: var(--space-6) auto; padding: var(--space-8); font-size: var(--font-size-base);
+      line-height: 1.6; color: var(--text-secondary); }
+    .legal h1 { margin: 0 0 var(--space-1); font-size: var(--font-size-xl); font-weight: 600; line-height: 1.3;
+      letter-spacing: -.01em; color: var(--text-primary); }
+    .legal h2 { margin: var(--space-6) 0 var(--space-2); font-size: var(--font-size-base); font-weight: 600; line-height: 1.4;
+      letter-spacing: 0; color: var(--text-primary); }
+    .legal p { margin: 0 0 var(--space-3); }
+    .legal ul { margin: 0 0 var(--space-3); padding-left: var(--space-5); }
+    .legal li { margin-bottom: var(--space-1); }
+    .legal strong { font-weight: 600; color: var(--text-primary); }
+    .legal a { text-decoration: underline; }
+    .legal .version { font-size: var(--font-size-sm); color: var(--text-muted); }
+    @media (max-width: 760px) {
+      .legal { margin: var(--space-4); padding: var(--space-5) var(--space-4); }
+    }
   `]
 })
 export class LegalComponent {

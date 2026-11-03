@@ -12,19 +12,20 @@
   <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
   <meta name="theme-color" content="#4f46e5">
   <style>
-    /* Boot shell: painted before the app script runs (and if it never does). */
-    .boot { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 12px; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; color: #475569; }
-    .boot-mark { width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #4f46e5, #7c3aed); }
-    .boot-name { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -.5px; }
-    @media (prefers-color-scheme: dark) { body { background: #0f172a; } .boot { color: #a3b1c6; } .boot-name { color: #f1f5f9; } }
+    /* Boot shell: painted before the app script runs (and if it never does). Same values as the design tokens. */
+    body { margin: 0; background: #f5f6fb; }
+    .boot { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 12px;
+            font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; color: #1e1b6e; }
+    .boot-mark { fill: currentColor; }
+    .boot-name { font-size: 16px; font-weight: 700; letter-spacing: .08em; }
+    @media (prefers-color-scheme: dark) { body { background: #070b1d; } .boot { color: #dfe3ff; } }
   </style>
 </head>
 <body class="mat-typography">
   <app-root>
     <div class="boot" aria-hidden="true">
-      <div class="boot-mark"></div>
-      <div class="boot-name">Andromeda</div>
+      <svg class="boot-mark" viewBox="0 0 32 28" width="30" height="26"><path d="M16 0 32 28H24.5L16 12.6 9.6 24 20 24 22.2 28H0L16 0Z"/></svg>
+      <div class="boot-name">ANDROMEDA</div>
     </div>
   </app-root>
   <noscript>Andromeda needs JavaScript. Please enable it to continue.</noscript>

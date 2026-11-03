@@ -2,12 +2,9 @@ import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
+import { EmptyStateComponent } from '../../shared/components/states';
 import { ModerationActionKind, ModerationCase } from '../../models/moderation.model';
 
 type Filter = 'open' | 'reports' | 'auto' | 'appeals' | 'all';
@@ -15,85 +12,115 @@ type Filter = 'open' | 'reports' | 'auto' | 'appeals' | 'all';
 /** Staff review queue: reported and auto-flagged content, appeals, and the audit trail per case. */
 @Component({
     selector: 'app-moderation-console',
-    imports: [CommonModule, FormsModule, MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatIconModule,
-      MatInputModule, MatSnackBarModule],
+    imports: [CommonModule, FormsModule, MatButtonModule, MatSnackBarModule, EmptyStateComponent],
     template: `
     <div class="console">
-      <h1><mat-icon>gavel</mat-icon> Moderation</h1>
-      <mat-button-toggle-group [value]="filter" (change)="setFilter($event.value)" aria-label="Queue">
-        <mat-button-toggle value="open">Open</mat-button-toggle>
-        <mat-button-toggle value="reports">Reported</mat-button-toggle>
-        <mat-button-toggle value="auto">Auto-flagged</mat-button-toggle>
-        <mat-button-toggle value="appeals">Appeals</mat-button-toggle>
-        <mat-button-toggle value="all">History</mat-button-toggle>
-      </mat-button-toggle-group>
-      <p class="text-secondary" *ngIf="!loading && !cases.length">Nothing to review.</p>
+      <h1>Moderation</h1>
+      <div class="filters" role="group" aria-label="Queue">
+        <button type="button" *ngFor="let f of filters" class="filter" [class.active]="filter === f.value"
+                [attr.aria-pressed]="filter === f.value" (click)="setFilter(f.value)">{{ f.label }}</button>
+      </div>
+      <app-empty-state *ngIf="!loading && !cases.length" icon="task_alt" title="Nothing to review."></app-empty-state>
 
       <section class="case card" *ngFor="let c of cases" [class.resolved]="c.resolved">
         <header>
-          <span class="chip">{{ c.content_type }}</span>
+          <span class="chip type">{{ c.content_type }}</span>
           <span class="chip" [class.warn]="c.decision === 'remove'">{{ c.source === 'report' ? c.report_count + ' report(s)' : 'AI: ' + c.decision }}</span>
-          <span class="text-secondary text-sm">by &#64;{{ c.author_username || 'deleted' }} · {{ c.created_at | date:'medium' }}</span>
+          <span class="meta">by &#64;{{ c.author_username || 'deleted' }} · {{ c.created_at | date:'medium' }}</span>
         </header>
         <!-- User content is shown as text only, never as HTML. -->
         <blockquote>{{ c.content || c.snapshot || '(content deleted)' }}</blockquote>
-        <p class="text-sm" *ngIf="c.content && c.snapshot && c.snapshot !== c.content">
+        <p class="detail" *ngIf="c.content && c.snapshot && c.snapshot !== c.content">
           <strong>When flagged:</strong> {{ c.snapshot }}
         </p>
-        <p class="text-sm" *ngIf="c.reason"><strong>Reason:</strong> {{ c.reason }}
+        <p class="detail" *ngIf="c.reason"><strong>Reason:</strong> {{ c.reason }}
           <span *ngIf="c.categories.length"> ({{ c.categories.join(', ') }})</span>
-          <span *ngIf="c.model" class="text-secondary"> · {{ c.model }}, confidence {{ c.confidence | number:'1.0-2' }}</span></p>
-        <ul class="reports text-sm" *ngIf="c.reports.length">
+          <span *ngIf="c.model" class="meta"> · {{ c.model }}, confidence {{ c.confidence | number:'1.0-2' }}</span></p>
+        <ul class="reports detail" *ngIf="c.reports.length">
           <li *ngFor="let r of c.reports">{{ r.reason }}<span *ngIf="r.details">: {{ r.details }}</span></li>
         </ul>
-        <div class="appeal" *ngIf="c.appeal">
+        <div class="appeal detail" *ngIf="c.appeal">
           <strong>Appeal ({{ c.appeal.status }}):</strong> {{ c.appeal.message || 'No message.' }}
         </div>
 
+        <div class="note" *ngIf="!c.resolved">
+          <label [attr.for]="'note-' + c.id">Note for the audit log</label>
+          <input [id]="'note-' + c.id" maxlength="500" [(ngModel)]="notes[c.id]" />
+        </div>
         <div class="actions" *ngIf="!c.resolved">
-          <mat-form-field appearance="outline" class="note">
-            <mat-label>Note for the audit log</mat-label>
-            <input matInput maxlength="500" [(ngModel)]="notes[c.id]" />
-          </mat-form-field>
           <ng-container *ngIf="c.appeal?.status === 'open'; else normal">
             <button mat-flat-button color="primary" (click)="appeal(c, true)">Restore</button>
             <button mat-stroked-button (click)="appeal(c, false)">Uphold removal</button>
           </ng-container>
           <ng-template #normal>
             <button mat-stroked-button (click)="act(c, 'approve')">Approve</button>
-            <button mat-flat-button color="warn" (click)="act(c, 'remove')">Remove</button>
+            <button mat-stroked-button class="danger" (click)="act(c, 'remove')">Remove</button>
             <button mat-stroked-button (click)="act(c, 'warn')">Warn</button>
             <button mat-stroked-button (click)="act(c, 'suspend')">Suspend {{ days }}d</button>
-            <button mat-stroked-button color="warn" (click)="act(c, 'ban')">Ban</button>
+            <button mat-stroked-button class="danger" (click)="act(c, 'ban')">Ban</button>
             <button mat-button (click)="act(c, 'dismiss')">Dismiss</button>
           </ng-template>
         </div>
         <details *ngIf="c.actions.length">
-          <summary class="text-sm">Audit log ({{ c.actions.length }})</summary>
-          <ul class="text-sm"><li *ngFor="let a of c.actions">{{ a.created_at | date:'short' }} · {{ a.action }} by
+          <summary>Audit log ({{ c.actions.length }})</summary>
+          <ul class="detail"><li *ngFor="let a of c.actions">{{ a.created_at | date:'short' }} · {{ a.action }} by
             {{ a.moderator_username || a.automated_by || 'system' }}<span *ngIf="a.note">: {{ a.note }}</span></li></ul>
         </details>
       </section>
-      <button mat-stroked-button *ngIf="next" (click)="load(true)">Load more</button>
+      <button mat-stroked-button class="more" *ngIf="next" (click)="load(true)">Load more</button>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
-    .console { max-width: 860px; margin: 0 auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 12px; }
-    h1 { display: flex; align-items: center; gap: 8px; font-size: 22px; margin: 0; }
-    .case { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-    .case.resolved { opacity: .7; }
-    header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .chip { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: rgba(0,0,0,.06); text-transform: capitalize; }
-    .chip.warn { background: rgba(198,40,40,.12); color: #c62828; }
-    blockquote { margin: 0; padding: 8px 12px; border-left: 3px solid rgba(0,0,0,.2); white-space: pre-wrap;
-      word-break: break-word; max-height: 240px; overflow: auto; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .note { flex: 1 1 220px; }
-    .reports { margin: 0; padding-left: 20px; }
+    .console { max-width: 860px; margin: 0 auto; padding: var(--space-6) var(--space-4); display: flex; flex-direction: column;
+      gap: var(--space-3); --mat-button-text-label-text-color: var(--text-primary); }
+    .console h1 { margin: 0; font-size: var(--font-size-xl); font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
+    .filters { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+    .filter { min-height: 36px; padding: 0 var(--space-3); font: inherit; font-size: var(--font-size-sm); font-weight: 500;
+      color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); cursor: pointer; }
+    .filter:hover { background: var(--surface-2); }
+    .filter.active { color: var(--primary); background: var(--primary-light); border-color: var(--primary); }
+    .case { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-size-base); }
+    .case.resolved { background: var(--surface-2); }
+    .case header { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+    .chip { padding: 2px var(--space-2); font-size: var(--font-size-xs); font-weight: 500; color: var(--text-secondary);
+      border: 1px solid var(--border); border-radius: var(--radius-sm); }
+    .chip.type { text-transform: capitalize; }
+    .chip.warn { color: var(--danger-text); border-color: var(--danger-text); }
+    .meta { font-size: var(--font-size-xs); color: var(--text-muted); }
+    blockquote { margin: 0; padding: var(--space-2) var(--space-3); color: var(--text-primary); white-space: pre-wrap;
+      word-break: break-word; max-height: 240px; overflow: auto; background: var(--surface-2); border-radius: var(--radius-sm); }
+    .detail { margin: 0; font-size: var(--font-size-sm); color: var(--text-secondary); }
+    .detail strong { font-weight: 600; color: var(--text-primary); }
+    .reports, details ul { padding-left: var(--space-5); }
+    .note { display: flex; flex-direction: column; gap: var(--space-1); }
+    .note label { font-size: var(--font-size-sm); font-weight: 500; color: var(--text-primary); }
+    .note input { width: 100%; height: 40px; padding: 0 var(--space-3); font: inherit; font-size: var(--font-size-base);
+      color: var(--text-primary); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
+    .note input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+    .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+    .danger { --mat-button-outlined-label-text-color: var(--danger-text); --mat-button-outlined-outline-color: var(--danger-text); }
+    summary { font-size: var(--font-size-sm); color: var(--text-secondary); cursor: pointer; }
+    details ul { margin-top: var(--space-2); }
+    .more { align-self: center; }
+    @media (max-width: 600px) {
+      .console { padding: var(--space-4); --mat-button-filled-container-height: 44px; --mat-button-outlined-container-height: 44px;
+        --mat-button-text-container-height: 44px; }
+      .filter { min-height: 44px; }
+      .note input { height: 44px; font-size: 16px; }
+      summary { padding: 12px 0; }
+    }
   `]
 })
 export class ModerationConsoleComponent implements OnInit {
+  readonly filters: { value: Filter; label: string }[] = [
+    { value: 'open', label: 'Open' },
+    { value: 'reports', label: 'Reported' },
+    { value: 'auto', label: 'Auto-flagged' },
+    { value: 'appeals', label: 'Appeals' },
+    { value: 'all', label: 'History' },
+  ];
   cases: ModerationCase[] = [];
   filter: Filter = 'open';
   notes: Record<number, string> = {};

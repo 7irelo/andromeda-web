@@ -50,26 +50,38 @@ export interface ImageCropperResult {
     <mat-dialog-actions align="end">
       <button mat-stroked-button mat-dialog-close>Cancel</button>
       <button mat-flat-button color="primary" (click)="crop()">
-        <mat-icon>check</mat-icon> Save
+        <mat-icon aria-hidden="true">check</mat-icon> Save
       </button>
     </mat-dialog-actions>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
+    :host { display: block; background: var(--surface); color: var(--text-primary); border-radius: var(--radius-lg);
+      --mat-dialog-subhead-size: var(--font-size-lg); --mat-dialog-subhead-weight: 600; --mat-dialog-subhead-color: var(--text-primary);
+      --mat-dialog-supporting-text-size: var(--font-size-base); --mat-dialog-supporting-text-color: var(--text-primary);
+      --mat-button-text-label-text-color: var(--text-primary); }
     .cropper-content { padding: 0; overflow: hidden; }
     .cropper-wrapper {
       width: 100%;
       max-height: 400px;
       overflow: hidden;
+      background: var(--surface-2);
       img { display: block; max-width: 100%; }
     }
     .cropper-controls {
       display: flex;
       justify-content: center;
-      gap: 8px;
-      padding: 12px 0 4px;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+      padding: var(--space-2) 0 0;
+      color: var(--text-secondary);
     }
-    mat-dialog-actions { padding: 12px 24px; }
+    mat-dialog-actions { padding: var(--space-3) var(--space-6); gap: var(--space-2); }
+    mat-dialog-actions mat-icon { width: 18px; height: 18px; font-size: 18px; }
+    @media (max-width: 600px) {
+      :host { --mat-button-filled-container-height: 44px; --mat-button-outlined-container-height: 44px;
+        --mat-icon-button-state-layer-size: 44px; }
+    }
   `]
 })
 export class ImageCropperComponent implements AfterViewInit, OnDestroy {

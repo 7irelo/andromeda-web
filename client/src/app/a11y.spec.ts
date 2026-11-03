@@ -10,6 +10,10 @@ import { AuthService } from './core/services/auth.service';
 import { WebSocketService } from './core/services/websocket.service';
 import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
+import { ForgotPasswordComponent } from './features/auth/password-reset/forgot-password.component';
+import { ResetPasswordComponent } from './features/auth/password-reset/reset-password.component';
+import { VerifyEmailComponent } from './features/auth/verify-email/verify-email.component';
+import { LandingComponent } from './features/landing/landing.component';
 import { FeedComponent } from './features/feed/feed.component';
 import { SettingsComponent } from './features/settings/settings.component';
 import { ChatWindowComponent } from './features/chat/chat-window/chat-window.component';
@@ -123,6 +127,40 @@ describe('Accessibility (axe-core)', () => {
       it('login page', async () => {
         configure({}, false);
         const fixture = await render(LoginComponent);
+        await expectNoSeriousViolations(fixture);
+      });
+
+      it('landing page', async () => {
+        configure({}, false);
+        const fixture = await render(LandingComponent);
+        expect(fixture.nativeElement.querySelector('h1')).not.toBeNull();
+        await expectNoSeriousViolations(fixture);
+      });
+
+      it('forgot password', async () => {
+        configure({}, false);
+        const fixture = await render(ForgotPasswordComponent);
+        await expectNoSeriousViolations(fixture);
+      });
+
+      it('reset password, with a mismatch showing', async () => {
+        configure({}, false);
+        const fixture = await render(ResetPasswordComponent);
+        const page = fixture.componentInstance;
+        page.uid = 'u';
+        page.token = 't';
+        fixture.detectChanges();
+        page.form.setValue({ password: 'short', confirm: 'other' });
+        page.form.markAllAsTouched();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#reset-confirm-error')).not.toBeNull();
+        await expectNoSeriousViolations(fixture);
+      });
+
+      it('verify email, failed link', async () => {
+        configure({}, false);
+        const fixture = await render(VerifyEmailComponent);
+        expect(fixture.componentInstance.state).toBe('failed');
         await expectNoSeriousViolations(fixture);
       });
 
