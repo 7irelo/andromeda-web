@@ -43,7 +43,8 @@ dependencies = [
   "django-filter~=25.1",
   "django-storages~=1.14",
   "boto3~=1.37",
-  "vercel-blob>=0.5.0",
+  "vercel",
+  "vercel-celery>=0.7",
 ]
 
 [tool.vercel]
