@@ -227,3 +227,21 @@ def test_dense_retrieval_respects_visibility(ai):
         plan = hybrid.Plan(query='zebra', vector=fake_vector('zebra post'))
         _, hits = hybrid.search(mallory, 'nothing lexical', ['posts'], mode='dense', plan=plan)
     assert {h.id for h in hits} == {w['public'].id}
+
+
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='trigram matching needs PostgreSQL')
+@pytest.mark.django_db
+@pytest.mark.parametrize('query, found', [
+    ('Johanesburg', True),      # a dropped letter
+    ('Johannesberg', True),     # a wrong letter
+    ('marketplce', True),
+    ('xylophone', False),       # unrelated words still don't match
+])
+def test_lexical_search_tolerates_typos(query, found):
+    from core.search import lexical
+    from django.contrib.auth import get_user_model
+    from posts.models import Post
+
+    author = get_user_model().objects.create_user('typo_author', 'typo@example.test', 'not-used-here-123')
+    post = Post.objects.create(author=author, content='Saturday marketplace in Johannesburg', privacy='public')
+    assert (post in lexical('posts', author, query)) is found

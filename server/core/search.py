@@ -18,6 +18,7 @@ from core import visibility
 MAX_QUERY = 100
 PER_TYPE_PREVIEW = 5
 PER_TYPE_FULL = 30
+MIN_FUZZY_QUERY = 4
 
 
 def _text_filter(qs, fields, query):
@@ -28,6 +29,9 @@ def _text_filter(qs, fields, query):
         partial = Q()
         for f in fields:
             partial |= Q(**{f'{f}__icontains': query})
+            # Typo tolerance, backed by the trigram indexes. Short queries match too much.
+            if len(query) >= MIN_FUZZY_QUERY:
+                partial |= Q(**{f'{f}__trigram_word_similar': query})
         # Filter on an actual match (ts_rank is never exactly 0, so it can't be the filter).
         # Ranked full-text matches first; substring matches keep prefix search working.
         return qs.annotate(_sv=vector, _rank=SearchRank(vector, sq)).filter(Q(_sv=sq) | partial).order_by('-_rank')
