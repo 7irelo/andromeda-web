@@ -1,59 +1,50 @@
 // Feed column plus right rail. The shell's sidebar holds the navigation.
 .feed-layout {
   display: grid;
-  grid-template-columns: minmax(0, 640px) 280px;
+  grid-template-columns: minmax(0, 470px) 320px;
   justify-content: center;
   align-items: start;
-  gap: 20px;
-  padding: 20px 24px;
+  gap: 64px;
+  padding: 24px;
 
-  @media (max-width: 959px) {
-    grid-template-columns: minmax(0, 640px);
+  @media (max-width: 1159px) {
+    grid-template-columns: minmax(0, 470px);
     .right-rail { display: none; }
   }
 
-  @media (max-width: 600px) { padding: 12px; }
+  @media (max-width: 600px) { padding: 0; }
 }
 
-.feed-main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.feed-main { min-width: 0; display: flex; flex-direction: column; gap: 0; }
 
 .right-rail {
   position: sticky;
-  top: calc(var(--header-height) + 20px);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: calc(100vh - var(--header-height) - 40px);
-  overflow-y: auto;
-}
-
-.rail-card {
-  padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  top: calc(var(--header-height) + 36px);
 }
 
 .rail-title {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-muted);
 }
 
 .loading-center { display: flex; justify-content: center; padding: 24px; }
 
-.feed-toolbar { display: flex; gap: 4px; }
+.feed-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
 
 .sort-btn {
-  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px;
-  border: 1px solid transparent; border-radius: var(--radius-sm); background: none;
-  font: inherit; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer;
-  mat-icon { font-size: 16px; width: 16px; height: 16px; }
-  &:hover { background: var(--surface-2); color: var(--text-primary); }
-  &.active { background: var(--primary-light); color: var(--primary); }
-  &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-  @media (pointer: coarse), (max-width: 600px) { height: var(--touch-target); }
+  height: 44px; padding: 0 4px; border: 0; border-bottom: 1px solid transparent; margin-bottom: -1px;
+  background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer;
+  &:hover { color: var(--text-primary); }
+  &.active { color: var(--text-primary); border-bottom-color: var(--text-primary); }
+  &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 }
 
 .new-posts-btn {

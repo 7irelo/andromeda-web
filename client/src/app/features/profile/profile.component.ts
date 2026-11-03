@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { Component, Input, OnInit, OnChanges, OnDestroy, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup } from '@angular/forms';
@@ -17,17 +18,17 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../models/user.model';
 import { Post } from '../../models/post.model';
-import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
 import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
 import { ImageCropperComponent, ImageCropperResult } from '../../shared/components/image-cropper/image-cropper.component';
 
 @Component({
     selector: 'app-profile',
     imports: [
+        RouterLink,
         CommonModule, ReactiveFormsModule, FormsModule,
         MatButtonModule, MatIconModule, MatTabsModule,
         MatProgressSpinnerModule, MatFormFieldModule, MatInputModule,
-        MatSnackBarModule, MatDialogModule, MatMenuModule, PostCardComponent, ModalDialogDirective,
+        MatSnackBarModule, MatDialogModule, MatMenuModule, ModalDialogDirective,
     ],
     templateUrl: './profile.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -41,6 +42,12 @@ export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
 
   profile: User | null = null;
   posts: Post[] = [];
+
+  /** The first picture of a post, for the grid. */
+  tileImage(post: Post): string | null {
+    const media = (post.media || []).find((m) => m.media_type === 'image');
+    return media ? media.file : post.image;
+  }
   loading = false;
   currentUser: User | null = null;
   isSelf = false;

@@ -1,36 +1,21 @@
-<div class="page ui-controls" *ngIf="!loading && profile">
-  <header class="entity">
-    <div class="entity-cover">
-      <img *ngIf="profile.cover_photo_url" [src]="profile.cover_photo_url" alt="" />
-      <button *ngIf="isSelf" class="cover-edit-btn" type="button" (click)="openCoverPicker()" [disabled]="uploadingCover"
-              aria-label="Change cover photo" i18n-aria-label="@@profile.changeCover">
-        <mat-spinner *ngIf="uploadingCover" diameter="18"></mat-spinner>
-        <mat-icon *ngIf="!uploadingCover" aria-hidden="true">add_a_photo</mat-icon>
+<div class="page ig-page ui-controls" *ngIf="!loading && profile">
+  <header class="ig-head">
+    <div class="ig-avatar">
+      <img [src]="profile.avatar_url || 'assets/default-avatar.png'" [alt]="profile.username" />
+      <button *ngIf="isSelf" class="avatar-edit-btn" type="button" (click)="openAvatarPicker()" [disabled]="uploadingAvatar"
+              aria-label="Change profile photo" i18n-aria-label="@@profile.changeAvatar">
+        <mat-spinner *ngIf="uploadingAvatar" diameter="18"></mat-spinner>
+        <mat-icon *ngIf="!uploadingAvatar" aria-hidden="true">photo_camera</mat-icon>
       </button>
-      <input #coverInput type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
+      <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarSelected($event)" />
     </div>
 
-    <div class="entity-body">
-      <div class="entity-avatar">
-        <img [src]="profile.avatar_url || 'assets/default-avatar.png'" [alt]="profile.username" />
-        <button *ngIf="isSelf" class="avatar-edit-btn" type="button" (click)="openAvatarPicker()" [disabled]="uploadingAvatar"
-                aria-label="Change profile photo" i18n-aria-label="@@profile.changeAvatar">
-          <mat-spinner *ngIf="uploadingAvatar" diameter="18"></mat-spinner>
-          <mat-icon *ngIf="!uploadingAvatar" aria-hidden="true">photo_camera</mat-icon>
-        </button>
-        <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarSelected($event)" />
-      </div>
-
-      <div class="entity-main">
-        <div class="entity-head">
-          <div class="entity-title">
-            <h1>
-              {{ profile.full_name }}
-              <mat-icon class="verified" *ngIf="profile.is_verified">verified</mat-icon>
-            </h1>
-            <p>&#64;{{ profile.username }}</p>
-          </div>
-
+    <div class="ig-main">
+      <div class="ig-top">
+        <h1>
+          {{ profile.username }}
+          <mat-icon class="verified" *ngIf="profile.is_verified">verified</mat-icon>
+        </h1>
           <div class="entity-actions" *ngIf="!isSelf">
             <button mat-stroked-button class="btn-danger" *ngIf="profile.is_blocked" (click)="toggleBlock()">
               <mat-icon>block</mat-icon> Unblock
@@ -105,26 +90,17 @@
           </div>
         </div>
 
-        <div class="entity-foot">
-          <div class="entity-about">
-            <p *ngIf="profile.bio">{{ profile.bio }}</p>
-            <div class="entity-meta" *ngIf="profile.location || profile.website">
-              <span *ngIf="profile.location"><mat-icon>location_on</mat-icon>{{ profile.location }}</span>
-              <span *ngIf="profile.website"><mat-icon>link</mat-icon>{{ profile.website }}</span>
-            </div>
-          </div>
 
-          <dl class="entity-stats">
-            <div>
-              <dt>Posts</dt>
-              <dd>{{ profile.posts_count | number }}</dd>
-            </div>
-            <div>
-              <dt>Friends</dt>
-              <dd>{{ profile.friends_count | number }}</dd>
-            </div>
-          </dl>
-        </div>
+      <dl class="ig-stats">
+        <div><dd>{{ profile.posts_count | number }}</dd><dt>posts</dt></div>
+        <div><dd>{{ profile.friends_count | number }}</dd><dt>friends</dt></div>
+      </dl>
+
+      <div class="ig-bio">
+        <p class="ig-name">{{ profile.full_name }}</p>
+        <p *ngIf="profile.bio">{{ profile.bio }}</p>
+        <p class="ig-meta" *ngIf="profile.location">{{ profile.location }}</p>
+        <a *ngIf="profile.website" [href]="profile.website" target="_blank" rel="noopener noreferrer nofollow ugc">{{ profile.website }}</a>
       </div>
     </div>
   </header>
@@ -132,16 +108,23 @@
   <mat-tab-group class="entity-tabs" mat-stretch-tabs="false" animationDuration="0ms">
     <mat-tab label="Posts">
       <div class="tab-body">
-        <div class="feed-col">
-          <app-post-card
-            *ngFor="let post of posts"
-            [post]="post"
-            (postDeleted)="onPostDeleted($event)"
-          ></app-post-card>
-          <div *ngIf="posts.length === 0" class="empty-posts">
-            <mat-icon aria-hidden="true">article</mat-icon>
-            <p>No posts yet</p>
-          </div>
+        <div class="ig-grid" *ngIf="posts.length">
+          <a *ngFor="let post of posts" class="ig-tile" [routerLink]="'/posts/' + post.id"
+             [attr.aria-label]="post.content ? post.content.slice(0, 80) : 'Open post'">
+            <img *ngIf="tileImage(post) as src; else noImage" [src]="src" alt="" loading="lazy" />
+            <ng-template #noImage>
+              <span class="ig-tile-text" *ngIf="!post.video">{{ post.content }}</span>
+              <mat-icon class="ig-tile-video" *ngIf="post.video" aria-hidden="true">play_arrow</mat-icon>
+            </ng-template>
+            <span class="ig-tile-stats" aria-hidden="true">
+              <span><mat-icon>favorite</mat-icon>{{ post.likes_count }}</span>
+              <span><mat-icon>chat_bubble</mat-icon>{{ post.comments_count }}</span>
+            </span>
+          </a>
+        </div>
+        <div *ngIf="posts.length === 0" class="empty-posts">
+          <mat-icon aria-hidden="true">photo_camera</mat-icon>
+          <p>No posts yet</p>
         </div>
       </div>
     </mat-tab>

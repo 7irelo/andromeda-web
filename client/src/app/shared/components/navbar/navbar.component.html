@@ -4,7 +4,7 @@
     <svg class="brand-mark" viewBox="0 0 32 28" width="26" height="23" aria-hidden="true">
       <path d="M16 0 32 28H24.5L16 12.6 9.6 24 20 24 22.2 28H0L16 0Z" />
     </svg>
-    <span class="brand-name" aria-hidden="true">ANDROMEDA</span>
+    <span class="brand-name" aria-hidden="true">Andromeda</span>
   </a>
 
   <nav id="main-nav" class="nav-list" aria-label="Main" i18n-aria-label="@@nav.main">
@@ -24,18 +24,37 @@
         <span class="nav-label">{{ item.label }}</span>
       </a>
     }
+
+    <a class="nav-item" routerLink="/feed" [queryParams]="{ compose: 1 }" [title]="createLabel" (click)="mobileMenuOpen = false">
+      <span class="icon-wrap"><mat-icon aria-hidden="true">add_box</mat-icon></span>
+      <span class="nav-label">{{ createLabel }}</span>
+    </a>
+
     @if (currentUser) {
       <a [routerLink]="'/profile/' + currentUser.username" routerLinkActive="active" ariaCurrentWhenActive="page"
          class="nav-item" [title]="profileLabel" (click)="mobileMenuOpen = false">
-        <span class="icon-wrap"><mat-icon aria-hidden="true">person_outline</mat-icon></span>
+        <span class="icon-wrap">
+          <img class="nav-avatar" [src]="currentUser.avatar_url || 'assets/default-avatar.png'" alt="" width="24" height="24" />
+        </span>
         <span class="nav-label">{{ profileLabel }}</span>
       </a>
     }
-    <a routerLink="/settings" routerLinkActive="active" ariaCurrentWhenActive="page" class="nav-item"
-       [title]="settingsLabel" (click)="mobileMenuOpen = false">
-      <span class="icon-wrap"><mat-icon aria-hidden="true">settings</mat-icon></span>
-      <span class="nav-label">{{ settingsLabel }}</span>
-    </a>
+
+    <div class="nav-divider" role="presentation"></div>
+
+    @for (item of moreItems; track item.route) {
+      <a [routerLink]="item.route" routerLinkActive="active" ariaCurrentWhenActive="page" class="nav-item"
+         [title]="item.label" (click)="mobileMenuOpen = false">
+        <span class="icon-wrap"><mat-icon aria-hidden="true">{{ item.icon }}</mat-icon></span>
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
+    }
+
+    <button type="button" class="nav-item" (click)="assistantOpen = !assistantOpen; mobileMenuOpen = false"
+            [title]="assistantLabel" [attr.aria-pressed]="assistantOpen">
+      <span class="icon-wrap"><mat-icon aria-hidden="true">auto_awesome</mat-icon></span>
+      <span class="nav-label">{{ assistantLabel }}</span>
+    </button>
   </nav>
 
   <!-- The menu (MatMenu + overlay) loads once the browser is idle, outside the initial bundle. -->
@@ -54,31 +73,28 @@
   <button type="button" class="scrim" (click)="mobileMenuOpen = false" [attr.aria-label]="closeMenuLabel"></button>
 }
 
+<!-- Phones only -->
 <header class="topbar">
   <a class="topbar-brand" routerLink="/feed" aria-label="Andromeda home" i18n-aria-label="@@nav.home">
-    <svg class="brand-mark" viewBox="0 0 32 28" width="26" height="23" aria-hidden="true">
+    <svg class="brand-mark" viewBox="0 0 32 28" width="24" height="21" aria-hidden="true">
       <path d="M16 0 32 28H24.5L16 12.6 9.6 24 20 24 22.2 28H0L16 0Z" />
     </svg>
+    <span class="brand-name" aria-hidden="true">Andromeda</span>
   </a>
 
-  <form class="search-box" role="search" (submit)="search($event, searchInput)">
-    <label for="nav-search" class="search-label">
-      <mat-icon aria-hidden="true">search</mat-icon>
-      <span class="visually-hidden" i18n="@@nav.searchLabel">Search Andromeda</span>
-    </label>
-    <input #searchInput id="nav-search" type="search" placeholder="Search posts, people or tags..."
-           i18n-placeholder="@@nav.searchPlaceholder" autocomplete="off" enterkeyhint="search" />
-  </form>
-
   <div class="topbar-actions">
-    <button class="icon-btn" type="button" (click)="assistantOpen = !assistantOpen" title="Assistant"
-            [attr.aria-pressed]="assistantOpen" aria-label="Open the assistant">
-      <mat-icon aria-hidden="true">auto_awesome</mat-icon>
-    </button>
-    <a class="new-post" routerLink="/feed" [queryParams]="{ compose: 1 }">
-      <mat-icon aria-hidden="true">add</mat-icon>
-      <span i18n="@@nav.newPost">New Post</span>
+    <a class="icon-btn" routerLink="/notifications" [attr.aria-label]="notificationsAriaLabel()">
+      <span class="icon-wrap">
+        <mat-icon aria-hidden="true">favorite_border</mat-icon>
+        @if (unreadNotifications) {
+          <span class="count-badge" aria-hidden="true">{{ badge(unreadNotifications) }}</span>
+        }
+      </span>
     </a>
+    <button class="icon-btn" type="button" (click)="toggleMobileMenu()" aria-controls="main-nav"
+            [attr.aria-expanded]="mobileMenuOpen" [attr.aria-label]="mobileMenuOpen ? closeMenuLabel : openMenuLabel">
+      <mat-icon aria-hidden="true">{{ mobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
+    </button>
   </div>
 </header>
 
@@ -90,39 +106,29 @@
 
 <!-- Bottom navigation, 600px and below -->
 <nav class="bottom-nav" aria-label="Sections" i18n-aria-label="@@nav.sections">
-  <a routerLink="/feed" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item">
+  <a routerLink="/feed" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item" [attr.aria-label]="navItems[0].label">
     <mat-icon aria-hidden="true">home</mat-icon>
-    <span>{{ navItems[0].label }}</span>
   </a>
-  <a routerLink="/search" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item">
+  <a routerLink="/search" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item" [attr.aria-label]="navItems[1].label">
     <mat-icon aria-hidden="true">search</mat-icon>
-    <span>{{ navItems[1].label }}</span>
   </a>
-  <a routerLink="/chat" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item"
-     [attr.aria-label]="chatAriaLabel()">
+  <a routerLink="/feed" [queryParams]="{ compose: 1 }" class="bottom-item" [attr.aria-label]="createLabel">
+    <mat-icon aria-hidden="true">add_box</mat-icon>
+  </a>
+  <a routerLink="/chat" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item" [attr.aria-label]="chatAriaLabel()">
     <span class="icon-wrap">
       <mat-icon aria-hidden="true">chat_bubble_outline</mat-icon>
       @if (unreadChats) {
         <span class="count-badge" aria-hidden="true">{{ badge(unreadChats) }}</span>
       }
     </span>
-    <span aria-hidden="true">{{ chatsLabel }}</span>
   </a>
-  <a routerLink="/notifications" routerLinkActive="active" ariaCurrentWhenActive="page" class="bottom-item"
-     [attr.aria-label]="notificationsAriaLabel()">
-    <span class="icon-wrap">
-      <mat-icon aria-hidden="true">notifications_none</mat-icon>
-      @if (unreadNotifications) {
-        <span class="count-badge" aria-hidden="true">{{ badge(unreadNotifications) }}</span>
-      }
-    </span>
-    <span aria-hidden="true">{{ alertsLabel }}</span>
-  </a>
-  <button type="button" class="bottom-item" (click)="toggleMobileMenu()" aria-controls="main-nav"
-          [attr.aria-expanded]="mobileMenuOpen">
-    <mat-icon aria-hidden="true">{{ mobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
-    <span i18n="@@nav.more">More</span>
-  </button>
+  @if (currentUser) {
+    <a [routerLink]="'/profile/' + currentUser.username" routerLinkActive="active" ariaCurrentWhenActive="page"
+       class="bottom-item" [attr.aria-label]="profileLabel">
+      <img class="nav-avatar" [src]="currentUser.avatar_url || 'assets/default-avatar.png'" alt="" width="24" height="24" />
+    </a>
+  }
 </nav>
 
 <!-- Screen-reader announcements for real-time notifications -->

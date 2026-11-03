@@ -77,6 +77,10 @@ export class PostCardComponent implements OnInit {
   }
 
   /** Gallery images in display order, falling back to the legacy single image. */
+  get hasMedia(): boolean {
+    return this.images.length > 0 || !!this.post.video;
+  }
+
   get images(): string[] {
     const media = (this.post.media || []).filter((m) => m.media_type === 'image').map((m) => m.file);
     if (media.length) return media;

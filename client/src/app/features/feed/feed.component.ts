@@ -50,6 +50,8 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
   private request?: Subscription;
   private wsSub?: Subscription;
   private composeSub?: Subscription;
+  /** The composer stays out of the way until "Create" is chosen. */
+  composing = false;
 
   @ViewChild(CreatePostComponent) private composer?: CreatePostComponent;
 
@@ -91,6 +93,7 @@ export class FeedComponent implements OnInit, AfterViewInit, OnDestroy {
     // The sidebar's "New Post" links here with ?compose=1. Clearing the param lets the link work again.
     this.composeSub = this.route.queryParamMap.subscribe((params) => {
       if (!params.has('compose')) return;
+      this.composing = true;
       setTimeout(() => this.composer?.open());
       this.router.navigate([], {
         relativeTo: this.route, queryParams: { compose: null }, queryParamsHandling: 'merge', replaceUrl: true,

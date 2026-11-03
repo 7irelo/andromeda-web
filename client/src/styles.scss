@@ -11,15 +11,16 @@
 // in its theme. Use --primary-strong (not --primary) behind white text.
 
 @mixin light-tokens {
-  --primary:         #4338ca;      // links, accents, icons: 7.9:1 on --surface
-  --primary-dark:    #3730a3;      // hover
-  --primary-light:   #eef0ff;      // tinted backgrounds
-  --primary-strong:  #4f46e5;      // fills behind --on-primary text, same in both themes
-  --primary-strong-hover: #4338ca;
+  --primary:         #00569e;      // links: 7.5:1 on --surface
+  --primary-dark:    #00447d;      // hover
+  --primary-light:   #eff6fc;      // tinted backgrounds
+  --primary-strong:  #0074cc;      // fills behind --on-primary text, same in both themes (4.9:1)
+  --primary-strong-hover: #0062ad;
   --on-primary:      #ffffff;
-  --accent:          #4338ca;
-  --accent-dark:     #3730a3;
-  --brand-mark:      #1e1b6e;
+  --accent:          #00569e;
+  --accent-dark:     #00447d;
+  --brand-mark:      #000000;
+  --like:            #ed4956;
   --success:         #15803d;
   --success-light:   #dcfce7;
   --warning:         #b45309;
@@ -28,37 +29,38 @@
   --danger-light:    #fee2e2;
   --danger-text:     #b91c1c;
 
-  --bg:              #f5f6fb;
-  --bg-secondary:    #fafbfe;
+  --bg:              #ffffff;
+  --bg-secondary:    #fafafa;
   --surface:         #ffffff;
-  --surface-2:       #f3f4fa;
-  --border:          #e4e6f0;
-  --border-strong:   #8d93ab;      // 3:1 against surfaces, for control outlines
-  --border-light:    #eef0f6;
+  --surface-2:       #f2f2f2;
+  --border:          #dbdbdb;
+  --border-strong:   #8e8e8e;      // 3:1 against surfaces, for control outlines
+  --border-light:    #efefef;
 
-  --text-primary:    #12142b;
-  --text-secondary:  #4b5068;
-  --text-muted:      #62677f;      // 4.8:1 on --bg
+  --text-primary:    #0a0a0a;
+  --text-secondary:  #4d4d4d;
+  --text-muted:      #6b6b6b;      // 5.3:1 on --bg
 
-  --focus-ring-color: #4f46e5;
+  --focus-ring-color: #0074cc;
 
-  --shadow-sm:       0 1px 2px rgba(18, 20, 43, .05);
-  --shadow:          0 1px 3px rgba(18, 20, 43, .07);
-  --shadow-md:       0 6px 16px -4px rgba(18, 20, 43, .1);
-  --shadow-lg:       0 18px 40px -12px rgba(18, 20, 43, .2);
-  --shadow-glow:     0 0 0 3px rgba(79, 70, 229, .2);
+  --shadow-sm:       0 1px 2px rgba(0, 0, 0, .05);
+  --shadow:          0 1px 3px rgba(0, 0, 0, .08);
+  --shadow-md:       0 6px 16px -4px rgba(0, 0, 0, .12);
+  --shadow-lg:       0 12px 32px -8px rgba(0, 0, 0, .2);
+  --shadow-glow:     0 0 0 3px rgba(0, 116, 204, .2);
 }
 
 @mixin dark-tokens {
-  --primary:         #a9b4ff;      // 9:1 on --surface
-  --primary-dark:    #c3cbff;
-  --primary-light:   rgba(129, 140, 248, .16);
-  --primary-strong:  #4f46e5;
-  --primary-strong-hover: #6058f0;
+  --primary:         #6cc0ff;      // 11:1 on --surface
+  --primary-dark:    #9ad4ff;
+  --primary-light:   rgba(108, 192, 255, .14);
+  --primary-strong:  #0074cc;
+  --primary-strong-hover: #1486dd;
   --on-primary:      #ffffff;
-  --accent:          #a9b4ff;
-  --accent-dark:     #c3cbff;
-  --brand-mark:      #dfe3ff;
+  --accent:          #6cc0ff;
+  --accent-dark:     #9ad4ff;
+  --brand-mark:      #ffffff;
+  --like:            #ff3040;
   --success:         #4ade80;
   --success-light:   rgba(74, 222, 128, .14);
   --warning:         #fbbf24;
@@ -67,25 +69,25 @@
   --danger-light:    rgba(248, 113, 113, .14);
   --danger-text:     #fca5a5;
 
-  --bg:              #070b1d;
-  --bg-secondary:    #0b1026;
-  --surface:         #0e1430;
-  --surface-2:       #151c3d;
-  --border:          #252d52;
-  --border-strong:   #5a6590;
-  --border-light:    #1a2144;
+  --bg:              #000000;
+  --bg-secondary:    #0a0a0a;
+  --surface:         #000000;
+  --surface-2:       #262626;
+  --border:          #363636;
+  --border-strong:   #737373;
+  --border-light:    #262626;
 
-  --text-primary:    #f4f6ff;
-  --text-secondary:  #b6bdd6;
-  --text-muted:      #98a0bd;      // 6.9:1 on --surface
+  --text-primary:    #f5f5f5;
+  --text-secondary:  #c7c7c7;
+  --text-muted:      #a8a8a8;      // 8.6:1 on --surface
 
-  --focus-ring-color: #a9b4ff;
+  --focus-ring-color: #6cc0ff;
 
-  --shadow-sm:       0 1px 2px rgba(0, 0, 0, .3);
-  --shadow:          0 1px 3px rgba(0, 0, 0, .35);
-  --shadow-md:       0 6px 16px -4px rgba(0, 0, 0, .45);
-  --shadow-lg:       0 18px 40px -12px rgba(0, 0, 0, .6);
-  --shadow-glow:     0 0 0 3px rgba(169, 180, 255, .3);
+  --shadow-sm:       0 1px 2px rgba(255, 255, 255, .04);
+  --shadow:          0 1px 3px rgba(0, 0, 0, .5);
+  --shadow-md:       0 6px 16px -4px rgba(0, 0, 0, .6);
+  --shadow-lg:       0 12px 32px -8px rgba(0, 0, 0, .8);
+  --shadow-glow:     0 0 0 3px rgba(108, 192, 255, .3);
 }
 
 :root {
@@ -105,7 +107,7 @@
   // Radius
   --radius-sm:   8px;
   --radius-md:   10px;
-  --radius-lg:   14px;
+  --radius-lg:   12px;
   --radius-full: 999px;
   // Older names, kept so existing components keep working.
   --border-radius:    var(--radius-md);
@@ -134,8 +136,8 @@
 
   // Layout
   --sidebar-width:   280px;
-  --header-height:   64px;
-  --shell-sidebar:   240px;
+  --header-height:   0px;       // no top bar on larger screens
+  --shell-sidebar:   244px;
   --bottom-nav-height: 0px;     // set on small screens, see "Bottom navigation"
   --touch-target:    44px;
 
@@ -149,7 +151,8 @@
   }
 
   @media (max-width: 600px) {
-    --bottom-nav-height: 60px;
+    --bottom-nav-height: 52px;
+    --header-height: 56px;
     --shell-sidebar: 0px;
   }
 }

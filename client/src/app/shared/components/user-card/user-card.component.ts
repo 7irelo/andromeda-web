@@ -39,10 +39,10 @@ import { User } from '../../../models/user.model';
     .name { font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary); }
     .handle { font-size: 12px; line-height: 16px; color: var(--text-muted); }
     .add-btn {
-      flex-shrink: 0; height: 30px; padding: 0 12px; border: none; border-radius: var(--radius-sm);
-      background: var(--primary-strong); color: var(--on-primary); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
-      &:hover:not(:disabled) { background: var(--primary-strong-hover); }
-      &:disabled { background: var(--surface-2); color: var(--text-secondary); cursor: default; }
+      flex-shrink: 0; height: 30px; padding: 0 4px; border: none; background: none; font: inherit;
+      font-size: 13px; font-weight: 600; color: var(--primary); cursor: pointer;
+      &:hover:not(:disabled) { color: var(--text-primary); }
+      &:disabled { color: var(--text-muted); cursor: default; }
       &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
     }
     .dismiss-btn {

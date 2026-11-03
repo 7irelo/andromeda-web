@@ -31,18 +31,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   readonly navItems = [
     { icon: 'home', label: $localize`:@@nav.homeLink:Home`, route: '/feed' },
-    { icon: 'search', label: $localize`:@@nav.explore:Explore`, route: '/search' },
-    { icon: 'storefront', label: $localize`:@@nav.marketplace:Marketplace`, route: '/marketplace' },
+    { icon: 'search', label: $localize`:@@nav.search:Search`, route: '/search' },
     { icon: 'chat_bubble_outline', label: $localize`:@@nav.messages:Messages`, route: '/chat' },
-    { icon: 'notifications_none', label: $localize`:@@nav.notifications:Notifications`, route: '/notifications' },
-    { icon: 'people_outline', label: $localize`:@@nav.friends:Friends`, route: '/friends' },
-    { icon: 'groups', label: $localize`:@@nav.groups:Groups`, route: '/groups' },
+    { icon: 'favorite_border', label: $localize`:@@nav.notifications:Notifications`, route: '/notifications' },
+  ];
+  readonly moreItems = [
+    { icon: 'storefront', label: $localize`:@@nav.marketplace:Marketplace`, route: '/marketplace' },
     { icon: 'play_circle_outline', label: $localize`:@@nav.watch:Watch`, route: '/watch' },
+    { icon: 'groups', label: $localize`:@@nav.groups:Groups`, route: '/groups' },
+    { icon: 'people_outline', label: $localize`:@@nav.friends:Friends`, route: '/friends' },
     { icon: 'flag', label: $localize`:@@nav.pages:Pages`, route: '/pages' },
     { icon: 'bookmark_border', label: $localize`:@@nav.saved:Saved`, route: '/saved' },
+    { icon: 'settings', label: $localize`:@@nav.settings:Settings`, route: '/settings' },
   ];
   readonly profileLabel = $localize`:@@nav.profile:Profile`;
-  readonly settingsLabel = $localize`:@@nav.settings:Settings`;
+  readonly createLabel = $localize`:@@nav.create:Create`;
+  readonly assistantLabel = $localize`:@@nav.assistant:Assistant`;
   readonly messengerLabel = $localize`:@@nav.messenger:Messenger`;
   readonly notificationsLabel = $localize`:@@nav.notifications:Notifications`;
   readonly chatsLabel = $localize`:@@nav.chats:Chats`;

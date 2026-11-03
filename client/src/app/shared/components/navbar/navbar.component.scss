@@ -1,4 +1,4 @@
-// The app shell: a sidebar and a top bar around every signed-in page.
+// The app shell: a left sidebar on larger screens; top and bottom bars on phones.
 
 .sidebar {
   position: fixed;
@@ -9,21 +9,25 @@
   display: flex;
   flex-direction: column;
   width: var(--shell-sidebar);
-  padding: 16px 12px 12px;
+  padding: 20px 12px 12px;
   background: var(--surface);
   border-right: 1px solid var(--border);
 }
 
-.brand {
+.brand,
+.topbar-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 40px;
-  margin-bottom: 16px;
-  padding: 0 10px;
   color: var(--text-primary);
 
   &:hover { text-decoration: none; }
+}
+
+.brand {
+  height: 44px;
+  margin-bottom: 16px;
+  padding: 0 12px;
 }
 
 .brand-mark {
@@ -32,9 +36,9 @@
 }
 
 .brand-name {
-  font-size: 15px;
+  font-size: 21px;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: -.03em;
 }
 
 .nav-list {
@@ -44,34 +48,49 @@
   gap: 2px;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   flex: none;
-  gap: 12px;
-  min-height: 40px;
-  padding: 0 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  gap: 16px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+  background: none;
+  border: 0;
   border-radius: var(--radius-sm);
-  transition: background var(--motion-fast), color var(--motion-fast);
+  transition: background var(--motion-fast);
 
   &:hover {
-    color: var(--text-primary);
     text-decoration: none;
     background: var(--surface-2);
   }
 
-  &.active {
-    font-weight: 600;
-    color: var(--primary);
-    background: var(--primary-light);
-  }
+  &.active { font-weight: 700; }
+  mat-icon { width: 24px; height: 24px; font-size: 24px; }
+}
 
-  mat-icon { width: 20px; height: 20px; font-size: 20px; }
+.nav-avatar {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.active .nav-avatar { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+
+.nav-divider {
+  flex: none;
+  margin: 8px 12px;
+  border-top: 1px solid var(--border);
 }
 
 .icon-wrap {
@@ -109,117 +128,17 @@
   img { border-radius: 50%; }
 }
 
-.topbar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: var(--shell-sidebar);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  height: var(--header-height);
-  padding: 0 24px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-
-.topbar-brand {
+.topbar,
+.bottom-nav {
   display: none;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  gap: 8px;
-  min-width: 0;  // lets the field shrink so the buttons stay on screen on phones
-  max-width: 480px;
-  height: 38px;
-  padding: 0 12px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-
-  &:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 1px var(--primary);
-  }
-
-  input {
-    flex: 1;
-    min-width: 0;
-    font: inherit;
-    font-size: 14px;
-    color: var(--text-primary);
-    background: none;
-    border: 0;
-    outline: none;
-
-    &::placeholder { color: var(--text-muted); }
-  }
-}
-
-.search-label {
-  display: flex;
-  color: var(--text-muted);
-
-  mat-icon { width: 18px; height: 18px; font-size: 18px; }
-}
-
-.topbar-actions {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-
-  &:hover { color: var(--text-primary); background: var(--surface-2); }
-
-  mat-icon { width: 18px; height: 18px; font-size: 18px; }
-}
-
-.new-post {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 14px 0 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--on-primary);
-  white-space: nowrap;
-  background: var(--primary-strong);
-  border-radius: var(--radius-sm);
-
-  &:hover { text-decoration: none; background: var(--primary-strong-hover); }
-
-  mat-icon { width: 18px; height: 18px; font-size: 18px; }
 }
 
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 105;
-  background: rgba(3, 6, 22, .6);
+  background: rgba(0, 0, 0, .6);
   border: 0;
-}
-
-.bottom-nav {
-  display: none;
 }
 
 // Tablets: the sidebar shrinks to icons.
@@ -229,11 +148,9 @@
 
   .brand,
   .nav-item { justify-content: center; padding: 0; }
-
-  .nav-item { min-height: 44px; }
 }
 
-// Phones: bottom navigation, and the sidebar becomes a drawer behind "More".
+// Phones: top and bottom bars, and the sidebar becomes a drawer.
 @media (max-width: 600px) {
   .sidebar {
     width: 280px;
@@ -243,33 +160,36 @@
     &.mobile-open { transform: none; }
   }
 
-  .nav-item { min-height: 44px; }
-
   .topbar {
+    position: fixed;
+    top: 0;
+    right: 0;
     left: 0;
-    gap: 12px;
-    padding: 0 12px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    padding: 0 4px 0 12px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
   }
 
-  .topbar-brand { display: flex; }
+  .topbar-actions { display: flex; }
 
   .icon-btn {
-    width: 44px;
-    height: 44px;
-    border: 0;
-  }
-
-  .new-post {
+    display: flex;
+    align-items: center;
     justify-content: center;
     width: 44px;
     height: 44px;
-    padding: 0;
+    color: var(--text-primary);
+    cursor: pointer;
+    background: none;
+    border: 0;
 
-    span { display: none; }
+    mat-icon { width: 24px; height: 24px; font-size: 24px; }
   }
-
-  .search-box { height: 40px; }
-  .search-box input { font-size: 16px; }  // below 16px, iOS zooms in on focus
 
   .bottom-nav {
     position: fixed;
@@ -278,7 +198,8 @@
     left: 0;
     z-index: 100;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
     height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
     background: var(--surface);
@@ -287,22 +208,14 @@
 
   .bottom-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
     min-width: 0;
-    font: inherit;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
-    background: none;
-    border: 0;
+    color: var(--text-primary);
 
     &:hover { text-decoration: none; }
-    &.active { color: var(--primary); }
+    &.active mat-icon { font-weight: 700; }
 
-    mat-icon { width: 22px; height: 22px; font-size: 22px; }
+    mat-icon { width: 26px; height: 26px; font-size: 26px; }
   }
 }

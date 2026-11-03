@@ -2,17 +2,19 @@
   <!-- Main Feed -->
   <section class="feed-main" aria-label="Feed" i18n-aria-label="@@nav.feed">
     <!-- Create Post -->
-    <app-create-post (postCreated)="onPostCreated($event)" [currentUser]="currentUser"></app-create-post>
+    <div [hidden]="!composing">
+      <app-create-post (postCreated)="composing = false; onPostCreated($event)" [currentUser]="currentUser"></app-create-post>
+    </div>
 
     <!-- Ordering -->
     <div class="feed-toolbar" role="group" aria-label="Sort feed" i18n-aria-label="@@feed.sort">
       <button type="button" class="sort-btn" [class.active]="sort === 'top'" [attr.aria-pressed]="sort === 'top'"
               (click)="setSort('top')">
-        <mat-icon aria-hidden="true">auto_awesome</mat-icon> <span i18n="@@feed.sortTop">Top</span>
+        <span i18n="@@feed.sortTop">For you</span>
       </button>
       <button type="button" class="sort-btn" [class.active]="sort === 'latest'" [attr.aria-pressed]="sort === 'latest'"
               (click)="setSort('latest')">
-        <mat-icon aria-hidden="true">schedule</mat-icon> <span i18n="@@feed.sortLatest">Latest</span>
+        <span i18n="@@feed.sortLatest">Latest</span>
       </button>
     </div>
 
@@ -56,7 +58,7 @@
   <!-- Right rail. No "Trending": the API has no endpoint that returns popular hashtags. -->
   <aside class="right-rail">
     <section class="rail-card" *ngIf="suggestions.length > 0">
-      <h2 class="rail-title" i18n="@@feed.whoToFollow">Who to follow</h2>
+      <h2 class="rail-title" i18n="@@feed.suggestedForYou">Suggested for you</h2>
       <app-user-card
         *ngFor="let user of suggestions"
         [user]="user"

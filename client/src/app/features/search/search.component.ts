@@ -16,7 +16,13 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
       PostCardComponent, EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     template: `
     <div class="search-page ui-controls">
-      <h1>Results for “{{ query }}”</h1>
+      <form class="search-field" role="search" (submit)="submitSearch($event, box)">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <input #box type="search" [value]="query" aria-label="Search Andromeda" i18n-aria-label="@@nav.searchLabel"
+               placeholder="Search posts, people or tags" i18n-placeholder="@@nav.searchPlaceholder"
+               autocomplete="off" enterkeyhint="search" />
+      </form>
+      <h1 *ngIf="query">Results for “{{ query }}”</h1>
       <p class="text-secondary text-sm understood" *ngIf="semantic?.understood_as as u">
         Searching for <strong>{{ u.query }}</strong>
         <span *ngIf="u.since_days"> · last {{ u.since_days }} days</span>
@@ -134,6 +140,15 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['../../shared/styles/ui-controls.scss'],
     styles: [`
+    .search-field {
+      display: flex; align-items: center; gap: 10px; height: 44px; margin-bottom: 20px; padding: 0 14px;
+      border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-muted);
+    }
+    .search-field:focus-within { outline: 2px solid var(--primary); outline-offset: 0; }
+    .search-field input {
+      flex: 1; min-width: 0; border: 0; outline: none; background: none; font: inherit; font-size: 16px;
+      color: var(--text-primary);
+    }
     .search-page { max-width: 760px; margin: 0 auto; padding: var(--space-6); }
     h1 { margin: 0 0 var(--space-2); font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
     h2 { margin: var(--space-6) 0 var(--space-1); font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: 0; }
@@ -169,6 +184,12 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
 export class SearchComponent implements OnInit, OnDestroy {
   readonly types: SearchType[] = ['all', 'people', 'posts', 'groups', 'pages', 'listings', 'videos'];
   query = '';
+
+  submitSearch(event: Event, box: HTMLInputElement): void {
+    event.preventDefault();
+    const q = box.value.trim();
+    if (q) this.router.navigate([], { queryParams: { q }, queryParamsHandling: 'merge' });
+  }
   type: SearchType = 'all';
   data: SearchResponse | null = null;
   semantic: SemanticSearchResponse | null = null;
