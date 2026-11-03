@@ -5,7 +5,7 @@
 # Core Framework
 Django~=5.2.0
 djangorestframework~=3.18.2
-djangorestframework-simplejwt~=5.5.0
+djangorestframework-simplejwt~=5.5.1
 PyJWT~=2.10
 pyotp~=2.10
 segno~=1.6.6
