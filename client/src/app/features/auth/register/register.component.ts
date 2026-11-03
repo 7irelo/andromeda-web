@@ -2,13 +2,10 @@ import { Component, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angu
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { User } from '../../../models/user.model';
@@ -27,9 +24,8 @@ function passwordMatchValidator(control: AbstractControl) {
 @Component({
     selector: 'app-register',
     imports: [
-        CommonModule, ReactiveFormsModule, RouterLink,
-        MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
-        MatSnackBarModule, MatDialogModule, MatCheckboxModule, OnboardingComponent,
+        CommonModule, ReactiveFormsModule, RouterLink, MatIconModule, MatProgressSpinnerModule,
+        MatSnackBarModule, MatDialogModule, OnboardingComponent,
     ],
     templateUrl: './register.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -40,6 +36,12 @@ export class RegisterComponent {
   @ViewChild('coverInput') coverInput!: ElementRef<HTMLInputElement>;
 
   currentStep = 1;
+  readonly steps = [
+    $localize`:@@register.stepAccount:Your account`,
+    $localize`:@@register.stepProfile:Your profile`,
+    $localize`:@@register.stepPeople:People you know`,
+    $localize`:@@register.stepInterests:Your interests`,
+  ];
 
   // Step 1: Account
   accountForm = this.fb.group({
@@ -86,8 +88,16 @@ export class RegisterComponent {
     private dialog: MatDialog,
   ) {}
 
+  showError(name: string): boolean {
+    const control = this.accountForm.get(name);
+    return !!control && control.invalid && control.touched;
+  }
+
   submitStep1(): void {
-    if (this.accountForm.invalid) return;
+    if (this.accountForm.invalid) {
+      this.accountForm.markAllAsTouched();
+      return;
+    }
     this.loading = true;
     this.error = '';
 

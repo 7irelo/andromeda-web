@@ -2,10 +2,7 @@ import { ChangeDetectionStrategy, Component, LOCALE_ID, computed, inject, input,
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, catchError, map } from 'rxjs';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
 import { Group } from '../../../models/group.model';
@@ -45,142 +42,100 @@ const MAX_SUGGESTED_GROUPS = 8;
 @Component({
   selector: 'app-onboarding',
   imports: [
-    FormsModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule,
+    FormsModule, MatIconModule, MatProgressSpinnerModule,
     EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @switch (step()) {
       @case ('interests') {
-        <div class="step-content fade-in-up">
-          <div class="auth-card-header">
-            <mat-icon class="card-logo" aria-hidden="true">interests</mat-icon>
-            <h2 i18n="@@onboarding.interestsTitle">What are you into?</h2>
-            <p class="text-secondary" i18n="@@onboarding.interestsHint">Pick a few and we'll suggest groups to join.</p>
-          </div>
+        <h2 i18n="@@onboarding.interestsTitle">What are you into?</h2>
+        <p class="hint" i18n="@@onboarding.interestsHint">Pick a few and we'll suggest groups to join.</p>
 
-          <div class="chips" role="group" aria-label="Interests" i18n-aria-label="@@onboarding.interestsGroup">
-            @for (i of interests; track i.key) {
-              <button type="button" class="chip" [class.selected]="selected().has(i.key)"
-                      [attr.aria-pressed]="selected().has(i.key)" (click)="toggle(i.key)">
-                <mat-icon aria-hidden="true">{{ selected().has(i.key) ? 'check' : i.icon }}</mat-icon>
-                {{ i.label }}
-              </button>
-            }
-          </div>
+        <div class="chips" role="group" aria-label="Interests" i18n-aria-label="@@onboarding.interestsGroup">
+          @for (i of interests; track i.key) {
+            <button type="button" class="chip" [class.selected]="selected().has(i.key)"
+                    [attr.aria-pressed]="selected().has(i.key)" (click)="toggle(i.key)">
+              <mat-icon aria-hidden="true">{{ selected().has(i.key) ? 'check' : i.icon }}</mat-icon>
+              {{ i.label }}
+            </button>
+          }
+        </div>
 
-          <div class="step-actions">
-            <button mat-stroked-button type="button" (click)="goGroups()" i18n="@@onboarding.skip">Skip</button>
-            <button mat-flat-button color="primary" type="button" (click)="goGroups()" [disabled]="!selected().size"
-                    i18n="@@onboarding.continue">Continue</button>
-          </div>
+        <div class="step-actions">
+          <button class="ghost-btn" type="button" (click)="goGroups()" i18n="@@onboarding.skip">Skip</button>
+          <button class="submit-btn" type="button" (click)="goGroups()" [disabled]="!selected().size"
+                  i18n="@@onboarding.continue">Continue</button>
         </div>
       }
 
       @case ('groups') {
-        <div class="step-content fade-in-up">
-          <div class="auth-card-header">
-            <mat-icon class="card-logo" aria-hidden="true">groups</mat-icon>
-            <h2 i18n="@@onboarding.groupsTitle">Join some groups</h2>
-            <p class="text-secondary" i18n="@@onboarding.groupsHint">Their posts show up in your feed.</p>
-          </div>
+        <h2 i18n="@@onboarding.groupsTitle">Join some groups</h2>
+        <p class="hint" i18n="@@onboarding.groupsHint">Their posts show up in your feed.</p>
 
-          <div class="group-list">
-            @if (groupsLoading()) {
-              <app-skeleton variant="list" [count]="4"></app-skeleton>
-            } @else if (groupsError()) {
-              <app-error-state [compact]="true" (retry)="loadGroups()"></app-error-state>
-            } @else if (!groups().length) {
-              <app-empty-state [compact]="true" icon="group_add" title="No groups yet"
-                               i18n-title="@@onboarding.noGroups"
-                               message="You can start one later from the Groups page."
-                               i18n-message="@@onboarding.noGroupsHint"></app-empty-state>
-            } @else {
-              @for (g of groups(); track g.id) {
-                <div class="group-row">
-                  <img [src]="g.cover_photo || 'assets/default-cover.png'" alt="" class="group-thumb" width="48" height="48" />
-                  <div class="group-info">
-                    <div class="font-semibold">{{ g.name }}</div>
-                    <div class="text-secondary text-sm" i18n="@@onboarding.members">{{ g.members_count }} members</div>
-                  </div>
-                  @if (joined().has(g.id)) {
-                    <span class="joined text-sm" role="status">
-                      <mat-icon aria-hidden="true">check</mat-icon>
-                      {{ joined().get(g.id) === 'request_pending' ? requestedLabel : joinedLabel }}
-                    </span>
-                  } @else {
-                    <button mat-stroked-button type="button" (click)="join(g)" [disabled]="joining().has(g.id)"
-                            [attr.aria-label]="joinLabel(g)">
-                      {{ g.privacy === 'public' ? joinText : requestText }}
-                    </button>
-                  }
+        <div class="group-list">
+          @if (groupsLoading()) {
+            <app-skeleton variant="list" [count]="4"></app-skeleton>
+          } @else if (groupsError()) {
+            <app-error-state [compact]="true" (retry)="loadGroups()"></app-error-state>
+          } @else if (!groups().length) {
+            <app-empty-state [compact]="true" icon="group_add" title="No groups yet"
+                             i18n-title="@@onboarding.noGroups"
+                             message="You can start one later from the Groups page."
+                             i18n-message="@@onboarding.noGroupsHint"></app-empty-state>
+          } @else {
+            @for (g of groups(); track g.id) {
+              <div class="group-row">
+                <img [src]="g.cover_photo || 'assets/default-cover.png'" alt="" class="group-thumb" width="44" height="44" />
+                <div class="group-info">
+                  <div class="group-name">{{ g.name }}</div>
+                  <div class="group-meta" i18n="@@onboarding.members">{{ g.members_count }} members</div>
                 </div>
-              }
+                @if (joined().has(g.id)) {
+                  <span class="joined" role="status">
+                    <mat-icon aria-hidden="true">check</mat-icon>
+                    {{ joined().get(g.id) === 'request_pending' ? requestedLabel : joinedLabel }}
+                  </span>
+                } @else {
+                  <button class="ghost-btn" type="button" (click)="join(g)" [disabled]="joining().has(g.id)"
+                          [attr.aria-label]="joinLabel(g)">
+                    {{ g.privacy === 'public' ? joinText : requestText }}
+                  </button>
+                }
+              </div>
             }
-          </div>
+          }
+        </div>
 
-          <div class="step-actions">
-            <button mat-stroked-button type="button" (click)="step.set('interests')" i18n="@@onboarding.back">Back</button>
-            <button mat-flat-button color="primary" type="button" (click)="goPost()" i18n="@@onboarding.continue">Continue</button>
-          </div>
+        <div class="step-actions">
+          <button class="ghost-btn" type="button" (click)="step.set('interests')" i18n="@@onboarding.back">Back</button>
+          <button class="submit-btn" type="button" (click)="goPost()" i18n="@@onboarding.continue">Continue</button>
         </div>
       }
 
       @case ('post') {
-        <div class="step-content fade-in-up">
-          <div class="auth-card-header">
-            <mat-icon class="card-logo" aria-hidden="true">edit_note</mat-icon>
-            <h2 i18n="@@onboarding.postTitle">Say hello</h2>
-            <p class="text-secondary" i18n="@@onboarding.postHint">Write your first post so friends know you're here.</p>
-          </div>
+        <h2 i18n="@@onboarding.postTitle">Say hello</h2>
+        <p class="hint" i18n="@@onboarding.postHint">Write your first post so friends know you're here.</p>
 
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label i18n="@@onboarding.postLabel">Your first post</mat-label>
-            <textarea matInput rows="4" maxlength="5000" [(ngModel)]="draft" name="draft"></textarea>
-          </mat-form-field>
-          @if (postError()) {
-            <div class="error-msg" role="alert">{{ postError() }}</div>
-          }
+        <div class="field">
+          <label for="onboarding-post" i18n="@@onboarding.postLabel">Your first post</label>
+          <textarea id="onboarding-post" rows="5" maxlength="5000" [(ngModel)]="draft" name="draft"></textarea>
+        </div>
+        @if (postError()) {
+          <div class="form-error" role="alert">{{ postError() }}</div>
+        }
 
-          <div class="step-actions">
-            <button mat-stroked-button type="button" (click)="done.emit()" i18n="@@onboarding.later">Maybe later</button>
-            <button mat-flat-button color="primary" type="button" (click)="publish()" [disabled]="!draft.trim() || posting()">
-              @if (posting()) {
-                <mat-spinner diameter="20"></mat-spinner>
-              } @else {
-                <span i18n="@@onboarding.publish">Post and finish</span>
-              }
-            </button>
-          </div>
+        <div class="step-actions">
+          <button class="ghost-btn" type="button" (click)="done.emit()" i18n="@@onboarding.later">Maybe later</button>
+          <button class="submit-btn" type="button" (click)="publish()" [disabled]="!draft.trim() || posting()">
+            @if (posting()) { <mat-spinner diameter="18" aria-hidden="true"></mat-spinner> }
+            <span i18n="@@onboarding.publish">Post and finish</span>
+          </button>
         </div>
       }
     }
   `,
-  styles: [`
-    .auth-card-header { text-align: center; margin-bottom: 20px; }
-    .auth-card-header h2 { font-size: 22px; font-weight: 700; margin: 8px 0 0; }
-    .auth-card-header p { font-size: 14px; margin: 4px 0 0; }
-    .card-logo { font-size: 36px; width: 36px; height: 36px; color: var(--primary); }
-    .w-full { width: 100%; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
-    .chip {
-      display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px;
-      border-radius: 22px; border: 1px solid var(--border-strong); background: var(--surface);
-      color: var(--text-primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
-    }
-    .chip mat-icon { font-size: 18px; width: 18px; height: 18px; }
-    .chip.selected { background: var(--primary-strong); border-color: var(--primary-strong); color: var(--on-primary); }
-    .group-list { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto; margin-bottom: 16px; }
-    .group-row { display: flex; align-items: center; gap: 12px; padding: 8px 4px; }
-    .group-thumb { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
-    .group-info { flex: 1; min-width: 0; }
-    .group-info .font-semibold { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .joined { display: inline-flex; align-items: center; gap: 4px; color: var(--success); font-weight: 600; }
-    .joined mat-icon { font-size: 18px; width: 18px; height: 18px; }
-    .step-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
-    .step-actions button { flex: 1; height: 44px; }
-    .error-msg { color: var(--danger-text); font-size: 13px; margin-bottom: 8px; }
-  `],
+  styleUrls: ['../login/login.component.scss', './onboarding.component.scss'],
 })
 export class OnboardingComponent {
   /** Used to personalise the first-post draft. */

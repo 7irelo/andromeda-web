@@ -22,7 +22,8 @@
       "resources": {
         "files": [
           "/assets/**",
-          "/*.(svg|woff|woff2)"
+          "/*.(svg|woff|woff2)",
+          "/fonts/**"
         ]
       }
     }

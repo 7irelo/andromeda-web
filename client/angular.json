@@ -26,13 +26,15 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/andromeda",
+            "outputPath": { "base": "dist/andromeda", "media": "fonts" },
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js", "@angular/localize/init"],
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/favicon.ico", "src/assets", "src/manifest.webmanifest"],
             "styles": [
+              "@fontsource-variable/inter/wght.css",
+              "material-icons/iconfont/filled.css",
               "cropperjs/dist/cropper.min.css",
               "src/styles.scss"
             ],

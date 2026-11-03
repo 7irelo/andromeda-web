@@ -9,6 +9,7 @@ import { ApiService } from './core/services/api.service';
 import { AuthService } from './core/services/auth.service';
 import { WebSocketService } from './core/services/websocket.service';
 import { LoginComponent } from './features/auth/login/login.component';
+import { RegisterComponent } from './features/auth/register/register.component';
 import { FeedComponent } from './features/feed/feed.component';
 import { SettingsComponent } from './features/settings/settings.component';
 import { ChatWindowComponent } from './features/chat/chat-window/chat-window.component';
@@ -124,6 +125,25 @@ describe('Accessibility (axe-core)', () => {
         const fixture = await render(LoginComponent);
         await expectNoSeriousViolations(fixture);
       });
+
+      it('sign-up, with validation errors showing', async () => {
+        configure({}, false);
+        const fixture = await render(RegisterComponent);
+        fixture.componentInstance.accountForm.markAllAsTouched();
+        fixture.detectChanges();
+        await expectNoSeriousViolations(fixture);
+      });
+
+      for (const step of [2, 3, 4]) {
+        it(`sign-up step ${step}`, async () => {
+          configure({ getSuggestions: [] }, false);
+          const fixture = await render(RegisterComponent);
+          fixture.componentInstance.currentStep = step;
+          fixture.detectChanges();
+          await fixture.whenStable();
+          await expectNoSeriousViolations(fixture);
+        });
+      }
 
       it('feed with posts and suggestions', async () => {
         configure({
