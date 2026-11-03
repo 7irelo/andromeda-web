@@ -1,101 +1,93 @@
 <div class="auth-page">
-  <div class="auth-left">
-    <div class="auth-bg-particles"></div>
-    <div class="brand-hero">
-      <mat-icon class="hero-icon">hub</mat-icon>
-      <h1>Andromeda</h1>
-      <p class="hero-tagline" i18n="@@auth.tagline">Connect with friends and the world around you.</p>
+  <header class="auth-header">
+    <span class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+        <rect width="24" height="24" rx="5" />
+        <path d="M12 5.5 18 18.5h-2.9l-1.1-2.6h-4l-1.1 2.6H6L12 5.5Zm0 5.6-1.1 2.7h2.2L12 11.1Z" />
+      </svg>
+      Andromeda
+    </span>
+  </header>
 
-      <div class="feature-highlights">
-        <div class="feature-item">
-          <mat-icon>people</mat-icon>
-          <span i18n="@@auth.featureConnections">Build meaningful connections</span>
-        </div>
-        <div class="feature-item">
-          <mat-icon>forum</mat-icon>
-          <span i18n="@@auth.featureMessaging">Real-time messaging</span>
-        </div>
-        <div class="feature-item">
-          <mat-icon>groups</mat-icon>
-          <span i18n="@@auth.featureCommunities">Join vibrant communities</span>
-        </div>
-        <div class="feature-item">
-          <mat-icon>play_circle</mat-icon>
-          <span i18n="@@auth.featureVideos">Share and discover videos</span>
-        </div>
-      </div>
+  <main class="auth-main">
+    <section class="auth-card">
+      @if (mfaToken) {
+        <h1 id="auth-heading" i18n="@@login.mfaTitle">Two-factor sign-in</h1>
+        <p class="auth-hint" i18n="@@login.mfaHint">Enter the 6-digit code from your authenticator app, or one of your recovery codes.</p>
 
-      <p class="social-proof" i18n="@@auth.socialProof">Trusted by creators, communities, and friends everywhere.</p>
-    </div>
-  </div>
+        <form [formGroup]="codeForm" (ngSubmit)="submitCode()" aria-labelledby="auth-heading" novalidate>
+          <div class="field">
+            <label for="login-code" i18n="@@login.code">Code</label>
+            <input id="login-code" type="text" formControlName="code" autocomplete="one-time-code" inputmode="numeric"
+                   maxlength="12" [attr.aria-invalid]="showError(codeForm, 'code')"
+                   [attr.aria-describedby]="showError(codeForm, 'code') ? 'login-code-error' : null" />
+            @if (showError(codeForm, 'code')) {
+              <p class="field-error" id="login-code-error" i18n="@@auth.required">Required</p>
+            }
+          </div>
 
-  <div class="auth-right">
-    <div class="auth-card">
-      <div class="auth-card-header">
-        <mat-icon class="card-logo">hub</mat-icon>
-        <h1 class="card-title" i18n="@@login.title">Welcome Back</h1>
-        <p class="text-secondary" i18n="@@login.subtitle">Sign in to your account</p>
-      </div>
+          @if (error) { <div class="form-error" role="alert">{{ error }}</div> }
 
-      <form *ngIf="mfaToken" [formGroup]="codeForm" (ngSubmit)="submitCode()" aria-labelledby="mfa-heading">
-        <h2 id="mfa-heading" class="mfa-title" i18n="@@login.mfaTitle">Two-factor sign-in</h2>
-        <p class="text-secondary" i18n="@@login.mfaHint">Enter the 6-digit code from your authenticator app, or one of your recovery codes.</p>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label i18n="@@login.code">Code</mat-label>
-          <input matInput formControlName="code" autocomplete="one-time-code" inputmode="numeric" maxlength="12" />
-        </mat-form-field>
-        <div class="error-msg" *ngIf="error" role="alert">{{ error }}</div>
-        <button mat-flat-button color="primary" class="submit-btn" type="submit" [disabled]="loading || codeForm.invalid">
-          <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
-          <span *ngIf="!loading" i18n="@@login.verify">Verify</span>
-        </button>
-        <p class="register-link"><a href="" (click)="$event.preventDefault(); startOver()" i18n="@@login.differentAccount">Use a different account</a></p>
-      </form>
-
-      <form *ngIf="!mfaToken" [formGroup]="form" (ngSubmit)="submit()">
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label i18n="@@login.username">Username or Email</mat-label>
-          <input matInput formControlName="username" autocomplete="username" />
-          <mat-error *ngIf="form.get('username')?.invalid" i18n="@@auth.required">Required</mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label i18n="@@auth.password">Password</mat-label>
-          <input
-            matInput
-            formControlName="password"
-            [type]="hidePassword ? 'password' : 'text'"
-            autocomplete="current-password"
-          />
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
-                  [attr.aria-label]="hidePassword ? showPasswordLabel : hidePasswordLabel" [attr.aria-pressed]="!hidePassword">
-            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          <button class="submit-btn" type="submit" [disabled]="loading">
+            @if (loading) { <mat-spinner diameter="18" aria-hidden="true"></mat-spinner> }
+            <span i18n="@@login.verify">Verify</span>
           </button>
-          <mat-error *ngIf="form.get('password')?.invalid" i18n="@@auth.required">Required</mat-error>
-        </mat-form-field>
+        </form>
 
-        <div class="error-msg" *ngIf="error" role="alert">{{ error }}</div>
-
-        <button
-          mat-flat-button
-          color="primary"
-          class="submit-btn"
-          type="submit"
-          [disabled]="loading || form.invalid"
-        >
-          <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
-          <span *ngIf="!loading" i18n="@@login.submit">Log In</span>
-        </button>
-
-        <div class="divider"><span i18n="@@login.or">or</span></div>
-
-        <p class="register-link">
-          <a routerLink="/forgot-password" i18n="@@login.forgot">Forgot your password?</a>
+        <p class="auth-footnote">
+          <button type="button" class="link-btn" (click)="startOver()" i18n="@@login.differentAccount">Use a different account</button>
         </p>
-        <p class="register-link">
-          <ng-container i18n="@@login.noAccount">Don't have an account?</ng-container>&ngsp;<a routerLink="/register" i18n="@@login.signUp">Sign Up</a>
+      } @else {
+        <h1 id="auth-heading" i18n="@@login.title">Sign in to Andromeda</h1>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" aria-labelledby="auth-heading" novalidate>
+          <div class="field">
+            <label for="login-username" i18n="@@login.username">Username or Email</label>
+            <input id="login-username" type="text" formControlName="username" autocomplete="username"
+                   autocapitalize="none" spellcheck="false" [attr.aria-invalid]="showError(form, 'username')"
+                   [attr.aria-describedby]="showError(form, 'username') ? 'login-username-error' : null" />
+            @if (showError(form, 'username')) {
+              <p class="field-error" id="login-username-error" i18n="@@auth.required">Required</p>
+            }
+          </div>
+
+          <div class="field">
+            <div class="field-row">
+              <label for="login-password" i18n="@@auth.password">Password</label>
+              <a routerLink="/forgot-password" i18n="@@login.forgot">Forgot your password?</a>
+            </div>
+            <div class="password-wrap">
+              <input id="login-password" [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+                     autocomplete="current-password" [attr.aria-invalid]="showError(form, 'password')"
+                     [attr.aria-describedby]="showError(form, 'password') ? 'login-password-error' : null" />
+              <button type="button" class="reveal-btn" (click)="hidePassword = !hidePassword"
+                      [attr.aria-label]="hidePassword ? showPasswordLabel : hidePasswordLabel"
+                      [attr.aria-pressed]="!hidePassword">
+                <mat-icon aria-hidden="true">{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+            @if (showError(form, 'password')) {
+              <p class="field-error" id="login-password-error" i18n="@@auth.required">Required</p>
+            }
+          </div>
+
+          @if (error) { <div class="form-error" role="alert">{{ error }}</div> }
+
+          <button class="submit-btn" type="submit" [disabled]="loading">
+            @if (loading) { <mat-spinner diameter="18" aria-hidden="true"></mat-spinner> }
+            <span i18n="@@login.submit">Sign in</span>
+          </button>
+        </form>
+
+        <p class="auth-footnote">
+          <ng-container i18n="@@login.noAccount">Don't have an account?</ng-container>&ngsp;<a routerLink="/register" i18n="@@login.signUp">Create one</a>
         </p>
-      </form>
-    </div>
-  </div>
+      }
+    </section>
+  </main>
+
+  <footer class="auth-footer">
+    <a routerLink="/privacy" i18n="@@login.privacy">Privacy</a>
+    <a routerLink="/terms" i18n="@@login.terms">Terms</a>
+  </footer>
 </div>

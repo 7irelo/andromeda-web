@@ -1,9 +1,7 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,8 +10,7 @@ import { safeReturnUrl } from '../../../core/guards/auth.guard';
 @Component({
     selector: 'app-login',
     imports: [
-        CommonModule, ReactiveFormsModule, RouterLink,
-        MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+        CommonModule, ReactiveFormsModule, RouterLink, MatIconModule, MatProgressSpinnerModule,
     ],
     templateUrl: './login.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -40,12 +37,20 @@ export class LoginComponent {
     private route: ActivatedRoute,
   ) {}
 
+  showError(group: FormGroup, name: string): boolean {
+    const control = group.get(name);
+    return !!control && control.invalid && control.touched;
+  }
+
   private done(): void {
     this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')));
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.loading = true;
     this.error = '';
 
@@ -66,7 +71,10 @@ export class LoginComponent {
   }
 
   submitCode(): void {
-    if (this.codeForm.invalid || !this.mfaToken) return;
+    if (this.codeForm.invalid || !this.mfaToken) {
+      this.codeForm.markAllAsTouched();
+      return;
+    }
     this.loading = true;
     this.error = '';
     this.authService.completeMfaLogin(this.mfaToken, (this.codeForm.value.code ?? '').trim()).subscribe({
