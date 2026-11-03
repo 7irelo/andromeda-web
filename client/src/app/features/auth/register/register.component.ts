@@ -97,8 +97,11 @@ export class RegisterComponent {
         this.currentStep = 2;
       },
       error: (err) => {
+        // A failed gateway or server sends HTML, not field errors.
         const errors = err.error;
-        this.error = Object.values(errors).flat().join(' ');
+        this.error = errors && typeof errors === 'object'
+          ? Object.values(errors).flat().join(' ')
+          : $localize`:@@register.serverError:Something went wrong on our side. Please try again.`;
         this.loading = false;
       },
     });

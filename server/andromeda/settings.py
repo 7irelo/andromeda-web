@@ -149,6 +149,19 @@ CACHES = {
     }
 }
 
+# Redis is optional on Vercel. Without it the cache (rate limits, WebSocket
+# tickets) lives in Postgres: run ``manage.py createcachetable`` once.
+_NO_REDIS = (os.environ.get('CELERY_BROKER_URL', '').startswith('vercel')
+             and not (os.environ.get('REDIS_URL') or os.environ.get('KV_URL')))
+if _NO_REDIS:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'andromeda_cache',
+            'KEY_PREFIX': 'andromeda',
+        }
+    }
+
 # ============================================================
 # Django Channels (WebSockets)
 # ============================================================
@@ -162,6 +175,9 @@ CHANNEL_LAYERS = {
         },
     }
 }
+if _NO_REDIS:
+    # Live updates only reach sockets on the same function instance.
+    CHANNEL_LAYERS = {'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}}
 
 # ============================================================
 # Celery (RabbitMQ broker, Redis result backend)

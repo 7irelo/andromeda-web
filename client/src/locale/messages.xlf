@@ -1791,6 +1791,15 @@
       <trans-unit id="login.terms" datatype="html">
         <source>Terms</source>
       </trans-unit>
+      <trans-unit id="login.heroTitle" datatype="html">
+        <source>Connect. Create. Explore.</source>
+      </trans-unit>
+      <trans-unit id="login.heroText" datatype="html">
+        <source>Share ideas, chat, buy and sell, and be part of a growing community.</source>
+      </trans-unit>
+      <trans-unit id="register.serverError" datatype="html">
+        <source>Something went wrong on our side. Please try again.</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>
