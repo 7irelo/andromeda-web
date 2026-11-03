@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ApiService } from '../../core/services/api.service';
 import { WebSocketService } from '../../core/services/websocket.service';
@@ -11,7 +10,7 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
 
 @Component({
     selector: 'app-notifications',
-    imports: [CommonModule, MatIconModule, MatButtonModule, ScrollingModule,
+    imports: [CommonModule, MatIconModule, ScrollingModule,
         EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     templateUrl: './notifications.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -22,7 +21,7 @@ export class NotificationsComponent implements OnInit {
   loading = false;
   loadError = false;
   /** Fixed row height for the virtual list (rows clamp their text to fit). */
-  readonly rowHeight = 84;
+  readonly rowHeight = 76;
 
   constructor(
     private apiService: ApiService,

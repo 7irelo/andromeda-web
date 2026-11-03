@@ -1,0 +1,214 @@
+// The chat window's panels and composer; split out because each stylesheet has a size budget.
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dots {
+  display: flex;
+  gap: 3px;
+  span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    animation: bounce 1.4s infinite ease-in-out;
+    &:nth-child(2) { animation-delay: .2s; }
+    &:nth-child(3) { animation-delay: .4s; }
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+// ── Panels under the header ───────────────────────────────────────
+.removed-banner, .notice, .search-panel, .catchup-panel {
+  flex-shrink: 0;
+  margin: var(--space-3) var(--space-4) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.notice { margin: 0 var(--space-4) var(--space-2); padding: var(--space-2) var(--space-3); }
+
+.search-panel {
+  max-height: 40vh;
+  overflow-y: auto;
+  background: var(--surface);
+
+  .search-row { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1); }
+}
+
+.msg-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-primary);
+  &::placeholder { color: var(--text-muted); }
+}
+
+.search-note { font-size: 12px; color: var(--text-secondary); }
+
+.search-hit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 6px var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  &:hover { background: var(--surface-2); }
+}
+
+.catchup-panel {
+  position: relative;
+  max-height: 40vh;
+  padding-right: 44px;
+  overflow-y: auto;
+  line-height: 20px;
+
+  .close { position: absolute; top: 4px; right: 4px; }
+  .tldr { margin: 0 0 var(--space-2); font-size: 14px; font-weight: 600; }
+  .topic { margin-bottom: var(--space-1); }
+  .group { margin-top: var(--space-2); }
+  .label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .foot { margin-top: var(--space-2); font-size: 12px; color: var(--text-muted); }
+  .error { margin: 0; color: var(--danger-text); }
+}
+
+// ── Composer ──────────────────────────────────────────────────────
+.compose-context {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-secondary);
+
+  > mat-icon { flex-shrink: 0; width: 18px; height: 18px; font-size: 18px; color: var(--text-muted); }
+  .ctx-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  strong { color: var(--text-primary); }
+}
+
+.message-input-area {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.composer-field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  height: 44px;
+  padding: 0 var(--space-1) 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+
+  &:has(.composer-input:focus) {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+}
+
+.composer-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-primary);
+  &::placeholder { color: var(--text-muted); }
+}
+
+.send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--primary-strong);
+  color: var(--on-primary);
+  cursor: pointer;
+  transition: background var(--motion-fast);
+
+  &:hover:not(:disabled) { background: var(--primary-strong-hover); }
+  &:disabled { background: var(--surface-2); color: var(--text-muted); cursor: default; }
+
+  mat-icon { width: 20px; height: 20px; font-size: 20px; }
+}
+
+.recording {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--space-2);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.composer-field:has(.recording) { padding-left: var(--space-1); }
+
+.rec-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+
+// ── Phones ────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .msg-input { height: var(--touch-target); }
+  .composer-input, .msg-input { font-size: 16px; }  // below 16px, iOS zooms in on focus
+  .message-input-area { padding: var(--space-2) var(--space-3); }
+  .composer-field { padding-right: 0; }
+  .removed-banner, .search-panel, .catchup-panel { margin: var(--space-2) var(--space-3) 0; }
+  .notice { margin: 0 var(--space-3) var(--space-2); }
+  .compose-context { padding: 0 var(--space-3); }
+}

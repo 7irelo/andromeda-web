@@ -1,89 +1,81 @@
 <div class="friends-page">
-  <div class="page-header-gradient">
+  <div class="page-head">
     <h1>Find Friends</h1>
-    <p style="opacity:.8;margin-top:4px;font-size:14px">Discover people you may know</p>
+    <p>Discover people you may know</p>
   </div>
 
   <!-- Search -->
-  <div class="search-bar">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Search people</mat-label>
-      <input matInput type="search" [(ngModel)]="searchQuery" (input)="search()" placeholder="Name, username..." />
-      <mat-icon matSuffix aria-hidden="true">search</mat-icon>
-    </mat-form-field>
-  </div>
+  <label class="search-field">
+    <mat-icon aria-hidden="true">search</mat-icon>
+    <input type="search" [(ngModel)]="searchQuery" (input)="search()" placeholder="Name, username..."
+           aria-label="Search people" i18n-aria-label="@@friends.searchLabel" autocomplete="off" />
+  </label>
 
   <!-- Search Results -->
-  <div *ngIf="searchResults.length > 0">
+  <section *ngIf="searchResults.length > 0">
     <h2>Search Results</h2>
     <div class="user-grid">
-      <div class="user-card-lg card" *ngFor="let user of searchResults">
-        <div class="user-card-cover">
-          <img *ngIf="user.cover_photo_url" [src]="user.cover_photo_url" alt="" class="cover-img" />
+      <div class="person card" *ngFor="let user of searchResults">
+        <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="user.username" />
+        <div class="person-info">
+          <div class="person-name">{{ user.full_name }}</div>
+          <div class="person-handle">&#64;{{ user.username }}</div>
         </div>
-        <div class="user-card-body">
-          <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar lg user-float-avatar" [alt]="user.username" />
-          <div class="font-semibold">{{ user.full_name }}</div>
-          <div class="text-secondary text-sm">&#64;{{ user.username }}</div>
+        <div class="person-actions full">
           <ng-container *ngIf="!user.is_friend">
-            <button mat-flat-button color="primary" (click)="addFriend(user)" class="w-full"
-                    [disabled]="user.friend_request_sent">
-              <mat-icon>{{ user.friend_request_sent ? 'check' : 'person_add' }}</mat-icon>
+            <button type="button" class="btn primary" (click)="addFriend(user)" [disabled]="user.friend_request_sent">
+              <mat-icon aria-hidden="true">{{ user.friend_request_sent ? 'check' : 'person_add' }}</mat-icon>
               {{ user.friend_request_sent ? 'Request Sent' : 'Add Friend' }}
             </button>
           </ng-container>
           <ng-container *ngIf="user.is_friend">
-            <span class="text-secondary text-sm">Already friends</span>
+            <span class="already">Already friends</span>
           </ng-container>
-          <a mat-button [routerLink]="'/profile/' + user.username" class="w-full">View Profile</a>
+          <a class="btn" [routerLink]="'/profile/' + user.username">View Profile</a>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- Received Requests -->
-  <div *ngIf="receivedRequests.length > 0">
+  <section *ngIf="receivedRequests.length > 0">
     <h2>Friend Requests ({{ receivedRequests.length }})</h2>
     <div class="user-grid">
-      <div class="user-card-lg card" *ngFor="let req of receivedRequests">
-        <div class="user-card-cover">
-          <img *ngIf="req.sender.cover_photo_url" [src]="req.sender.cover_photo_url" alt="" class="cover-img" />
+      <div class="person card" *ngFor="let req of receivedRequests">
+        <img [src]="req.sender.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="req.sender.username" />
+        <div class="person-info">
+          <div class="person-name">{{ req.sender.full_name }}</div>
+          <div class="person-handle">&#64;{{ req.sender.username }}</div>
         </div>
-        <div class="user-card-body">
-          <img [src]="req.sender.avatar_url || 'assets/default-avatar.png'" class="avatar lg user-float-avatar" [alt]="req.sender.username" />
-          <div class="font-semibold">{{ req.sender.full_name }}</div>
-          <div class="text-secondary text-sm">&#64;{{ req.sender.username }}</div>
-          <div class="request-actions">
-            <button mat-flat-button color="primary" (click)="accept(req)" class="w-full">Confirm</button>
-            <button mat-stroked-button (click)="decline(req)" class="w-full">Delete</button>
-          </div>
+        <div class="person-actions full">
+          <button type="button" class="btn primary" (click)="accept(req)">Confirm</button>
+          <button type="button" class="btn" (click)="decline(req)">Delete</button>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- Sent Requests -->
-  <div *ngIf="sentRequests.length > 0">
+  <section *ngIf="sentRequests.length > 0">
     <h2>Sent Requests ({{ sentRequests.length }})</h2>
     <div class="user-grid">
-      <div class="user-card-lg card" *ngFor="let req of sentRequests">
-        <div class="user-card-cover">
-          <img *ngIf="req.receiver.cover_photo_url" [src]="req.receiver.cover_photo_url" alt="" class="cover-img" />
+      <div class="person card" *ngFor="let req of sentRequests">
+        <img [src]="req.receiver.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="req.receiver.username" />
+        <div class="person-info">
+          <div class="person-name">{{ req.receiver.full_name }}</div>
+          <div class="person-handle">&#64;{{ req.receiver.username }}</div>
         </div>
-        <div class="user-card-body">
-          <img [src]="req.receiver.avatar_url || 'assets/default-avatar.png'" class="avatar lg user-float-avatar" [alt]="req.receiver.username" />
-          <div class="font-semibold">{{ req.receiver.full_name }}</div>
-          <div class="text-secondary text-sm">&#64;{{ req.receiver.username }}</div>
-          <button mat-stroked-button (click)="cancelRequest(req)" class="w-full">
-            <mat-icon>close</mat-icon> Cancel Request
+        <div class="person-actions">
+          <button type="button" class="btn" (click)="cancelRequest(req)">
+            <mat-icon aria-hidden="true">close</mat-icon> Cancel Request
           </button>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- Suggestions -->
-  <div>
+  <section>
     <h2>People You May Know</h2>
     <app-skeleton *ngIf="loading" variant="grid" [count]="6"></app-skeleton>
     <app-error-state *ngIf="!loading && loadError" (retry)="loadSuggestions()"></app-error-state>
@@ -91,21 +83,19 @@
                      title="No suggestions right now"
                      message="Search for people above, or check back once you've made a few friends."></app-empty-state>
     <div class="user-grid" *ngIf="!loading && !loadError">
-      <div class="user-card-lg card" *ngFor="let user of suggestions">
-        <div class="user-card-cover">
-          <img *ngIf="user.cover_photo_url" [src]="user.cover_photo_url" alt="" class="cover-img" />
+      <div class="person card" *ngFor="let user of suggestions">
+        <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="user.username" />
+        <div class="person-info">
+          <div class="person-name">{{ user.full_name }}</div>
+          <div class="person-handle">&#64;{{ user.username }}</div>
         </div>
-        <div class="user-card-body">
-          <img [src]="user.avatar_url || 'assets/default-avatar.png'" class="avatar lg user-float-avatar" [alt]="user.username" />
-          <div class="font-semibold">{{ user.full_name }}</div>
-          <div class="text-secondary text-sm">&#64;{{ user.username }}</div>
-          <button mat-flat-button color="primary" (click)="addFriend(user)" class="w-full"
-                  [disabled]="user.friend_request_sent">
-            <mat-icon>{{ user.friend_request_sent ? 'check' : 'person_add' }}</mat-icon>
+        <div class="person-actions">
+          <button type="button" class="btn primary" (click)="addFriend(user)" [disabled]="user.friend_request_sent">
+            <mat-icon aria-hidden="true">{{ user.friend_request_sent ? 'check' : 'person_add' }}</mat-icon>
             {{ user.friend_request_sent ? 'Request Sent' : 'Add Friend' }}
           </button>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </div>

@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Out
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { ApiService } from '../../../core/services/api.service';
 import { ChatMember, ChatRoom } from '../../../models/chat.model';
@@ -11,13 +10,13 @@ import { User } from '../../../models/user.model';
 /** Group chat settings: name, picture, members and roles. The server enforces who may do what. */
 @Component({
   selector: 'app-group-settings',
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatMenuModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatMenuModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="panel" role="region" aria-label="Group settings">
       <div class="head">
         <strong>Group settings</strong>
-        <button mat-icon-button (click)="closed.emit()" aria-label="Close settings"><mat-icon>close</mat-icon></button>
+        <button type="button" class="icon-btn" (click)="closed.emit()" aria-label="Close settings"><mat-icon aria-hidden="true">close</mat-icon></button>
       </div>
       <p class="error" *ngIf="error">{{ error }}</p>
 
@@ -25,17 +24,17 @@ import { User } from '../../../models/user.model';
         <label class="label" for="group-name">Name</label>
         <div class="row">
           <input id="group-name" class="field" [(ngModel)]="name" maxlength="255" (keyup.enter)="rename()" />
-          <button mat-stroked-button (click)="rename()" [disabled]="!name.trim() || name.trim() === room.name">Save</button>
+          <button type="button" class="btn" (click)="rename()" [disabled]="!name.trim() || name.trim() === room.name">Save</button>
         </div>
 
         <div class="label">Picture</div>
         <div class="row">
           <img [src]="room.avatar || 'assets/default-avatar.png'" class="avatar md" alt="Group picture" />
-          <label class="upload">
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="setAvatar($event)" hidden />
-            <span mat-stroked-button>Change</span>
+          <label class="btn upload">
+            <input type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp,image/gif" (change)="setAvatar($event)" />
+            <span>Change</span>
           </label>
-          <button mat-button *ngIf="room.avatar" (click)="removeAvatar()">Remove</button>
+          <button type="button" class="btn plain" *ngIf="room.avatar" (click)="removeAvatar()">Remove</button>
         </div>
       </ng-container>
 
@@ -43,9 +42,9 @@ import { User } from '../../../models/user.model';
       <div class="member" *ngFor="let m of room.members">
         <img [src]="m.user.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="m.user.username" />
         <span class="who">{{ m.user.full_name }} <span class="role" *ngIf="m.role === 'admin'">Admin</span></span>
-        <button mat-icon-button *ngIf="isAdmin && m.user.id !== currentUserId" [matMenuTriggerFor]="memberMenu"
+        <button type="button" class="icon-btn" *ngIf="isAdmin && m.user.id !== currentUserId" [matMenuTriggerFor]="memberMenu"
                 [attr.aria-label]="'Manage ' + m.user.username">
-          <mat-icon>more_vert</mat-icon>
+          <mat-icon aria-hidden="true">more_vert</mat-icon>
         </button>
         <mat-menu #memberMenu="matMenu">
           <button mat-menu-item *ngIf="m.role !== 'admin'" (click)="setRole(m, 'admin')">Make admin</button>
@@ -55,32 +54,53 @@ import { User } from '../../../models/user.model';
       </div>
 
       <ng-container *ngIf="isAdmin">
-        <div class="label">Add people</div>
-        <input class="field" placeholder="Search people..." [(ngModel)]="query" (ngModelChange)="search()" />
+        <label class="label" for="group-add">Add people</label>
+        <input id="group-add" class="field" placeholder="Search people..." [(ngModel)]="query" (ngModelChange)="search()" />
         <div class="member" *ngFor="let u of candidates">
           <img [src]="u.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="u.username" />
           <span class="who">{{ u.full_name }}</span>
-          <button mat-icon-button (click)="add(u)" [attr.aria-label]="'Add ' + u.username"><mat-icon>person_add</mat-icon></button>
+          <button type="button" class="icon-btn" (click)="add(u)" [attr.aria-label]="'Add ' + u.username"><mat-icon aria-hidden="true">person_add</mat-icon></button>
         </div>
       </ng-container>
 
-      <button mat-stroked-button color="warn" class="leave" (click)="leave()">Leave group</button>
+      <button type="button" class="btn danger leave" (click)="leave()">Leave group</button>
     </div>
   `,
   styles: [`
-    .panel { margin: 8px 12px 0; padding: 12px 14px; border-radius: 12px; background: var(--bg-secondary, #f0f2f5);
-             font-size: 14px; max-height: 50vh; overflow-y: auto; }
-    .head { display: flex; justify-content: space-between; align-items: center; }
-    .label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; margin: 10px 0 4px; display: block; }
-    .row { display: flex; align-items: center; gap: 8px; }
-    .field { flex: 1; width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
-             background: var(--surface); color: var(--text-primary); }
-    .member { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
-    .who { flex: 1; }
-    .role { font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--primary-strong); color: var(--on-primary); margin-left: 4px; }
-    .upload span { cursor: pointer; text-decoration: underline; }
+    .panel { margin: 12px 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+             background: var(--surface); font-size: 13px; color: var(--text-primary); max-height: 50vh; overflow-y: auto; }
+    .head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+    .head strong { font-weight: 600; }
+    .label { display: block; margin: 12px 0 4px; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .field { flex: 1; width: 100%; min-width: 0; height: 36px; padding: 0 12px; border: 1px solid var(--border-strong);
+             border-radius: var(--radius-sm); background: var(--surface); font: inherit; font-size: 13px; color: var(--text-primary); }
+    .row .field { width: auto; flex-basis: 140px; }
+    .field::placeholder { color: var(--text-muted); }
+    .member { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+    .who { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+    .role { margin-left: 4px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 11px; color: var(--text-secondary); }
+    .icon-btn { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px;
+                border: none; border-radius: var(--radius-sm); background: none; color: var(--text-secondary); cursor: pointer; }
+    .icon-btn:hover { background: var(--surface-2); color: var(--text-primary); }
+    .icon-btn mat-icon { width: 20px; height: 20px; font-size: 20px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 12px;
+           border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: none; font: inherit;
+           font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer; }
+    .btn:hover:not(:disabled) { background: var(--surface-2); }
+    .btn:disabled { border-color: var(--border); color: var(--text-muted); cursor: default; }
+    .btn.plain { border-color: transparent; color: var(--primary); }
+    .btn.danger { border-color: var(--border); color: var(--danger-text); }
+    .upload:focus-within { outline: 3px solid var(--focus-ring-color); outline-offset: 2px; }
     .leave { margin-top: 12px; }
-    .error { color: var(--danger, #e41e3f); }
+    .error { margin: 8px 0 0; color: var(--danger-text); }
+    @media (max-width: 768px) {
+      .panel { margin: 8px 12px 0; }
+      .field, .btn { height: var(--touch-target); }
+      .field { font-size: 16px; }
+      .icon-btn { width: var(--touch-target); height: var(--touch-target); }
+    }
   `],
 })
 export class GroupSettingsComponent implements OnChanges {

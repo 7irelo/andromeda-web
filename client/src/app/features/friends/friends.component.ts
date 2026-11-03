@@ -3,10 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -17,7 +13,6 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
     selector: 'app-friends',
     imports: [
         CommonModule, RouterLink, FormsModule, MatIconModule,
-        MatButtonModule, MatTabsModule, MatInputModule, MatProgressSpinnerModule,
         MatSnackBarModule, EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     templateUrl: './friends.component.html',

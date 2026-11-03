@@ -1,10 +1,10 @@
 <div class="notifications-page">
-  <div class="page-header-gradient notif-header">
+  <div class="page-head">
     <div>
       <h1>Notifications</h1>
-      <p style="opacity:.85;margin-top:4px;font-size:14px">Stay up to date with your activity</p>
+      <p>Stay up to date with your activity</p>
     </div>
-    <button mat-flat-button (click)="markAllRead()" *ngIf="notifications.length > 0" class="mark-all">
+    <button type="button" class="btn" (click)="markAllRead()" *ngIf="notifications.length > 0">
       <mat-icon aria-hidden="true">done_all</mat-icon> Mark all read
     </button>
   </div>
@@ -25,24 +25,22 @@
     >
       <div *cdkVirtualFor="let n of notifications; trackBy: trackById" role="listitem" class="notif-row">
         <button type="button" class="notif-item" [class.unread]="!n.is_read" (click)="markRead(n)">
-          <span class="notif-avatar-wrap">
-            <img
-              [src]="n.sender?.avatar_url || 'assets/default-avatar.png'"
-              class="avatar md"
-              alt=""
-              width="40"
-              height="40"
-              loading="lazy"
-            />
-            <span class="notif-type-icon" aria-hidden="true">
-              <mat-icon>{{ getIcon(n.notification_type, n.extra) }}</mat-icon>
-            </span>
-          </span>
+          <img
+            [src]="n.sender?.avatar_url || 'assets/default-avatar.png'"
+            class="avatar md"
+            alt=""
+            width="40"
+            height="40"
+            loading="lazy"
+          />
 
           <span class="notif-content">
             <span class="notif-title">{{ n.title }}</span>
             <span class="notif-body" *ngIf="n.body">{{ n.body }}</span>
-            <span class="notif-time">{{ timeAgo(n.created_at) }}</span>
+            <span class="notif-time">
+              <mat-icon aria-hidden="true">{{ getIcon(n.notification_type, n.extra) }}</mat-icon>
+              {{ timeAgo(n.created_at) }}
+            </span>
           </span>
 
           <span class="unread-dot" *ngIf="!n.is_read"></span>
