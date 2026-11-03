@@ -426,7 +426,7 @@ services:
   # Monitoring Exporters
   # ============================================================
   redis_exporter:
-    image: oliver006/redis_exporter:v1.67.0
+    image: oliver006/redis_exporter:v1.96.0
     container_name: andromeda_redis_exporter
     restart: unless-stopped
     environment:
