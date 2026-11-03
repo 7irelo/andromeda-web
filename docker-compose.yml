@@ -4,7 +4,7 @@ services:
   # ============================================================
   postgres:
     # pgvector build of Postgres 15: same major version, so existing volumes keep working.
-    image: pgvector/pgvector:0.8.7-pg15-trixie@sha256:8d4485d6fd3156d090ac5f37eb2e22eb59d93c91169414d5809414102ee924b9
+    image: pgvector/pgvector:0.8.7-pg15-trixie@sha256:4870105f2d566f6abe6b838cfbf86823fcca78967b0bc1cf79a7d84a0b4ebb60
     container_name: andromeda_postgres
     restart: unless-stopped
     environment:
