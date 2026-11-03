@@ -1,37 +1,36 @@
-<div class="watch-page">
-  <div class="watch-header">
-    <h1>Watch</h1>
-    <a mat-stroked-button routerLink="/watch/history">
-      <mat-icon>history</mat-icon>
-      History
-    </a>
+<div class="ui-page">
+  <h1 class="visually-hidden">Watch</h1>
+
+  <div class="toolbar">
+    <div class="ui-chips" role="group" aria-label="Which videos">
+      <button class="ui-chip" type="button" [attr.aria-pressed]="feed === 'all'" (click)="setFeed('all')">All videos</button>
+      <button class="ui-chip" type="button" [attr.aria-pressed]="feed === 'subscriptions'" (click)="setFeed('subscriptions')">Subscriptions</button>
+    </div>
+    <div class="toolbar-actions">
+      <a class="ui-btn" routerLink="/watch/history"><mat-icon aria-hidden="true">history</mat-icon> History</a>
+      <button class="ui-btn ui-btn-primary" type="button" [attr.aria-expanded]="showUpload" (click)="showUpload = !showUpload">
+        <mat-icon aria-hidden="true">{{ uploading ? 'hourglass_top' : 'add' }}</mat-icon> Upload Video
+      </button>
+    </div>
   </div>
 
-  <div class="upload-card card">
-    <div class="upload-title">Upload Video</div>
+  <div class="upload-card card" *ngIf="showUpload">
     <div class="upload-fields">
-      <input
-        type="text"
-        placeholder="Title (optional)"
-        aria-label="Video title (optional)"
-        [(ngModel)]="uploadTitle"
-        maxlength="255"
-        class="upload-input"
-      />
-      <textarea
-        placeholder="Description (optional)"
-        aria-label="Video description (optional)"
-        [(ngModel)]="uploadDescription"
-        class="upload-input upload-textarea"
-      ></textarea>
-      <mat-checkbox [(ngModel)]="uploadPublic">Public (anyone can watch it)</mat-checkbox>
+      <input class="ui-control" type="text" placeholder="Title (optional)" aria-label="Video title (optional)"
+             [(ngModel)]="uploadTitle" maxlength="255" />
+      <textarea class="ui-control" rows="2" placeholder="Description (optional)" aria-label="Video description (optional)"
+                [(ngModel)]="uploadDescription"></textarea>
+      <label class="ui-check">
+        <input type="checkbox" [(ngModel)]="uploadPublic" />
+        Public (anyone can watch it)
+      </label>
       <div class="upload-actions">
-        <button mat-stroked-button (click)="videoInput.click()" [disabled]="uploading">
-          <mat-icon>upload_file</mat-icon>
-          {{ selectedVideo ? selectedVideo.name : 'Choose video' }}
+        <button class="ui-btn file-btn" type="button" (click)="videoInput.click()" [disabled]="uploading">
+          <mat-icon aria-hidden="true">upload_file</mat-icon>
+          <span class="file-name">{{ selectedVideo ? selectedVideo.name : 'Choose video' }}</span>
         </button>
-        <button mat-flat-button color="primary" (click)="uploadVideo()" [disabled]="!selectedVideo || uploading">
-          <mat-icon>cloud_upload</mat-icon>
+        <button class="ui-btn ui-btn-primary" type="button" (click)="uploadVideo()" [disabled]="!selectedVideo || uploading">
+          <mat-icon aria-hidden="true">cloud_upload</mat-icon>
           {{ uploading ? 'Uploading...' : 'Upload' }}
         </button>
       </div>
@@ -40,15 +39,10 @@
     <input #videoInput type="file" hidden accept="video/mp4,video/quicktime,video/webm" (change)="onVideoSelected($event)" />
   </div>
 
-  <mat-button-toggle-group class="feed-toggle" [value]="feed" (change)="setFeed($event.value)" aria-label="Which videos">
-    <mat-button-toggle value="all">All videos</mat-button-toggle>
-    <mat-button-toggle value="subscriptions">Subscriptions</mat-button-toggle>
-  </mat-button-toggle-group>
-
   <app-skeleton *ngIf="loading" variant="grid" [count]="6"></app-skeleton>
   <app-error-state *ngIf="!loading && loadError" (retry)="loadVideos()"></app-error-state>
 
-  <div class="video-grid" *ngIf="!loading && !loadError">
+  <div class="ui-grid ui-grid-single" *ngIf="!loading && !loadError">
     <app-video-card *ngFor="let v of videos" [video]="v"></app-video-card>
   </div>
 

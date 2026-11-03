@@ -4,10 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { Video } from '../../models/video.model';
@@ -24,21 +20,18 @@ const POLL_MS = 10_000;
         FormsModule,
         RouterLink,
         MatIconModule,
-        MatButtonModule,
-        MatButtonToggleModule,
-        MatCheckboxModule,
-        MatProgressSpinnerModule,
         MatSnackBarModule,
         VideoCardComponent, EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     templateUrl: './watch.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrls: ['./watch.component.scss']
+    styleUrls: ['../marketplace/ui.scss', './watch.component.scss']
 })
 export class WatchComponent implements OnInit, OnDestroy {
   videos: Video[] = [];
   loading = false;
   loadError = false;
+  showUpload = false;
   uploading = false;
   uploadTitle = '';
   uploadDescription = '';

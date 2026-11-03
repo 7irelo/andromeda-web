@@ -19,10 +19,10 @@ export function formatDuration(seconds: number): string {
   template: `
     <a class="video-card" [routerLink]="'/watch/' + video.id">
       <div class="thumbnail-wrap">
-        <img *ngIf="video.thumbnail_url; else noThumb" [src]="video.thumbnail_url" [alt]="video.title" class="thumbnail" loading="lazy" />
+        <img *ngIf="video.thumbnail_url; else noThumb" [src]="video.thumbnail_url" alt="" class="thumbnail" loading="lazy" />
         <ng-template #noThumb>
           <div class="thumbnail placeholder">
-            <mat-icon>{{ video.status === 'failed' ? 'error_outline' : video.status === 'processing' ? 'hourglass_top' : 'play_circle_outline' }}</mat-icon>
+            <mat-icon aria-hidden="true">{{ video.status === 'failed' ? 'error_outline' : video.status === 'processing' ? 'hourglass_top' : 'play_circle_outline' }}</mat-icon>
           </div>
         </ng-template>
         <span class="badge" *ngIf="video.status === 'processing'">Processing</span>
@@ -33,37 +33,50 @@ export function formatDuration(seconds: number): string {
         </div>
       </div>
       <div class="video-info">
-        <div class="video-title font-medium">
-          <mat-icon class="lock" *ngIf="!video.is_public" title="Only you can see this">lock</mat-icon>{{ video.title }}
+        <div class="video-title">
+          <mat-icon class="lock" *ngIf="!video.is_public" title="Only you can see this">lock</mat-icon><span>{{ video.title }}</span>
         </div>
-        <div class="text-secondary text-xs" *ngIf="showUploader">{{ video.uploader.full_name || video.uploader.username }}</div>
-        <div class="text-secondary text-xs">
+        <div class="meta" *ngIf="showUploader">{{ video.uploader.full_name || video.uploader.username }}</div>
+        <div class="meta">
           {{ video.views_count | number }} views · {{ video.created_at | date: 'mediumDate' }}
         </div>
-        <div class="failure text-xs" *ngIf="video.status === 'failed' && video.failure_reason">{{ video.failure_reason }}</div>
+        <div class="failure" *ngIf="video.status === 'failed' && video.failure_reason">{{ video.failure_reason }}</div>
       </div>
     </a>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
-    .video-card { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; }
-    .video-card:hover { text-decoration: none; }
-    .thumbnail-wrap { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 9; background: #000; }
-    .thumbnail { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .placeholder { display: flex; align-items: center; justify-content: center; color: #bbb; }
-    .placeholder mat-icon { font-size: 40px; width: 40px; height: 40px; }
-    .duration, .badge {
-      position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff;
-      font-size: 12px; padding: 2px 6px; border-radius: 4px;
+    :host { display: block; min-width: 0; }
+    .video-card {
+      display: block; box-sizing: border-box; height: 100%; overflow: hidden; color: inherit; text-decoration: none;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      transition: border-color var(--motion-fast);
     }
-    .badge { left: 8px; right: auto; top: 8px; bottom: auto; }
-    .badge.failed { background: #c62828; }
-    .resume { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255, 255, 255, 0.35); }
-    .resume-fill { height: 100%; background: var(--primary); }
-    .video-info { display: flex; flex-direction: column; gap: 2px; }
-    .video-title { display: flex; align-items: center; gap: 4px; }
-    .lock { font-size: 16px; width: 16px; height: 16px; color: var(--text-secondary); }
-    .failure { color: #c62828; }
+    .video-card:hover { color: inherit; text-decoration: none; border-color: var(--border-strong); }
+    .thumbnail-wrap { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+    .thumbnail { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .placeholder { display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+    .placeholder mat-icon { width: 36px; height: 36px; font-size: 36px; }
+    .duration, .badge {
+      position: absolute; right: var(--space-2); bottom: var(--space-2); padding: 1px 6px;
+      font-size: var(--font-size-xs); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--text-primary);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    }
+    .badge { top: var(--space-2); right: auto; bottom: auto; left: var(--space-2); }
+    .badge.failed { color: var(--danger-text); }
+    .resume { position: absolute; right: 0; bottom: 0; left: 0; height: 4px; background: var(--border); }
+    .resume-fill { height: 100%; background: var(--primary-strong); }
+    .video-info { display: flex; flex-direction: column; gap: 2px; padding: var(--space-3); }
+    .video-title {
+      display: flex; align-items: flex-start; gap: var(--space-1); margin-bottom: 2px;
+      font-size: var(--font-size-base); font-weight: 600; line-height: 1.35; color: var(--text-primary);
+    }
+    .video-title span {
+      display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: anywhere;
+    }
+    .lock { flex: none; width: 16px; height: 16px; font-size: 16px; color: var(--text-muted); }
+    .meta { font-size: var(--font-size-xs); color: var(--text-muted); }
+    .failure { font-size: var(--font-size-xs); color: var(--danger-text); }
   `],
 })
 export class VideoCardComponent {

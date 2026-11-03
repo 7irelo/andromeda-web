@@ -1,81 +1,118 @@
-.marketplace-page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px 16px;
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
-.marketplace-header {
+.search {
   display: flex;
+  flex: 1 1 280px;
+  align-items: center;
+  min-width: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+
+  &:focus-within { border-color: var(--primary); outline: 1px solid var(--primary); }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 34px;
+    padding: 0 10px 0 0;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    background: none;
+    border: 0;
+    outline: none;
+
+    &::placeholder { color: var(--text-muted); }
+  }
+
+  .ui-icon-btn { height: 34px; }
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
-
-  h1 {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
-.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.chips { flex: 1 1 320px; min-width: 0; }
 
-.search-bar {
+.sort-group {
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+  align-items: center;
+  gap: var(--space-2);
 
-  .search-field { flex: 1 1 320px; }
-  .sort-field { flex: 0 1 220px; }
-  .filters-toggle { margin-top: 8px; }
+  select { width: auto; max-width: 190px; }
 }
 
 .filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  align-items: flex-start;
-  padding: 16px 16px 0;
-  margin-bottom: 18px;
-
-  mat-form-field { min-width: 180px; }
-  .price-range, .location-filter { display: flex; gap: 8px; align-items: center; }
-  .price-range mat-form-field { min-width: 0; width: 120px; }
-  > button { margin-top: 8px; }
-}
-
-.listings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 18px;
-}
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-3);
+  align-items: end;
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
 
-.load-more { display: flex; justify-content: center; padding: 24px 0; }
-
-.loading-center { display: flex; justify-content: center; padding: 48px; }
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 72px 24px;
-  color: var(--text-secondary);
-  gap: 14px;
-
-  mat-icon {
-    font-size: 56px;
-    width: 56px;
-    height: 56px;
-    opacity: .25;
-    color: var(--primary);
+  fieldset {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
   }
 
-  p { font-size: 15px; font-weight: 500; }
+  legend {
+    padding: 0;
+    margin-bottom: var(--space-1);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+}
+
+.price-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+}
+
+@media (max-width: 600px) {
+  .search { flex-basis: 100%; }
+  .search input { height: 42px; font-size: var(--font-size-lg); }
+  .search .ui-icon-btn { height: 42px; }
+
+  .toolbar .ui-btn { flex: 1 1 0; padding: 0 var(--space-2); }
+
+  // The chip row scrolls inside itself so the page never scrolls sideways.
+  .chips {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    margin: 0 calc(var(--space-4) * -1);
+    padding: 0 var(--space-4);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sort-group { flex: 1 1 100%; }
+  .sort-group select { flex: 1; width: 100%; max-width: none; }
+  .filters { grid-template-columns: minmax(0, 1fr); }
 }

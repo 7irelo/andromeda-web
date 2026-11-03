@@ -1,9 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/services/api.service';
 import { WatchHistoryEntry } from '../../../models/video.model';
 import { VideoCardComponent } from '../video-card/video-card.component';
@@ -11,53 +9,52 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
 
 @Component({
   selector: 'app-watch-history',
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, VideoCardComponent,
+  imports: [CommonModule, RouterLink, MatIconModule, VideoCardComponent,
     EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
   template: `
-    <div class="history-page">
-      <div class="header">
-        <a mat-icon-button routerLink="/watch" aria-label="Back to Watch"><mat-icon>arrow_back</mat-icon></a>
+    <div class="ui-page">
+      <div class="ui-head">
+        <a class="ui-icon-btn" routerLink="/watch" aria-label="Back to Watch"><mat-icon aria-hidden="true">arrow_back</mat-icon></a>
         <h1>Watch history</h1>
-        <button mat-stroked-button *ngIf="entries.length" (click)="clear()">
-          <mat-icon>delete_sweep</mat-icon> Clear all
+        <button class="ui-btn" type="button" *ngIf="entries.length" (click)="clear()">
+          <mat-icon aria-hidden="true">delete_sweep</mat-icon> Clear all
         </button>
       </div>
 
       <app-skeleton *ngIf="loading" variant="grid" [count]="6"></app-skeleton>
       <app-error-state *ngIf="!loading && loadError" [compact]="entries.length > 0" (retry)="retry()"></app-error-state>
 
-      <div class="video-grid" *ngIf="!loading">
+      <div class="ui-grid ui-grid-single" *ngIf="!loading">
         <div class="entry" *ngFor="let e of entries">
           <app-video-card [video]="e.video" [progressS]="e.position_s"></app-video-card>
-          <div class="entry-meta text-xs text-secondary">
+          <div class="entry-meta">
             Watched {{ e.updated_at | date: 'medium' }}
-            <button mat-icon-button (click)="remove(e)" aria-label="Remove from history">
-              <mat-icon>close</mat-icon>
+            <button class="ui-icon-btn" type="button" (click)="remove(e)" aria-label="Remove from history">
+              <mat-icon aria-hidden="true">close</mat-icon>
             </button>
           </div>
         </div>
       </div>
 
-      <button mat-stroked-button class="more" *ngIf="hasMore && !loading && !loadError" (click)="loadMore()">Load more</button>
+      <div class="ui-more" *ngIf="hasMore && !loading && !loadError">
+        <button class="ui-btn" type="button" (click)="loadMore()">Load more</button>
+      </div>
 
       <app-empty-state *ngIf="!loading && !loadError && entries.length === 0" icon="history"
                        title="No watch history" message="Videos you watch will show up here.">
-        <a mat-stroked-button routerLink="/watch">Browse videos</a>
+        <a class="ui-btn" routerLink="/watch">Browse videos</a>
       </app-empty-state>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    .history-page { max-width: 1100px; margin: 0 auto; padding: 16px; }
-    .header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-    .header h1 { font-size: 24px; font-weight: 700; flex: 1; }
-    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .entry-meta { display: flex; align-items: center; justify-content: space-between; }
-    .more { display: block; margin: 24px auto 0; }
-    .loading-center { display: flex; justify-content: center; padding: 40px; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; padding: 60px; gap: 12px;
-                   color: var(--text-secondary); }
-    .empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.4; }
+  styleUrls: ['../../marketplace/ui.scss'],
+    styles: [`
+    .entry { min-width: 0; }
+    .entry app-video-card { height: auto; }
+    .entry-meta {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+      padding: var(--space-1) 0 0 var(--space-1); font-size: var(--font-size-xs); color: var(--text-muted);
+    }
   `],
 })
 export class WatchHistoryComponent implements OnInit {
