@@ -15,8 +15,6 @@
 [![Angular](https://img.shields.io/badge/angular-22-red.svg)](https://angular.dev/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
-![Andromeda: feed, chat, marketplace, profile, API, monitoring](docs/screenshots/andromeda-ui.png)
-
 ---
 
 ## Contents

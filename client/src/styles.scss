@@ -189,6 +189,9 @@ html {
 // The M2 `color` input ("warn", "accent") on buttons, toggles and spinners.
 // Material follows the design: one solid indigo fill, compact 8px controls, no pills.
 html {
+  // Checkboxes, toggles, tabs and select panels: the one indigo accent, never Material's teal.
+  --mat-sys-primary: var(--primary-strong);
+  --mat-sys-on-primary: var(--on-primary);
   --mat-button-filled-container-color: var(--primary-strong);
   --mat-button-filled-label-text-color: var(--on-primary);
   --mat-button-filled-container-shape: var(--radius-sm);
@@ -212,10 +215,6 @@ html {
   --mat-button-filled-label-text-color: #fff;
   --mat-button-outlined-label-text-color: var(--danger-text);
   --mat-button-text-label-text-color: var(--danger-text);
-}
-.mat-accent {
-  --mat-sys-primary: var(--mat-sys-tertiary);
-  --mat-sys-on-primary: var(--mat-sys-on-tertiary);
 }
 
 // Reset
