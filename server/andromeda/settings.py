@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from urllib.parse import parse_qsl, unquote, urlsplit
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -108,6 +109,21 @@ DATABASES = {
         'OPTIONS': {'connect_timeout': 10},
     }
 }
+# Hosted Postgres (Neon on Vercel) gives a single URL. It goes through a
+# transaction-mode pooler, so no persistent connections or server-side cursors.
+_DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if _DATABASE_URL:
+    _db = urlsplit(_DATABASE_URL)
+    DATABASES['default'].update({
+        'NAME': _db.path.lstrip('/'),
+        'USER': unquote(_db.username or ''),
+        'PASSWORD': unquote(_db.password or ''),
+        'HOST': _db.hostname,
+        'PORT': _db.port or 5432,
+        'OPTIONS': {'connect_timeout': 10, **dict(parse_qsl(_db.query))},
+        'CONN_MAX_AGE': 0,
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+    })
 
 # Neo4j (neomodel)
 NEOMODEL_NEO4J_BOLT_URL = os.environ.get(
@@ -120,7 +136,7 @@ NEOMODEL_FORCE_TIMEZONE = True
 # ============================================================
 # Caching (Redis)
 # ============================================================
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_URL = os.environ.get('REDIS_URL') or os.environ.get('KV_URL') or 'redis://localhost:6379/0'
 
 CACHES = {
     'default': {
@@ -150,7 +166,7 @@ CHANNEL_LAYERS = {
 # ============================================================
 # Celery (RabbitMQ broker, Redis result backend)
 # ============================================================
-CELERY_BROKER_URL = os.environ.get(
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or os.environ.get(
     'RABBITMQ_URL', 'amqp://andromeda:andromeda_secret@localhost:5672/andromeda'
 )
 CELERY_RESULT_BACKEND = REDIS_URL
@@ -172,6 +188,16 @@ CELERY_TASK_QUEUES = {
     'ai': {},  # assistant runs; its own worker so provider outages can't starve product queues
 }
 CELERY_TASK_DEFAULT_QUEUE = 'default'
+
+# Vercel Queues: tasks run in queue-triggered functions. Nothing reads task
+# results, and a redelivered task must survive a function timeout.
+if CELERY_BROKER_URL.startswith('vercel'):
+    CELERY_RESULT_BACKEND = None
+    CELERY_TASK_IGNORE_RESULT = True
+    CELERY_TASK_TRACK_STARTED = False
+    CELERY_TASK_SEND_SENT_EVENT = False
+    CELERY_TASK_ACKS_LATE = True
+    CELERY_TASK_TIME_LIMIT = 280  # inside the free plan's 300 s function limit
 
 # ── Periodic tasks ────────────────────────────────────────────
 from celery.schedules import crontab  # noqa: E402
@@ -460,6 +486,13 @@ if _MINIO_ENDPOINT:
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_FILE_OVERWRITE = False
     AWS_DEFAULT_ACL = None  # access is governed by the bucket's prefix policy
+
+# Vercel Blob, on hosts with no writable disk. See core/blob_storage.py.
+if os.environ.get('MEDIA_STORAGE') == 'blob':
+    STORAGES['default'] = {'BACKEND': 'core.blob_storage.BlobStorage'}
+
+# Daily scheduled work on hosts without Celery Beat. See core/media_views.py.
+CRON_SECRET = os.environ.get('CRON_SECRET', '')
 
 # ============================================================
 # Email

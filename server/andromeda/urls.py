@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from assistant.mcp import MCPView
+from core import media_views
 from core.search import SearchView
 from observability.views import ErrorTunnelView
 
@@ -32,6 +33,7 @@ urlpatterns = [
     path('api/watch/', include('watch.urls')),
     path('api/pages/', include('pages.urls')),
     path('api/search/', SearchView.as_view(), name='search'),
+    path('api/internal/cron/', media_views.run_scheduled_tasks, name='scheduled-tasks'),
     path('api/', include('retrieval.urls')),
     path('api/moderation/', include('moderation.urls')),
     path('api/assistant/', include('assistant.urls')),
@@ -51,3 +53,6 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.STORAGES['default']['BACKEND'] == 'core.blob_storage.BlobStorage':
+    urlpatterns += [path('media/<path:path>', media_views.public_media, name='public-media')]

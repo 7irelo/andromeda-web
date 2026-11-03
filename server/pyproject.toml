@@ -1,0 +1,53 @@
+# Used by Vercel. Docker and local development install requirements.txt instead.
+# Left out on purpose: LightGBM and scikit-learn (the ranker falls back to the
+# heuristic), Flower and Gunicorn (no long-running processes on Vercel).
+[project]
+name = "andromeda-api"
+version = "1.0.0"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "Django~=5.2.0",
+  "djangorestframework~=3.18.2",
+  "djangorestframework-simplejwt~=5.5.0",
+  "PyJWT~=2.10",
+  "pyotp~=2.10",
+  "segno~=1.6.6",
+  "cryptography>=47",
+  "pywebpush~=2.5",
+  "django-cors-headers~=4.7",
+  "drf-spectacular~=0.28.0",
+  "channels~=4.2",
+  "channels-redis~=4.2",
+  "websockets~=14.0",
+  "psycopg[binary]~=3.2",
+  "pgvector~=0.5.1",
+  "neomodel~=5.4",
+  "redis~=5.2",
+  "django-redis~=5.4",
+  "celery~=5.5",
+  "django-celery-beat~=2.8",
+  "django-celery-results~=2.6",
+  "django-prometheus~=2.4",
+  "prometheus-client~=0.21",
+  "numpy~=2.5.4",
+  "opentelemetry-api==1.45.1",
+  "opentelemetry-sdk==1.45.1",
+  "opentelemetry-exporter-otlp-proto-http==1.45.1",
+  "opentelemetry-instrumentation-django==0.66b1",
+  "opentelemetry-instrumentation-celery==0.66b1",
+  "opentelemetry-instrumentation-asgi==0.66b1",
+  "opentelemetry-instrumentation-urllib3==0.66b1",
+  "sentry-sdk==2.72.0",
+  "Pillow~=13.0",
+  "python-decouple~=3.8",
+  "django-filter~=25.1",
+  "django-storages~=1.14",
+  "boto3~=1.37",
+  "vercel-blob>=0.5.0",
+]
+
+[tool.vercel]
+entrypoint = "andromeda.asgi:application"
+
+[[tool.vercel.subscribers]]
+entrypoint = "andromeda.celery:app"
