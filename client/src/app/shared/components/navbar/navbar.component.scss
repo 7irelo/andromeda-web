@@ -133,6 +133,7 @@
   align-items: center;
   flex: 1;
   gap: 8px;
+  min-width: 0;  // lets the field shrink so the buttons stay on screen on phones
   max-width: 480px;
   height: 38px;
   padding: 0 12px;
@@ -168,6 +169,7 @@
 
 .topbar-actions {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 8px;
   margin-left: auto;
