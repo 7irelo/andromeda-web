@@ -26,37 +26,48 @@
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--space-4);
-  padding: var(--space-4) 0;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 630px;
+  margin: 0 auto;
+  padding: var(--space-2) 0;
 }
 
 .item-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
   min-width: 0;
-  overflow: hidden;
-  transition: border-color var(--motion-fast);
-  &:hover { border-color: var(--border-strong); }
+  padding: var(--space-3) 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 0;
 }
 
 .item-cover {
-  height: 96px;
-  background: var(--primary-light);
+  flex: none;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border-radius: 50%;
   img { display: block; width: 100%; height: 100%; object-fit: cover; }
 }
 
 .item-body {
-  display: flex;
+  display: grid;
   flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-3) var(--space-4) var(--space-4);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-3);
+  min-width: 0;
+  padding: 0;
 }
 
 .item-name { font-size: 14px; font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere; }
 .item-meta { font-size: 13px; color: var(--text-secondary); }
-.item-action { margin-top: auto; padding-top: var(--space-3); a, button { width: 100%; } }
+.item-action { grid-column: 2; grid-row: 1 / span 3; margin: 0; padding: 0; }
 
 .member-grid {
   display: grid;

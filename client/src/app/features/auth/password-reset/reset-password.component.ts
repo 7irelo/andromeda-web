@@ -10,21 +10,13 @@ import { AuthService } from '../../../core/services/auth.service';
     imports: [CommonModule, ReactiveFormsModule, RouterLink, MatSnackBarModule],
     template: `
     <div class="auth-page">
-      <div class="stars" aria-hidden="true"></div>
-      <div class="planet" aria-hidden="true"></div>
 
       <header class="auth-header">
         <a class="brand brand-link" routerLink="/">
           <svg class="brand-mark" viewBox="0 0 32 28" width="30" height="26" aria-hidden="true">
-            <defs>
-              <linearGradient id="brand-gradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#ffffff" />
-                <stop offset="1" stop-color="#7c8cff" />
-              </linearGradient>
-            </defs>
             <path d="M16 0 32 28H24.5L16 12.6 9.6 24 20 24 22.2 28H0L16 0Z" />
           </svg>
-          ANDROMEDA
+          Andromeda
         </a>
       </header>
 

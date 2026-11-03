@@ -1,65 +1,7 @@
 // Sign-up. The page shell, fields and buttons come from login.component.scss.
 
-:host {
-  // Shared components inside these steps read the app's tokens, so map them to the dark palette.
-  --surface: #0d132c;
-  --surface-2: #121938;
-  --bg: #060a1c;
-  --border: var(--auth-border);
-  --border-strong: var(--auth-border-strong);
-  --text-primary: var(--auth-text);
-  --text-secondary: var(--auth-text-2);
-  --text-muted: var(--auth-text-2);
-  --primary: var(--auth-link);
-}
-
 .register-main {
-  grid-template-columns: minmax(0, 1fr) 480px;
-}
-
-.steps {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin: 36px 0 0;
-  padding: 0;
-  list-style: none;
-
-  li {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 14px;
-    color: var(--auth-text-2);
-
-    &.current { font-weight: 600; color: var(--auth-text); }
-  }
-
-  .step-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    width: 28px;
-    height: 28px;
-    font-size: 13px;
-    font-weight: 600;
-    border: 1px solid var(--auth-border-strong);
-    border-radius: 50%;
-
-    mat-icon { width: 16px; height: 16px; font-size: 16px; }
-  }
-
-  .current .step-number {
-    color: #fff;
-    background: var(--auth-accent);
-    border-color: var(--auth-accent);
-  }
-
-  .done .step-number {
-    color: var(--auth-link);
-    border-color: var(--auth-link);
-  }
+  grid-template-columns: minmax(0, 440px);
 }
 
 .progress {
@@ -191,8 +133,8 @@
   overflow: hidden;
   color: var(--auth-text-2);
   cursor: pointer;
-  background: #121938;
-  border: 3px solid #0d132c;
+  background: var(--surface-2);
+  border: 3px solid var(--surface);
   border-radius: 50%;
   outline: 1px solid var(--auth-border-strong);
 
@@ -275,13 +217,7 @@
   &:disabled { color: var(--auth-text-2); cursor: default; }
 }
 
-@media (max-width: 960px) {
-  .register-main { grid-template-columns: minmax(0, 480px); }
-  .steps { display: none; }
-}
-
 @media (max-width: 600px) {
-  .hero { display: none; }
   .field label.terms a { display: inline; min-height: 0; }
 }
 

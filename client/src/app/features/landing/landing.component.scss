@@ -1,66 +1,37 @@
-// Builds on the sign-in page's palette, starfield and brand (login.component.scss).
-:host {
-  --focus-ring-color: #a9b4ff;
-}
+// Public landing page, in the same plain style as sign-in.
 
-.first-screen {
-  position: relative;
+.landing {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  overflow: hidden;
-
-  // Fades the planet out so it doesn't end in a hard line above the next section.
-  &::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 160px;
-    background: linear-gradient(transparent, var(--auth-bg));
-    pointer-events: none;
-  }
+  overflow: visible;
 }
 
-// Larger than the sign-in planet and lit from the upper left.
-.planet {
-  top: 50%;
-  right: -26vw;
-  width: 66vw;
-  height: 66vw;
-  max-width: 1040px;
-  max-height: 1040px;
-  transform: translateY(-46%);
-  background:
-    radial-gradient(circle at 68% 62%, #030616 0%, #050b24 50%, #0c2358 76%, #1d4fb0 93%, #5d8fee 100%);
-  box-shadow:
-    -6px -8px 40px rgba(96, 148, 255, .5),
-    -24px -32px 130px rgba(62, 104, 235, .34);
-}
-
-.landing-header,
-.landing-hero {
-  position: relative;
-  width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
-  box-sizing: border-box;
+.first-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 86vh;
 }
 
 .landing-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 24px 56px;
+  gap: 16px;
+  width: 100%;
+  max-width: 975px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  box-sizing: border-box;
 }
 
-.landing-nav {
+.landing-nav,
+.hero-actions {
   display: flex;
-  flex: none;
-  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .cta {
@@ -72,125 +43,97 @@
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  white-space: nowrap;
-  border-radius: var(--auth-radius);
   cursor: pointer;
-  transition: background var(--motion-fast), border-color var(--motion-fast);
+  border-radius: var(--auth-radius);
 
   &:hover { text-decoration: none; }
 }
 
 .cta-solid {
-  color: #fff;
+  color: var(--on-primary);
   background: var(--auth-accent);
-  border: 1px solid var(--auth-accent);
+  border: 0;
 
-  &:hover {
-    color: #fff;
-    background: var(--auth-accent-hover);
-    border-color: var(--auth-accent-hover);
-  }
+  &:hover { color: var(--on-primary); background: var(--auth-accent-hover); }
 }
 
 .cta-outline {
   color: var(--auth-text);
-  background: var(--auth-bg);
-  border: 1px solid var(--auth-border-strong);
+  background: var(--surface-2);
+  border: 0;
 
-  &:hover {
-    color: var(--auth-text);
-    border-color: var(--auth-link);
-  }
+  &:hover { color: var(--auth-text); background: var(--border); }
 }
 
 .landing-hero {
-  z-index: 1;
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 24px 56px 96px;
+  padding: 32px 20px 64px;
+  text-align: center;
 
   h1 {
-    margin: 0 0 20px;
-    font-size: clamp(36px, 3.9vw, 56px);
+    margin: 0 0 16px;
+    font-family: inherit;
+    font-size: 56px;
     font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -.02em;
+    line-height: 1.08;
+    letter-spacing: -.03em;
     color: var(--auth-text);
   }
 
   p {
-    max-width: 480px;
-    margin: 0 0 32px;
-    font-size: 16px;
-    line-height: 1.6;
+    max-width: 520px;
+    margin: 0 0 28px;
+    font-size: 17px;
+    line-height: 1.5;
     color: var(--auth-text-2);
   }
-}
 
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-
-  .cta {
-    min-height: 44px;
-    padding: 0 24px;
-  }
+  .hero-actions { justify-content: center; }
 }
 
 .landing-features {
-  position: relative;
-  width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 72px 56px;
-  box-sizing: border-box;
+  padding: 56px 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--auth-border);
 
   &:focus { outline: none; }
 
   h2 {
-    margin: 0 0 28px;
+    margin: 0 0 32px;
+    font-family: inherit;
     font-size: 24px;
     font-weight: 600;
-    line-height: 1.3;
-    letter-spacing: -.01em;
+    text-align: center;
     color: var(--auth-text);
   }
 
   ul {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-    margin: 0;
+    gap: 32px;
+    max-width: 935px;
+    margin: 0 auto;
     padding: 0;
     list-style: none;
   }
 
-  li {
-    padding: 20px;
-    background: var(--auth-card);
-    border: 1px solid var(--auth-border);
-    border-radius: 14px;
-  }
-
   mat-icon {
-    display: block;
-    width: 22px;
-    height: 22px;
-    margin-bottom: 12px;
-    font-size: 22px;
-    color: var(--auth-link);
+    width: 28px;
+    height: 28px;
+    margin-bottom: 8px;
+    font-size: 28px;
+    color: var(--auth-text);
   }
 
   h3 {
     margin: 0 0 4px;
+    font-family: inherit;
     font-size: 15px;
     font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: 0;
     color: var(--auth-text);
   }
 
@@ -202,71 +145,27 @@
   }
 }
 
-.features-cta { margin-top: 28px; }
-
-.landing-footer {
-  width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
-  box-sizing: border-box;
+.features-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
 }
 
-// Too narrow to sit beside the text: the planet rises from the bottom of the first screen instead.
-@media (max-width: 960px) {
-  .planet {
-    top: auto;
-    right: -240px;
-    bottom: -440px;
-    width: 720px;
-    height: 720px;
-    transform: none;
-  }
+.landing-footer {
+  justify-content: center;
+  padding-top: 20px;
+}
 
-  .landing-hero {
-    justify-content: flex-start;
-    padding-top: 8vh;
-    padding-bottom: 300px;
-  }
-
-  .landing-features ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 720px) {
+  .landing-hero h1 { font-size: 38px; }
+  .landing-features ul { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 }
 
 @media (max-width: 600px) {
-  .landing-header { gap: 8px; padding: 16px; }
-  .brand { gap: 8px; font-size: 14px; letter-spacing: .04em; }
-  .landing-nav { gap: 6px; }
+  .cta { min-height: 44px; }
+}
 
-  .cta { min-height: 44px; padding: 0 12px; font-size: 13px; }
-
-  .hero-actions {
-    align-self: stretch;
-
-    .cta { flex: 1 1 0; padding: 0 16px; font-size: 14px; }
-  }
-
-  .landing-hero {
-    padding: 32px 16px 220px;
-
-    h1 { font-size: 36px; }
-    p { font-size: 15px; }
-  }
-
-  .planet {
-    right: -220px;
-    bottom: -340px;
-    width: 560px;
-    height: 560px;
-    box-shadow:
-      -4px -6px 28px rgba(96, 148, 255, .5),
-      -12px -18px 72px rgba(62, 104, 235, .3);
-  }
-
-  .landing-features {
-    padding: 48px 16px;
-
-    h2 { font-size: 20px; }
-    ul { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  }
-
-  .features-cta .cta { width: 100%; }
+@media (max-width: 420px) {
+  .landing-features ul { grid-template-columns: minmax(0, 1fr); }
+  .landing-header .cta { padding: 0 12px; }
 }

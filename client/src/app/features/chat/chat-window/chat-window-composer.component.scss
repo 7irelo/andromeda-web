@@ -133,7 +133,7 @@
   height: 44px;
   padding: 0 var(--space-1) 0 var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 22px;
   background: var(--surface-2);
 
   &:has(.composer-input:focus) {

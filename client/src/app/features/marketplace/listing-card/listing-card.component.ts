@@ -45,45 +45,39 @@ export function primaryImage(listing: Listing): string {
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
     :host { display: block; min-width: 0; }
-    .listing-card {
-      position: relative; height: 100%; overflow: hidden; box-sizing: border-box;
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-      transition: border-color var(--motion-fast);
-    }
-    .listing-card:hover { border-color: var(--border-strong); }
+    .listing-card { position: relative; height: 100%; }
     .card-link { display: block; height: 100%; color: inherit; text-decoration: none; }
     .card-link:hover { color: inherit; text-decoration: none; }
     .card-link:focus-visible { outline-offset: -2px; border-radius: var(--radius-lg); }
-    .media { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+    .media { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--surface-2); }
     .media img { display: block; width: 100%; height: 100%; object-fit: cover; }
     .status {
       position: absolute; top: var(--space-2); left: var(--space-2); padding: 2px 8px;
       font-size: var(--font-size-xs); font-weight: 600; color: var(--text-primary);
       background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
     }
-    .info { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--space-3); }
+    .info { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 8px 2px 0; }
     .title {
-      overflow: hidden; font-size: var(--font-size-base); font-weight: 600; color: var(--text-primary);
+      order: 1; overflow: hidden; font-size: var(--font-size-base); font-weight: 400; color: var(--text-primary);
       text-overflow: ellipsis; white-space: nowrap;
     }
-    .price-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+    .price-row { order: 0; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
     .price { font-size: var(--font-size-base); font-weight: 600; color: var(--text-primary); white-space: nowrap; }
     .meta { font-size: var(--font-size-xs); color: var(--text-muted); white-space: nowrap; }
-    .line { overflow: hidden; text-overflow: ellipsis; }
+    .line { order: 2; overflow: hidden; text-overflow: ellipsis; }
     .save {
       position: absolute; top: 0; right: 0; display: flex; align-items: center; justify-content: center;
       width: var(--touch-target); height: var(--touch-target); padding: 0; cursor: pointer; background: none; border: 0;
     }
     .save-icon {
       display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
-      color: var(--text-primary); background: var(--surface); border: 1px solid var(--border); border-radius: 50%;
+      color: #fff; background: rgba(0, 0, 0, .45); border-radius: 50%;  // over a photo, in both themes
     }
     .save-icon mat-icon { width: 18px; height: 18px; font-size: 18px; }
-    .save:hover .save-icon { background: var(--surface-2); }
-    .save.saved .save-icon { color: var(--primary); }
+    .save:hover .save-icon { background: rgba(0, 0, 0, .65); }
+    .save.saved .save-icon { color: var(--like); }
     @media (max-width: 600px) {
-      .media { aspect-ratio: 4 / 3; }
-      .info { padding: 10px; }
+      .info { padding: 6px 8px 0; }
       .title, .price { font-size: var(--font-size-sm); }
     }
   `]

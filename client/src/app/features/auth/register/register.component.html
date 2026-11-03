@@ -1,40 +1,15 @@
 <div class="auth-page">
-  <div class="stars" aria-hidden="true"></div>
-  <div class="planet" aria-hidden="true"></div>
 
   <header class="auth-header">
     <a class="brand" routerLink="/" aria-label="Andromeda home" i18n-aria-label="@@nav.home">
       <svg class="brand-mark" viewBox="0 0 32 28" width="30" height="26" aria-hidden="true">
-        <defs>
-          <linearGradient id="brand-gradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#ffffff" />
-            <stop offset="1" stop-color="#7c8cff" />
-          </linearGradient>
-        </defs>
         <path d="M16 0 32 28H24.5L16 12.6 9.6 24 20 24 22.2 28H0L16 0Z" />
       </svg>
-      <span aria-hidden="true">ANDROMEDA</span>
+      <span aria-hidden="true">Andromeda</span>
     </a>
   </header>
 
   <div class="auth-main register-main">
-    <section class="hero">
-      <p class="hero-title" i18n="@@register.heroTitle">Join Andromeda.</p>
-      <p class="hero-text" i18n="@@register.heroText">Set up your account in a few steps. Everything after the first step is optional.</p>
-
-      <ol class="steps">
-        @for (step of steps; track step; let i = $index) {
-          <li [class.current]="currentStep === i + 1" [class.done]="currentStep > i + 1"
-              [attr.aria-current]="currentStep === i + 1 ? 'step' : null">
-            <span class="step-number" aria-hidden="true">
-              @if (currentStep > i + 1) { <mat-icon>check</mat-icon> } @else { {{ i + 1 }} }
-            </span>
-            {{ step }}
-          </li>
-        }
-      </ol>
-    </section>
-
     <section class="auth-card register-card">
       <div class="progress">
         <p class="progress-label" aria-live="polite" i18n="@@register.stepOf">Step {{ currentStep }} of 4</p>
