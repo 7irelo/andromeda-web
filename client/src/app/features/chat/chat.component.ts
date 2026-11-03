@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { WebSocketService } from '../../core/services/websocket.service';
@@ -15,8 +13,8 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
 
 @Component({
     selector: 'app-chat',
-    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, FormsModule, MatIconModule, MatButtonModule,
-        MatInputModule, EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
+    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, FormsModule, MatIconModule,
+        EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     templateUrl: './chat.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./chat.component.scss']
@@ -26,6 +24,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   loading = false;
   loadError = false;
+  /** Filters the conversation list by name or last message. */
+  roomQuery = '';
 
   // New-message search panel
   showNewChat = false;
@@ -57,6 +57,12 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subs.unsubscribe();
+  }
+
+  get visibleRooms(): ChatRoom[] {
+    const q = this.roomQuery.trim().toLowerCase();
+    if (!q) return this.rooms;
+    return this.rooms.filter((r) => `${this.getRoomName(r)} ${this.preview(r)}`.toLowerCase().includes(q));
   }
 
   preview(room: ChatRoom): string {

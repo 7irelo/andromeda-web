@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { ApiService } from '../../../core/services/api.service';
 import { Message } from '../../../models/chat.model';
 
@@ -12,12 +11,12 @@ import { Message } from '../../../models/chat.model';
  */
 @Component({
   selector: 'app-voice-note',
-  imports: [CommonModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="voice">
-      <button mat-icon-button *ngIf="!src" (click)="load()" [disabled]="loading" aria-label="Play voice message">
-        <mat-icon>{{ loading ? 'hourglass_empty' : 'play_arrow' }}</mat-icon>
+      <button type="button" class="play" *ngIf="!src" (click)="load()" [disabled]="loading" aria-label="Play voice message">
+        <mat-icon aria-hidden="true">{{ loading ? 'hourglass_empty' : 'play_arrow' }}</mat-icon>
       </button>
       <audio *ngIf="src" [src]="src" controls autoplay preload="metadata"></audio>
       <span class="len" *ngIf="!src">{{ length }}</span>
@@ -33,14 +32,23 @@ import { Message } from '../../../models/chat.model';
     </ng-container>
   `,
   styles: [`
-    :host { display: block; min-width: 200px; }
-    .voice { display: flex; align-items: center; gap: 4px; }
-    audio { height: 36px; max-width: 260px; }
-    .len { font-size: 13px; opacity: .8; }
-    .toggle { background: none; border: none; padding: 2px 0; font-size: 12px; color: inherit;
-              text-decoration: underline; cursor: pointer; opacity: .85; }
-    .transcript { font-size: 13px; font-style: italic; opacity: .9; margin-top: 2px; white-space: pre-wrap; }
-    .error { font-size: 12px; }
+    :host { display: block; width: 240px; max-width: 100%; }
+    .voice { display: flex; align-items: center; gap: 8px; }
+    .play { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px;
+            border: 1px solid currentColor; border-radius: var(--radius-sm); background: none; color: inherit; cursor: pointer; }
+    .play:disabled { cursor: default; }
+    .play mat-icon { width: 20px; height: 20px; font-size: 20px; }
+    audio { width: 100%; height: 36px; }
+    .len { font-size: 13px; }
+    .toggle { display: block; margin-top: 4px; padding: 2px 0; border: none; background: none; font: inherit; font-size: 12px;
+              color: inherit; text-decoration: underline; cursor: pointer; }
+    .transcript { margin-top: 2px; font-size: 13px; font-style: italic; white-space: pre-wrap; }
+    .error { margin-top: 4px; font-size: 12px; }
+    @media (max-width: 768px) {
+      :host { width: 200px; }
+      .play { width: var(--touch-target); height: var(--touch-target); }
+      .toggle { min-height: var(--touch-target); }
+    }
   `],
 })
 export class VoiceNoteComponent implements OnDestroy {

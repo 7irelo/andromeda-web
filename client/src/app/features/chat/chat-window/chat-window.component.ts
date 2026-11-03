@@ -8,7 +8,6 @@ import { Router, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { openReportDialog } from '../../../shared/components/report-dialog/report-dialog.component';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription } from 'rxjs';
@@ -28,11 +27,11 @@ const VOICE_EXT: Record<string, string> = { 'audio/webm': 'webm', 'audio/ogg': '
 
 @Component({
     selector: 'app-chat-window',
-    imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule,
+    imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatMenuModule, MatTooltipModule,
         VoiceNoteComponent, GroupSettingsComponent, SmartRepliesComponent],
     templateUrl: './chat-window.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrls: ['./chat-window.component.scss']
+    styleUrls: ['./chat-window.component.scss', './chat-window-composer.component.scss']
 })
 export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @Input() roomId!: string;
@@ -40,6 +39,7 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
   @ViewChild(SmartRepliesComponent) smartReplies?: SmartRepliesComponent;
 
   readonly reactions = REACTIONS;
+  readonly typeMessagePlaceholder = $localize`:@@chat.typeMessagePlaceholder:Type a message...`;
   room: ChatRoom | null = null;
   messages: Message[] = [];
   messageText = '';
@@ -453,6 +453,12 @@ export class ChatWindowComponent implements OnInit, OnChanges, OnDestroy, AfterV
     if (this.room.name) return this.room.name;
     const other = this.room.members.find((m) => m.user.id !== this.currentUser?.id);
     return this.room.room_type === 'direct' ? other?.user.full_name ?? 'Chat' : 'Group Chat';
+  }
+
+  get avatar(): string {
+    if (this.room?.avatar) return this.room.avatar;
+    const other = this.room?.members.find((m) => m.user.id !== this.currentUser?.id);
+    return (this.room?.room_type === 'direct' && other?.user.avatar_url) || 'assets/default-avatar.png';
   }
 
   get presenceLabel(): string {
