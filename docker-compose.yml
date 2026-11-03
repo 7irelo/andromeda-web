@@ -440,7 +440,7 @@ services:
       - redis
 
   postgres_exporter:
-    image: prometheuscommunity/postgres-exporter:v0.16.0
+    image: prometheuscommunity/postgres-exporter:v0.20.1
     container_name: andromeda_postgres_exporter
     restart: unless-stopped
     environment:
