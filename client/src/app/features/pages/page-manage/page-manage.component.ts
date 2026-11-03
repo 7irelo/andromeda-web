@@ -33,7 +33,8 @@ import { User } from '../../../models/user.model';
           <input #avatarInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden (change)="onImage($event, 'avatar')" />
         </div>
         <div class="image-pick">
-          <img class="cover-preview" [src]="coverPreview || page.cover_photo || 'assets/default-cover.png'" alt="Cover preview" />
+          <img *ngIf="coverPreview || page.cover_photo as src; else noCover" class="cover-preview" [src]="src" alt="Cover preview" />
+          <ng-template #noCover><div class="cover-preview cover-empty"></div></ng-template>
           <button mat-stroked-button type="button" (click)="coverInput.click()">Change cover</button>
           <input #coverInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden (change)="onImage($event, 'cover_photo')" />
         </div>
@@ -86,7 +87,7 @@ import { User } from '../../../models/user.model';
         <img [src]="m.user.avatar_url || 'assets/default-avatar.png'" class="avatar sm" [alt]="m.user.username" />
         <span class="team-name text-sm font-semibold">{{ m.user.full_name }}</span>
         <ng-container *ngIf="isAdmin && m.user.id !== page.created_by?.id; else roleLabel">
-          <mat-select class="role-select" [value]="m.role" (selectionChange)="setRole(m.user, $event.value)">
+          <mat-select class="role-select" aria-label="Role" i18n-aria-label="@@pages.teamRole" [value]="m.role" (selectionChange)="setRole(m.user, $event.value)">
             <mat-option *ngFor="let r of roles" [value]="r">{{ r | titlecase }}</mat-option>
           </mat-select>
         </ng-container>
@@ -120,31 +121,36 @@ import { User } from '../../../models/user.model';
     </div>
 
     <div class="card section" *ngIf="isAdmin">
-      <h3>Delete page</h3>
+      <h3 class="danger-title">Delete page</h3>
       <p class="text-secondary text-sm">This removes the page for everyone and can't be undone.</p>
       <div class="row-actions">
-        <button mat-flat-button color="warn" (click)="deletePage()">Delete page</button>
+        <button mat-stroked-button class="btn-danger" (click)="deletePage()">Delete page</button>
       </div>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../../shared/styles/ui-controls.scss', '../../../shared/styles/ui-cards.scss'],
     styles: [`
-    :host { display: flex; flex-direction: column; gap: 16px; }
-    .section { padding: 16px 20px; }
-    .section h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
-    .w-full { width: 100%; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
-    .images { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
-    .image-pick { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-    .avatar-preview { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; }
-    .cover-preview { width: 200px; height: 72px; border-radius: 10px; object-fit: cover; }
-    .row-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
-    .team-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-    .team-name { flex: 1; min-width: 0; }
-    .role-select { width: 120px; }
-    .add-member { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-top: 12px; }
-    .grow { flex: 1; min-width: 180px; }
+    :host { display: flex; flex-direction: column; gap: var(--space-4); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; gap: 0; } }
+    .images { display: flex; flex-wrap: wrap; gap: var(--space-6); margin-bottom: var(--space-4); }
+    .image-pick { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+    .avatar-preview { width: 72px; height: 72px; object-fit: cover; border-radius: var(--radius-lg); }
+    .cover-preview { width: 200px; max-width: 100%; height: 72px; object-fit: cover; border-radius: var(--radius-sm); }
+    .cover-empty { background: var(--primary-light); }
+    .row-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+    .team-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); min-height: var(--touch-target); padding: var(--space-1) 0; }
+    .team-name { flex: 1 1 120px; min-width: 0; overflow-wrap: anywhere; }
+    .role-select {
+      display: flex; align-items: center; width: 120px; min-height: 36px; padding: 0 10px;
+      border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 13px;
+    }
+    @media (max-width: 600px) { .role-select { min-height: var(--touch-target); } }
+    .add-member { display: flex; align-items: flex-start; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+    .add-member button { margin-top: var(--space-1); }
+    .grow { flex: 1 1 180px; min-width: 0; }
+    .danger-title { color: var(--danger-text); }
   `]
 })
 export class PageManageComponent implements OnInit {

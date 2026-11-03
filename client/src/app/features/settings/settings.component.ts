@@ -29,15 +29,28 @@ import { TokenSettingsComponent } from './token-settings.component';
         SecuritySettingsComponent, NotificationSettingsComponent, DataSettingsComponent, TokenSettingsComponent,
     ],
     template: `
-    <div class="settings-page">
-      <div class="page-header-gradient">
-        <h1><mat-icon aria-hidden="true">settings</mat-icon> <span i18n="@@nav.settings">Settings</span></h1>
-        <p i18n="@@settings.subtitle">Manage your account preferences</p>
+    <div class="settings-page ui-controls">
+      <div class="page-head">
+        <div>
+          <h1 i18n="@@nav.settings">Settings</h1>
+          <p i18n="@@settings.subtitle">Manage your account preferences</p>
+        </div>
       </div>
 
+      <div class="settings-layout">
+      <nav class="settings-nav" aria-label="Settings sections" i18n-aria-label="@@settings.sectionsLabel">
+        <button *ngFor="let item of sections" type="button" class="nav-link" [class.active]="activeSection === item.id"
+                [attr.aria-current]="activeSection === item.id ? 'true' : null" (click)="activeSection = item.id">
+          <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </button>
+      </nav>
+
+      <div class="settings-panels">
+
       <!-- Profile Section -->
-      <section class="settings-section card">
-        <h2><mat-icon aria-hidden="true">person</mat-icon> <span i18n="@@settings.editProfile">Edit Profile</span></h2>
+      <section class="settings-section card" [hidden]="activeSection !== 'profile'">
+        <h2 i18n="@@settings.editProfile">Edit Profile</h2>
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="settings-form">
           <div class="form-row">
             <mat-form-field appearance="outline">
@@ -69,8 +82,8 @@ import { TokenSettingsComponent } from './token-settings.component';
       </section>
 
       <!-- Privacy Section -->
-      <section class="settings-section card">
-        <h2><mat-icon aria-hidden="true">shield</mat-icon> <span i18n="@@settings.privacy">Privacy Settings</span></h2>
+      <section class="settings-section card" [hidden]="activeSection !== 'privacy'">
+        <h2 i18n="@@settings.privacy">Privacy Settings</h2>
         <form [formGroup]="privacyForm" (ngSubmit)="savePrivacy()" class="settings-form">
           <mat-form-field appearance="outline" class="w-full">
             <mat-label i18n="@@settings.profileVisibility">Profile Visibility</mat-label>
@@ -122,7 +135,7 @@ import { TokenSettingsComponent } from './token-settings.component';
               <div class="font-semibold" id="online-label" i18n="@@settings.onlineStatus">Show Online Status</div>
               <div class="text-secondary text-sm" id="online-hint" i18n="@@settings.onlineStatusHint">Let others see when you're active</div>
             </div>
-            <mat-slide-toggle formControlName="show_online_status" aria-labelledby="online-label" aria-describedby="online-hint"></mat-slide-toggle>
+            <mat-slide-toggle color="primary" formControlName="show_online_status" aria-labelledby="online-label" aria-describedby="online-hint"></mat-slide-toggle>
           </div>
 
           <div class="setting-item">
@@ -130,7 +143,7 @@ import { TokenSettingsComponent } from './token-settings.component';
               <div class="font-semibold" id="search-label" i18n="@@settings.searchable">Appear in Search Results</div>
               <div class="text-secondary text-sm" id="search-hint" i18n="@@settings.searchableHint">Allow others to find you via search</div>
             </div>
-            <mat-slide-toggle formControlName="searchable" aria-labelledby="search-label" aria-describedby="search-hint"></mat-slide-toggle>
+            <mat-slide-toggle color="primary" formControlName="searchable" aria-labelledby="search-label" aria-describedby="search-hint"></mat-slide-toggle>
           </div>
 
           <button mat-flat-button color="primary" type="submit" [disabled]="savingPrivacy">
@@ -141,8 +154,8 @@ import { TokenSettingsComponent } from './token-settings.component';
       </section>
 
       <!-- Appearance -->
-      <section class="settings-section card">
-        <h2><mat-icon aria-hidden="true">palette</mat-icon> <span i18n="@@settings.appearance">Appearance</span></h2>
+      <section class="settings-section card" [hidden]="activeSection !== 'appearance'">
+        <h2 i18n="@@settings.appearance">Appearance</h2>
         <div class="setting-item">
           <div>
             <div class="font-semibold" id="theme-label" i18n="@@settings.theme">Theme</div>
@@ -158,8 +171,8 @@ import { TokenSettingsComponent } from './token-settings.component';
       </section>
 
       <!-- Password -->
-      <section class="settings-section card">
-        <h2><mat-icon aria-hidden="true">lock</mat-icon> <span i18n="@@settings.changePassword">Change Password</span></h2>
+      <section class="settings-section card" [hidden]="activeSection !== 'password'">
+        <h2 i18n="@@settings.changePassword">Change Password</h2>
         <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="settings-form">
           <mat-form-field appearance="outline" class="w-full">
             <mat-label i18n="@@settings.currentPassword">Current Password</mat-label>
@@ -173,7 +186,7 @@ import { TokenSettingsComponent } from './token-settings.component';
             @if (changingPassword) { <span i18n="@@settings.updating">Updating...</span> } @else { <span i18n="@@reset.update">Update password</span> }
           </button>
         </form>
-        <div class="setting-item" style="margin-top:16px">
+        <div class="setting-item separated">
           <div>
             <div class="font-semibold" i18n="@@settings.signOutEverywhere">Sign out everywhere</div>
             <div class="text-secondary text-sm" i18n="@@settings.signOutEverywhereHint">End every session on every device, including this one</div>
@@ -182,66 +195,107 @@ import { TokenSettingsComponent } from './token-settings.component';
         </div>
       </section>
 
-      <app-notification-settings></app-notification-settings>
+      <div [hidden]="activeSection !== 'notifications'"><app-notification-settings></app-notification-settings></div>
 
-      <app-security-settings></app-security-settings>
+      <div [hidden]="activeSection !== 'security'"><app-security-settings></app-security-settings></div>
 
-      <app-data-settings></app-data-settings>
+      <div [hidden]="activeSection !== 'data'"><app-data-settings></app-data-settings></div>
 
-      <app-token-settings></app-token-settings>
+      <div [hidden]="activeSection !== 'tokens'"><app-token-settings></app-token-settings></div>
 
       <!-- Danger Zone -->
-      <section class="settings-section card danger-zone">
-        <h2><mat-icon aria-hidden="true">warning</mat-icon> <span i18n="@@settings.dangerZone">Danger Zone</span></h2>
+      <section class="settings-section card danger-zone" [hidden]="activeSection !== 'danger'">
+        <h2 i18n="@@settings.dangerZone">Danger Zone</h2>
         <div class="setting-item">
           <div>
             <div class="font-semibold" i18n="@@settings.deleteAccount">Delete Account</div>
             <div class="text-secondary text-sm" i18n="@@settings.deleteHint">You're signed out now and everything is permanently deleted after
               14 days. Sign in before then to cancel.</div>
           </div>
-          <button mat-stroked-button color="warn" *ngIf="!showDelete" (click)="showDelete = true" i18n="@@settings.deleteAccount">Delete Account</button>
+          <button mat-stroked-button class="btn-danger" *ngIf="!showDelete" (click)="showDelete = true" i18n="@@settings.deleteAccount">Delete Account</button>
         </div>
-        <div *ngIf="showDelete" class="settings-form" style="margin-top:12px">
+        <div *ngIf="showDelete" class="settings-form separated">
           <mat-form-field appearance="outline" class="w-full">
             <mat-label i18n="@@settings.confirmWithPassword">Enter your password to confirm</mat-label>
             <input matInput type="password" autocomplete="current-password" [(ngModel)]="deletePassword" />
           </mat-form-field>
-          <div style="display:flex;gap:8px">
+          <div class="confirm-actions">
             <button mat-stroked-button (click)="showDelete = false; deletePassword = ''" i18n="@@common.cancel">Cancel</button>
-            <button mat-flat-button color="warn" [disabled]="!deletePassword || deleting" (click)="confirmDelete()">
+            <button mat-stroked-button class="btn-danger" [disabled]="!deletePassword || deleting" (click)="confirmDelete()">
               @if (deleting) { <span i18n="@@settings.deleting">Deleting...</span> } @else { <span i18n="@@settings.deleteForever">Permanently delete my account</span> }
             </button>
           </div>
         </div>
       </section>
+      </div>
+      </div>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../shared/styles/ui-controls.scss', './settings-section.scss'],
     styles: [`
-    .settings-page { max-width: 700px; margin: 0 auto; padding: 16px; }
-    .page-header-gradient {
-      background: var(--gradient-primary); color: #fff; padding: 28px 32px;
-      border-radius: var(--border-radius); margin-bottom: 20px;
+    .settings-page { max-width: 1000px; margin: 0 auto; padding: var(--space-6); }
+    .settings-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: start; gap: var(--space-6); }
+    .settings-nav {
+      position: sticky; top: calc(var(--header-height) + var(--space-4));
+      display: flex; flex-direction: column; gap: 2px;
     }
-    .page-header-gradient h1 { font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-    .page-header-gradient p { opacity: .85; margin-top: 4px; font-size: 14px; }
-    .settings-section { padding: 24px; margin-bottom: 16px; }
-    .settings-section h2 {
-      font-size: 18px; font-weight: 700; margin-bottom: 16px;
-      display: flex; align-items: center; gap: 8px;
+    .nav-link {
+      display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 0 var(--space-3);
+      background: none; border: 0; border-radius: var(--radius-sm); color: var(--text-secondary);
+      font: inherit; font-size: 13px; font-weight: 500; text-align: left; white-space: nowrap; cursor: pointer;
     }
-    .settings-form { display: flex; flex-direction: column; gap: 8px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+    .nav-link:hover { background: var(--surface-2); color: var(--text-primary); }
+    .nav-link.active { background: var(--primary-light); color: var(--primary); }
+    .nav-link mat-icon { flex: none; width: 18px; height: 18px; font-size: 18px; }
+    .settings-form { display: flex; flex-direction: column; }
+    .settings-form > button { align-self: flex-start; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
     .setting-item {
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-      padding: 12px 0; flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+      gap: var(--space-2) var(--space-4); padding: var(--space-3) 0;
     }
-    .danger-zone { border-color: var(--danger); }
-    .danger-zone h2 { color: var(--danger); }
+    .setting-item > div:first-child { flex: 1 1 200px; min-width: 0; }
+    .separated { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+    .confirm-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .danger-zone h2 { color: var(--danger-text); }
+    mat-button-toggle-group {
+      --mat-button-toggle-shape: var(--radius-sm);
+      --mat-button-toggle-height: 36px;
+      --mat-button-toggle-label-text-size: 13px;
+      --mat-button-toggle-selected-state-background-color: var(--primary-light);
+      --mat-button-toggle-selected-state-text-color: var(--primary);
+      --mat-button-toggle-divider-color: var(--border-strong);
+    }
+    @media (max-width: 760px) {
+      .settings-layout { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+      .settings-nav {
+        position: static; flex-direction: row; flex-wrap: wrap; gap: var(--space-1);
+      }
+      .nav-link { width: auto; flex: none; min-height: var(--touch-target); }
+      .nav-link mat-icon { display: none; }
+    }
+    @media (max-width: 600px) {
+      .settings-page { padding: var(--space-4); }
+      .form-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
+      mat-button-toggle-group { --mat-button-toggle-height: var(--touch-target); }
+    }
   `]
 })
 export class SettingsComponent implements OnInit {
+  readonly sections = [
+    { id: 'profile', icon: 'person', label: $localize`:@@settings.nav.profile:Profile` },
+    { id: 'privacy', icon: 'shield', label: $localize`:@@settings.nav.privacy:Privacy` },
+    { id: 'appearance', icon: 'palette', label: $localize`:@@settings.appearance:Appearance` },
+    { id: 'password', icon: 'lock', label: $localize`:@@settings.nav.password:Password` },
+    { id: 'notifications', icon: 'notifications', label: $localize`:@@settings.nav.notifications:Notifications` },
+    { id: 'security', icon: 'verified_user', label: $localize`:@@settings.nav.security:Security` },
+    { id: 'data', icon: 'folder_zip', label: $localize`:@@settings.nav.data:Your data` },
+    { id: 'tokens', icon: 'key', label: $localize`:@@settings.nav.tokens:Access tokens` },
+    { id: 'danger', icon: 'warning', label: $localize`:@@settings.dangerZone:Danger Zone` },
+  ];
+  activeSection = 'profile';
+
   currentUser: User | null = null;
   changingPassword = false;
   showDelete = false;

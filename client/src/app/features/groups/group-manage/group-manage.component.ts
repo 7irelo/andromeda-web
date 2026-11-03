@@ -41,7 +41,8 @@ import { Group, GroupBan, GroupInvite, GroupRule } from '../../../models/group.m
         </mat-select>
       </mat-form-field>
       <div class="cover-row">
-        <img [src]="coverPreview || group.cover_photo || 'assets/default-cover.png'" alt="Cover preview" />
+        <img *ngIf="coverPreview || group.cover_photo as src; else noCover" [src]="src" alt="Cover preview" />
+        <ng-template #noCover><div class="cover-empty"></div></ng-template>
         <button mat-stroked-button type="button" (click)="coverInput.click()"><mat-icon>image</mat-icon> Change cover</button>
         <input #coverInput type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden (change)="onCover($event)" />
       </div>
@@ -117,14 +118,14 @@ import { Group, GroupBan, GroupInvite, GroupRule } from '../../../models/group.m
           </span>
           <span class="text-xs text-secondary">Expires {{ inv.expires_at | date: 'medium' }} · by {{ inv.created_by?.full_name || 'unknown' }}</span>
         </div>
-        <button mat-stroked-button color="warn" *ngIf="inv.is_usable" (click)="revoke(inv)">Revoke</button>
+        <button mat-stroked-button class="btn-danger" *ngIf="inv.is_usable" (click)="revoke(inv)">Revoke</button>
       </div>
     </div>
 
     <!-- Bans (admins) -->
     <div class="card section" *ngIf="isAdmin">
       <h3>Banned users</h3>
-      <p class="text-secondary" *ngIf="bans.length === 0">Nobody is banned.</p>
+      <p *ngIf="bans.length === 0">Nobody is banned.</p>
       <div class="invite-row" *ngFor="let b of bans">
         <div class="invite-info">
           <span class="text-sm font-semibold">{{ b.user.full_name }}</span>
@@ -134,35 +135,41 @@ import { Group, GroupBan, GroupInvite, GroupRule } from '../../../models/group.m
       </div>
     </div>
 
-    <div class="card section danger" *ngIf="isAdmin">
-      <h3>Delete group</h3>
+    <div class="card section" *ngIf="isAdmin">
+      <h3 class="danger-title">Delete group</h3>
       <p class="text-secondary text-sm">This removes the group for everyone and can't be undone.</p>
       <div class="row-actions">
-        <button mat-flat-button color="warn" (click)="deleteGroup()">Delete group</button>
+        <button mat-stroked-button class="btn-danger" (click)="deleteGroup()">Delete group</button>
       </div>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../../shared/styles/ui-controls.scss', '../../../shared/styles/ui-cards.scss'],
     styles: [`
-    :host { display: flex; flex-direction: column; gap: 16px; }
-    .section { padding: 16px 20px; }
-    .section h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
-    .w-full { width: 100%; }
-    .row-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
-    .cover-row { display: flex; align-items: center; gap: 12px; }
-    .cover-row img { width: 160px; height: 60px; object-fit: cover; border-radius: 8px; }
-    .rule-row { display: flex; gap: 8px; align-items: flex-start; }
-    .rule-num { font-weight: 700; padding-top: 16px; min-width: 18px; }
-    .rule-fields { flex: 1; }
+    :host { display: flex; flex-direction: column; gap: var(--space-4); }
+    .row-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+    .cover-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-3); }
+    .cover-row img, .cover-empty { width: 160px; height: 60px; object-fit: cover; border-radius: var(--radius-sm); }
+    .cover-empty { background: var(--primary-light); }
+    .rule-row { display: flex; align-items: flex-start; gap: var(--space-2); }
+    .rule-num { min-width: 18px; padding-top: 10px; font-size: 13px; font-weight: 600; }
+    .rule-fields { flex: 1; min-width: 0; }
     .rule-buttons { display: flex; flex-direction: column; }
-    .invite-form { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-top: 8px; }
-    .new-link { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; }
+    .invite-form { display: flex; align-items: flex-start; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); }
+    .invite-form mat-form-field { flex: 1 1 180px; }
+    .invite-form button { margin-top: var(--space-1); }
+    .new-link { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-2) 0 var(--space-1); }
     .link-input {
-      flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
-      background: var(--surface); color: inherit; font-family: monospace; font-size: 12px;
+      flex: 1 1 160px; min-width: 0; min-height: 36px; padding: var(--space-2) 10px;
+      background: var(--surface); color: inherit; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      font-family: monospace; font-size: 12px;
     }
-    .invite-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border); }
-    .invite-info { display: flex; flex-direction: column; }
+    .invite-row {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+      gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--border);
+    }
+    .invite-info { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+    .danger-title { color: var(--danger-text); }
   `]
 })
 export class GroupManageComponent implements OnInit {

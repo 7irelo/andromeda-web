@@ -28,47 +28,65 @@ const MAX_PINS = 3;
         EmptyStateComponent, ErrorStateComponent, SkeletonComponent,
     ],
     template: `
-    <div class="group-detail" *ngIf="group">
-      <div class="group-cover">
-        <img [src]="group.cover_photo || 'assets/default-cover.png'" alt="" />
-        <div class="cover-overlay">
-          <h1>{{ group.name }}</h1>
-          <p>{{ group.members_count | number }} members · {{ group.privacy | titlecase }}</p>
+    <div class="page ui-controls" *ngIf="group">
+      <header class="entity">
+        <div class="entity-cover">
+          <img *ngIf="group.cover_photo" [src]="group.cover_photo" alt="" />
         </div>
-      </div>
-
-      <div class="group-actions">
-        <ng-container *ngIf="!group.is_member">
-          <button mat-stroked-button disabled *ngIf="group.is_banned">
-            <mat-icon>block</mat-icon> You can't join this group
-          </button>
-          <ng-container *ngIf="!group.is_banned && group.privacy !== 'secret'">
-            <button mat-flat-button color="primary" *ngIf="!requested" (click)="startJoin()">
-              <mat-icon>group_add</mat-icon> {{ group.privacy === 'public' ? 'Join Group' : 'Request to Join' }}
-            </button>
-            <button mat-stroked-button disabled *ngIf="requested">
-              <mat-icon>schedule</mat-icon> Request Sent
-            </button>
-          </ng-container>
-        </ng-container>
-        <button mat-stroked-button color="warn" *ngIf="group.is_member" (click)="leave()">
-          <mat-icon>logout</mat-icon> Leave Group
-        </button>
-      </div>
-
-      <!-- Rules shown before joining -->
-      <div class="card rules-prompt" *ngIf="showRulesPrompt">
-        <h3>Before you join: group rules</h3>
-        <ol class="rules-list">
-          <li *ngFor="let r of rules"><strong>{{ r.title }}</strong><p *ngIf="r.description">{{ r.description }}</p></li>
-        </ol>
-        <div class="row-actions">
-          <button mat-stroked-button (click)="showRulesPrompt = false">Cancel</button>
-          <button mat-flat-button color="primary" (click)="join()">I agree, join</button>
+        <div class="entity-body">
+          <div class="entity-main">
+            <div class="entity-head">
+              <div class="entity-title">
+                <h1>{{ group.name }}</h1>
+                <p i18n="@@groups.privacyLine">{{ group.privacy | titlecase }} group</p>
+              </div>
+              <div class="entity-actions">
+                <ng-container *ngIf="!group.is_member">
+                  <button mat-stroked-button disabled *ngIf="group.is_banned">
+                    <mat-icon>block</mat-icon> You can't join this group
+                  </button>
+                  <ng-container *ngIf="!group.is_banned && group.privacy !== 'secret'">
+                    <button mat-flat-button color="primary" *ngIf="!requested" (click)="startJoin()">
+                      <mat-icon>group_add</mat-icon> {{ group.privacy === 'public' ? 'Join Group' : 'Request to Join' }}
+                    </button>
+                    <button mat-stroked-button disabled *ngIf="requested">
+                      <mat-icon>schedule</mat-icon> Request Sent
+                    </button>
+                  </ng-container>
+                </ng-container>
+                <button mat-stroked-button class="btn-danger" *ngIf="group.is_member" (click)="leave()">
+                  <mat-icon>logout</mat-icon> Leave Group
+                </button>
+              </div>
+            </div>
+            <div class="entity-foot">
+              <div class="entity-about">
+                <p *ngIf="group.description">{{ group.description }}</p>
+              </div>
+              <dl class="entity-stats">
+                <div>
+                  <dt>Members</dt>
+                  <dd>{{ group.members_count | number }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <mat-tab-group animationDuration="0ms">
+        <!-- Rules shown before joining -->
+        <div class="entity-notice section" *ngIf="showRulesPrompt">
+          <h3>Before you join: group rules</h3>
+          <ol class="rules-list">
+            <li *ngFor="let r of rules"><strong>{{ r.title }}</strong><p *ngIf="r.description">{{ r.description }}</p></li>
+          </ol>
+          <div class="row-actions">
+            <button mat-stroked-button (click)="showRulesPrompt = false">Cancel</button>
+            <button mat-flat-button color="primary" (click)="join()">I agree, join</button>
+          </div>
+        </div>
+      </header>
+
+      <mat-tab-group class="entity-tabs" mat-stretch-tabs="false" animationDuration="0ms">
         <mat-tab label="Posts">
           <div class="tab-body">
             <!-- Pending join requests (admins and moderators) -->
@@ -84,7 +102,7 @@ const MAX_PINS = 3;
               </div>
             </div>
 
-            <div class="group-posts" *ngIf="canSeeContent">
+            <div class="feed-col" *ngIf="canSeeContent">
               <app-create-post *ngIf="group.is_member" [currentUser]="currentUser" [groupId]="group.id"
                 (postCreated)="posts.unshift($event)"></app-create-post>
 
@@ -110,7 +128,7 @@ const MAX_PINS = 3;
                                icon="forum" title="No posts yet" [compact]="true"
                                [message]="group.is_member ? 'Start the conversation with the first post.' : ''"></app-empty-state>
             </div>
-            <p class="text-secondary private-note" *ngIf="!canSeeContent">
+            <p class="muted-note private-note" *ngIf="!canSeeContent">
               <mat-icon>lock</mat-icon> Only members can see posts and members of this group.
             </p>
           </div>
@@ -120,24 +138,24 @@ const MAX_PINS = 3;
           <div class="tab-body">
             <div class="card section">
               <h3>About</h3>
-              <p class="text-secondary">{{ group.description || 'No description yet.' }}</p>
-              <p class="text-secondary text-sm privacy-line">
-                <mat-icon>{{ privacyIcon }}</mat-icon> {{ privacyText }}
-              </p>
+              <p>{{ group.description || 'No description yet.' }}</p>
+              <ul class="info-list">
+                <li><mat-icon>{{ privacyIcon }}</mat-icon> {{ privacyText }}</li>
+              </ul>
             </div>
             <div class="card section">
               <h3>Rules</h3>
               <ol class="rules-list" *ngIf="rules.length > 0">
                 <li *ngFor="let r of rules"><strong>{{ r.title }}</strong><p *ngIf="r.description">{{ r.description }}</p></li>
               </ol>
-              <p class="text-secondary" *ngIf="rules.length === 0">This group has no rules yet.</p>
+              <p *ngIf="rules.length === 0">This group has no rules yet.</p>
             </div>
           </div>
         </mat-tab>
 
         <mat-tab label="Members" *ngIf="canSeeContent">
           <div class="tab-body">
-            <div class="members-grid">
+            <div class="member-grid">
               <div *ngFor="let m of members" class="member-card">
                 <a [routerLink]="'/profile/' + m.user.username" class="member-link">
                   <img [src]="m.user.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="m.user.username" />
@@ -188,55 +206,31 @@ const MAX_PINS = 3;
       </ng-container>
     </ng-template>
 
-    <div class="group-detail" *ngIf="loading">
+    <div class="page" *ngIf="loading">
       <app-skeleton variant="card" [count]="1"></app-skeleton>
       <app-skeleton variant="post" [count]="2"></app-skeleton>
     </div>
-    <div class="group-detail" *ngIf="!loading && loadError">
+    <div class="page" *ngIf="!loading && loadError">
       <app-error-state [title]="loadError === 404 ? 'Group not found' : ''"
                        [message]="loadError === 404 ? 'It may have been deleted, or it is a secret group you are not in.' : ''"
                        (retry)="load()"></app-error-state>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../../shared/styles/ui-controls.scss', '../../../shared/styles/entity.scss', '../../../shared/styles/ui-cards.scss'],
     styles: [`
-    .group-detail { max-width: 800px; margin: 0 auto; padding: 16px; }
-    .group-cover {
-      position: relative; height: 240px; border-radius: 16px; overflow: hidden; margin-bottom: 16px;
-    }
-    .group-cover img { width: 100%; height: 100%; object-fit: cover; }
-    .cover-overlay {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,.7));
-      color: #fff; padding: 24px;
-    }
-    .cover-overlay h1 { font-size: 28px; font-weight: 800; }
-    .cover-overlay p { opacity: .9; margin-top: 4px; }
-    .group-actions { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px; }
-    .tab-body { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; }
-    .section { padding: 16px 20px; }
-    .section h3, .rules-prompt h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-    .rules-prompt { padding: 16px 20px; margin-bottom: 12px; }
-    .rules-list { padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
-    .rules-list p { color: var(--text-secondary); margin-top: 2px; }
-    .row-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
-    .privacy-line { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
-    .members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-    .member-card {
-      display: flex; align-items: center; gap: 4px; padding: 8px 4px 8px 12px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      text-decoration: none; color: inherit;
-    }
-    .member-link { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; text-decoration: none; color: inherit; }
-    .member-info { display: flex; flex-direction: column; min-width: 0; }
-    .request-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .request-row .member-card { flex: 1; }
-    .group-posts { display: flex; flex-direction: column; gap: 16px; }
-    .post-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 32px; }
-    .pin-label { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--primary); }
-    .pin-label mat-icon { font-size: 18px; width: 18px; height: 18px; }
-    .private-note { display: flex; align-items: center; gap: 6px; }
-    .loading-center { display: flex; justify-content: center; padding: 60px; }
+    .rules-list { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding-left: var(--space-5); font-size: 13px; }
+    .rules-list p { margin: 2px 0 0; color: var(--text-secondary); }
+    .row-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+    .member-link { display: flex; align-items: center; gap: var(--space-3); flex: 1; min-width: 0; min-height: var(--touch-target); color: inherit; }
+    .member-link:hover { text-decoration: none; }
+    .member-info { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+    .request-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
+    .request-row .member-card { flex: 1 1 200px; }
+    .post-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
+    .pin-label { display: flex; align-items: center; gap: var(--space-1); font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+    .pin-label mat-icon { width: 16px; height: 16px; font-size: 16px; }
+    .private-note { display: flex; align-items: center; gap: var(--space-2); }
   `]
 })
 export class GroupDetailComponent implements OnInit {

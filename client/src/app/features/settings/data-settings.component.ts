@@ -13,7 +13,7 @@ import { DataExportEntry } from '../../models/moderation.model';
     imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatSnackBarModule],
     template: `
     <section class="settings-section card">
-      <h2><mat-icon>folder_zip</mat-icon> Your data</h2>
+      <h2>Your data</h2>
       <p class="text-secondary">Download everything you have on Andromeda: profile, posts, comments, messages you sent,
         listings, connections, notifications and the files you uploaded. The download is kept for 7 days.</p>
       <div class="row">
@@ -22,20 +22,20 @@ import { DataExportEntry } from '../../models/moderation.model';
         </button>
       </div>
       <div class="row" *ngFor="let e of ready">
-        <mat-icon>description</mat-icon>
+        <mat-icon aria-hidden="true">description</mat-icon>
         <span class="grow">{{ e.created_at | date:'medium' }} · {{ e.size_bytes / 1048576 | number:'1.0-1' }} MB
           <span class="text-secondary"> · until {{ e.expires_at | date:'mediumDate' }}</span></span>
         <button mat-button (click)="download(e)">Download</button>
       </div>
-      <p><a routerLink="/decisions">Moderation decisions about your content</a> ·
+      <p class="legal-links"><a routerLink="/decisions">Moderation decisions about your content</a> ·
         <a routerLink="/privacy">Privacy policy</a> · <a routerLink="/terms">Terms</a></p>
     </section>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./settings-section.scss', '../../shared/styles/ui-controls.scss'],
     styles: [`
-    .settings-section { padding: 24px; margin-bottom: 16px; }
-    .row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
-    .grow { flex: 1; }
+    .row { flex-wrap: wrap; }
+    .legal-links { margin: var(--space-4) 0 0; padding-top: var(--space-4); border-top: 1px solid var(--border); font-size: 13px; }
   `]
 })
 export class DataSettingsComponent implements OnInit, OnDestroy {

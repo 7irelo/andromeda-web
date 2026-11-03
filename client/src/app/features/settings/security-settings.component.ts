@@ -18,10 +18,10 @@ import { DeviceSession, MfaSetup, MfaStatus } from '../../models/user.model';
       MatSlideToggleModule, MatSnackBarModule],
     template: `
     <section class="settings-section card" *ngIf="auth.currentUser as me">
-      <h2><mat-icon>verified_user</mat-icon> Account security</h2>
+      <h2>Account security</h2>
 
       <div class="row" *ngIf="!me.email_verified">
-        <mat-icon class="warn">mark_email_unread</mat-icon>
+        <mat-icon class="warn" aria-hidden="true">mark_email_unread</mat-icon>
         <div class="grow">
           <div class="font-semibold">Confirm your email</div>
           <div class="text-secondary text-sm">We sent a link to {{ me.email }}. Confirming lets you recover your account.</div>
@@ -38,7 +38,7 @@ import { DeviceSession, MfaSetup, MfaStatus } from '../../models/user.model';
               <input matInput type="password" autocomplete="current-password" [(ngModel)]="password" /></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Code</mat-label>
               <input matInput autocomplete="one-time-code" inputmode="numeric" maxlength="12" [(ngModel)]="code" /></mat-form-field>
-            <button mat-stroked-button color="warn" (click)="disable()" [disabled]="!password || !code">Turn off</button>
+            <button mat-stroked-button class="btn-danger" (click)="disable()" [disabled]="!password || !code">Turn off</button>
           </div>
         </ng-container>
 
@@ -73,7 +73,7 @@ import { DeviceSession, MfaSetup, MfaStatus } from '../../models/user.model';
 
       <h3>Where you're signed in</h3>
       <div class="row" *ngFor="let s of sessions">
-        <mat-icon>{{ deviceIcon(s.user_agent) }}</mat-icon>
+        <mat-icon aria-hidden="true">{{ deviceIcon(s.user_agent) }}</mat-icon>
         <div class="grow">
           <div class="font-semibold">{{ deviceName(s.user_agent) }} <span class="current" *ngIf="s.current">This device</span></div>
           <div class="text-secondary text-sm">Last active {{ s.last_seen_at | date:'medium' }}<span *ngIf="s.network"> · {{ s.network }}</span></div>
@@ -82,7 +82,7 @@ import { DeviceSession, MfaSetup, MfaStatus } from '../../models/user.model';
       </div>
 
       <h3>AI features</h3>
-      <mat-slide-toggle [checked]="!me.ai_opt_out" (change)="setAiOptOut(!$event.checked)">
+      <mat-slide-toggle color="primary" [checked]="!me.ai_opt_out" (change)="setAiOptOut(!$event.checked)">
         Use AI features (smart search, Ask Andromeda, summaries)
       </mat-slide-toggle>
       <p class="text-secondary text-sm">When off, your posts, listings and videos aren't indexed for semantic search or
@@ -90,17 +90,23 @@ import { DeviceSession, MfaSetup, MfaStatus } from '../../models/user.model';
     </section>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./settings-section.scss', '../../shared/styles/ui-controls.scss'],
     styles: [`
-    .settings-section { padding: 24px; margin-bottom: 16px; }
-    h3 { font-size: 15px; margin: 20px 0 8px; }
-    .row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-    .grow { flex: 1; }
-    .warn { color: var(--warn, #c62828); }
-    .inline-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .setup { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-    .secret { display: inline-block; padding: 4px 8px; letter-spacing: 2px; word-break: break-all; }
-    .codes ul { columns: 2; padding-left: 20px; }
-    .current { font-size: 12px; margin-left: 8px; opacity: .7; }
+    .warn { color: var(--danger-text) !important; }
+    .row { flex-wrap: wrap; }
+    .row .grow { flex: 1 1 180px; }
+    .inline-form { display: flex; align-items: flex-start; flex-wrap: wrap; gap: var(--space-3); }
+    .inline-form mat-form-field { flex: 1 1 180px; }
+    .inline-form button { margin-top: var(--space-1); }
+    .setup { display: flex; align-items: flex-start; flex-wrap: wrap; gap: var(--space-4); }
+    .setup > div { flex: 1 1 220px; min-width: 0; }
+    .setup img { border-radius: var(--radius-sm); }
+    .secret {
+      display: inline-block; margin-bottom: var(--space-3); padding: var(--space-1) var(--space-2);
+      background: var(--surface-2); border-radius: var(--radius-sm); letter-spacing: 2px; word-break: break-all;
+    }
+    .codes ul { margin: 0 0 var(--space-3); padding-left: var(--space-5); columns: 2; }
+    .current { margin-left: var(--space-2); font-size: 12px; font-weight: 500; color: var(--text-muted); }
   `]
 })
 export class SecuritySettingsComponent implements OnInit {

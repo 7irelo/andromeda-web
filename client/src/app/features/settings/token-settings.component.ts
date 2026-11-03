@@ -19,7 +19,7 @@ import { AccessToken, TokenScope } from '../../models/assistant.model';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
   <section class="settings-section card">
-    <h2><mat-icon>key</mat-icon> Access tokens</h2>
+    <h2>Access tokens</h2>
     <p class="text-secondary">Let an AI app that supports MCP use the assistant's tools as you, at
       <code>/api/mcp/</code>. Tokens can read what you can see. With "Propose", they can also draft posts and
       messages, which wait for your approval in the assistant panel.</p>
@@ -45,8 +45,8 @@ import { AccessToken, TokenScope } from '../../models/assistant.model';
         </mat-select>
       </mat-form-field>
       <div class="scopes">
-        <mat-checkbox [checked]="true" disabled>Read</mat-checkbox>
-        <mat-checkbox [(ngModel)]="propose" name="propose">Propose posts and messages</mat-checkbox>
+        <mat-checkbox color="primary" [checked]="true" disabled>Read</mat-checkbox>
+        <mat-checkbox color="primary" [(ngModel)]="propose" name="propose">Propose posts and messages</mat-checkbox>
       </div>
       <mat-form-field appearance="outline">
         <mat-label>Your password</mat-label>
@@ -58,25 +58,31 @@ import { AccessToken, TokenScope } from '../../models/assistant.model';
     </form>
 
     <div class="token-item" *ngFor="let t of tokens">
-      <mat-icon>vpn_key</mat-icon>
+      <mat-icon aria-hidden="true">vpn_key</mat-icon>
       <div class="grow">
         <div class="font-semibold">{{ t.name }} <code>{{ t.prefix }}…</code></div>
         <div class="text-secondary text-sm">{{ t.scopes.join(' + ') }} · expires {{ t.expires_at | date:'mediumDate' }}
           · {{ t.last_used_at ? 'last used ' + (t.last_used_at | date:'medium') : 'never used' }}</div>
       </div>
-      <button mat-stroked-button color="warn" (click)="revoke(t)">Revoke</button>
+      <button mat-stroked-button class="btn-danger" (click)="revoke(t)">Revoke</button>
     </div>
   </section>
   `,
-  styles: [`
-    .settings-section { padding: 24px; margin-bottom: 16px; }
-    .create { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-    .scopes { display: flex; gap: 12px; flex-wrap: wrap; }
-    .new-token { background: var(--primary-light); padding: 12px; border-radius: var(--border-radius-sm); }
-    .token-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-    .token { word-break: break-all; user-select: all; }
-    .token-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
-    .grow { flex: 1; }
+  styleUrls: ['./settings-section.scss', '../../shared/styles/ui-controls.scss'],
+    styles: [`
+    .create { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--space-3); }
+    .create button { justify-self: start; margin-top: var(--space-1); }
+    .scopes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-2); }
+    @media (max-width: 600px) { .create { grid-template-columns: minmax(0, 1fr); } }
+    .new-token { padding: var(--space-3); background: var(--primary-light); border-radius: var(--radius-sm); }
+    .token-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+    .token { min-width: 0; word-break: break-all; user-select: all; }
+    .token-item {
+      display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3);
+      padding: var(--space-3) 0; border-top: 1px solid var(--border);
+    }
+    .token-item > mat-icon { flex: none; width: 20px; height: 20px; font-size: 20px; color: var(--text-muted); }
+    .token-item .grow { flex: 1 1 200px; }
   `],
 })
 export class TokenSettingsComponent implements OnInit {

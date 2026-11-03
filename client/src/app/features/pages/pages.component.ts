@@ -22,13 +22,13 @@ import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
         EmptyStateComponent, ErrorStateComponent, SkeletonComponent, ModalDialogDirective,
     ],
     template: `
-    <div class="pages-page">
-      <div class="page-header-gradient">
+    <div class="page ui-controls">
+      <div class="page-head">
         <div>
           <h1>Pages</h1>
-          <p style="opacity:.8;margin-top:4px;font-size:14px">Discover and follow community pages</p>
+          <p>Discover and follow community pages</p>
         </div>
-        <button mat-flat-button (click)="openCreateDialog()" style="background:#fff;color:#4f46e5;font-weight:600">
+        <button mat-flat-button color="primary" (click)="openCreateDialog()">
           <mat-icon aria-hidden="true">add</mat-icon> Create Page
         </button>
       </div>
@@ -36,22 +36,20 @@ import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
       <app-skeleton *ngIf="loading" variant="grid" [count]="6"></app-skeleton>
       <app-error-state *ngIf="!loading && loadError" (retry)="loadPages()"></app-error-state>
 
-      <div class="pages-grid" *ngIf="!loading && !loadError">
-        <div class="page-card card" *ngFor="let p of pages">
-          <div class="page-cover">
-            <img [src]="p.cover_photo || 'assets/default-cover.png'" alt="" />
+      <div class="card-grid list-grid" *ngIf="!loading && !loadError">
+        <div class="item-card card" *ngFor="let p of pages">
+          <div class="item-cover">
+            <img *ngIf="p.cover_photo" [src]="p.cover_photo" alt="" />
           </div>
-          <div class="page-body">
+          <div class="item-body">
             <a [routerLink]="'/pages/' + p.id" tabindex="-1" aria-hidden="true"><img [src]="p.avatar || 'assets/default-avatar.png'" class="page-avatar" alt="" width="56" height="56" /></a>
-            <div class="page-info">
-              <a class="font-semibold page-name" [routerLink]="'/pages/' + p.id">
-                {{ p.name }}
-                <mat-icon class="verified" *ngIf="p.is_verified" aria-label="Verified">verified</mat-icon>
-              </a>
-              <div class="text-secondary text-sm">{{ p.category || 'Community' }} · {{ p.followers_count | number }} followers</div>
-              <p class="page-desc text-sm" *ngIf="p.description">{{ p.description }}</p>
-            </div>
-            <div class="page-actions">
+            <a class="item-name page-name" [routerLink]="'/pages/' + p.id">
+              {{ p.name }}
+              <mat-icon class="verified" *ngIf="p.is_verified" aria-label="Verified">verified</mat-icon>
+            </a>
+            <div class="item-meta">{{ p.category || 'Community' }} · {{ p.followers_count | number }} followers</div>
+            <p class="page-desc" *ngIf="p.description">{{ p.description }}</p>
+            <div class="item-action">
               <button
                 mat-flat-button
                 *ngIf="!p.is_following"
@@ -80,7 +78,7 @@ import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
 
     <!-- Create Dialog -->
     <div class="edit-overlay" *ngIf="isCreating" (click)="cancelCreate()"></div>
-    <div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm"
+    <div class="edit-dialog card ui-controls" *ngIf="isCreating" [formGroup]="createForm"
          appModalDialog dialogLabel="Create Page" (dismiss)="cancelCreate()">
       <div class="edit-dialog-header">
         <h2>Create Page</h2>
@@ -110,50 +108,18 @@ import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../shared/styles/ui-controls.scss', '../../shared/styles/ui-cards.scss'],
     styles: [`
-    .pages-page { max-width: 1100px; margin: 0 auto; padding: 16px; }
-    .page-header-gradient {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
-    }
-    .page-header-gradient h1 { font-size: 24px; font-weight: 800; color: #fff; }
-    .pages-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-    .page-card { overflow: hidden; transition: transform .2s, box-shadow .2s; }
-    .page-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .page-cover { height: 100px; overflow: hidden; background: var(--gradient-accent); }
-    .page-cover img { width: 100%; height: 100%; object-fit: cover; }
-    .page-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+    .list-grid { padding-top: 0; }
     .page-avatar {
-      width: 56px; height: 56px; border-radius: 12px; object-fit: cover;
-      border: 3px solid var(--surface); margin-top: -40px; box-shadow: var(--shadow);
+      display: block; width: 56px; height: 56px; margin: -40px 0 var(--space-2); object-fit: cover;
+      background: var(--surface); border: 3px solid var(--surface); border-radius: var(--radius-lg);
     }
-    .page-info { display: flex; flex-direction: column; gap: 2px; }
-    .page-name { display: flex; align-items: center; gap: 4px; color: inherit; text-decoration: none; }
-    .page-name .verified { font-size: 18px; width: 18px; height: 18px; color: var(--primary); }
-    .page-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text-secondary); }
-    .page-actions { margin-top: 4px; }
-    .loading-center { display: flex; justify-content: center; padding: 40px; }
-    .empty-state {
-      display: flex; flex-direction: column; align-items: center; padding: 60px; color: var(--text-secondary); gap: 12px;
+    .page-name { display: flex; align-items: center; gap: var(--space-1); }
+    .page-desc {
+      display: -webkit-box; margin: var(--space-1) 0 0; overflow: hidden; font-size: 13px; color: var(--text-secondary);
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
-    .empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: .4; }
-
-    .edit-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; backdrop-filter: blur(2px); }
-    .edit-dialog {
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      z-index: 101; width: min(480px, 95vw); max-height: 90vh; overflow-y: auto; padding: 0;
-    }
-    .edit-dialog-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; background: var(--surface); z-index: 1;
-    }
-    .edit-dialog-header h2 { font-size: 18px; font-weight: 700; margin: 0; }
-    .edit-dialog-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 8px; }
-    .edit-dialog-actions {
-      display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px;
-      border-top: 1px solid var(--border); position: sticky; bottom: 0; background: var(--surface);
-    }
-    .w-full { width: 100%; }
   `]
 })
 export class PagesComponent implements OnInit {

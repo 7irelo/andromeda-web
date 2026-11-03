@@ -1,15 +1,15 @@
-<div class="groups-page">
-  <div class="groups-header page-header-gradient">
+<div class="page ui-controls">
+  <div class="page-head">
     <div>
       <h1>Groups</h1>
-      <p style="opacity:.8;margin-top:4px;font-size:14px">Connect with communities that matter to you</p>
+      <p>Connect with communities that matter to you</p>
     </div>
-    <button mat-flat-button (click)="openCreateDialog()" style="background:#fff;color:#4f46e5;font-weight:600">
+    <button mat-flat-button color="primary" (click)="openCreateDialog()">
       <mat-icon aria-hidden="true">add</mat-icon> Create Group
     </button>
   </div>
 
-  <mat-tab-group>
+  <mat-tab-group class="ui-tabs" mat-stretch-tabs="false" animationDuration="0ms">
     <mat-tab label="Discover">
       <app-skeleton *ngIf="loading" variant="grid" [count]="6" class="tab-state"></app-skeleton>
       <app-error-state *ngIf="!loading && loadError" (retry)="loadAll()"></app-error-state>
@@ -17,15 +17,15 @@
                        title="No groups to discover yet" message="Start one and invite your friends.">
         <button mat-flat-button color="primary" type="button" (click)="openCreateDialog()">Create Group</button>
       </app-empty-state>
-      <div class="groups-grid" *ngIf="!loading && !loadError">
-        <div class="group-card card" *ngFor="let g of allGroups">
-          <div class="group-cover">
-            <img [src]="g.cover_photo || 'assets/default-cover.png'" alt="" />
+      <div class="card-grid" *ngIf="!loading && !loadError">
+        <div class="item-card card" *ngFor="let g of allGroups">
+          <div class="item-cover">
+            <img *ngIf="g.cover_photo" [src]="g.cover_photo" alt="" />
           </div>
-          <div class="group-info">
-            <div class="font-semibold">{{ g.name }}</div>
-            <div class="text-secondary text-sm">{{ g.members_count | number }} members · {{ g.privacy }}</div>
-            <div class="group-actions">
+          <div class="item-body">
+            <div class="item-name">{{ g.name }}</div>
+            <div class="item-meta">{{ g.members_count | number }} members · {{ g.privacy }}</div>
+            <div class="item-action">
               <!-- Joining happens on the group page, where the rules are shown first. -->
               <a mat-stroked-button [routerLink]="'/groups/' + g.id">{{ g.is_member ? 'View Group' : 'View & Join' }}</a>
             </div>
@@ -39,15 +39,17 @@
       <app-error-state *ngIf="!mineLoading && mineError" (retry)="loadMine()"></app-error-state>
       <app-empty-state *ngIf="!mineLoading && !mineError && myGroups.length === 0" icon="group"
                        title="You haven't joined any groups" message="Groups you join or create show up here."></app-empty-state>
-      <div class="groups-grid" *ngIf="!mineLoading && !mineError">
-        <div class="group-card card" *ngFor="let g of myGroups">
-          <div class="group-cover">
-            <img [src]="g.cover_photo || 'assets/default-cover.png'" alt="" />
+      <div class="card-grid" *ngIf="!mineLoading && !mineError">
+        <div class="item-card card" *ngFor="let g of myGroups">
+          <div class="item-cover">
+            <img *ngIf="g.cover_photo" [src]="g.cover_photo" alt="" />
           </div>
-          <div class="group-info">
-            <div class="font-semibold">{{ g.name }}</div>
-            <div class="text-secondary text-sm">{{ g.members_count | number }} members</div>
-            <a mat-stroked-button [routerLink]="'/groups/' + g.id">View Group</a>
+          <div class="item-body">
+            <div class="item-name">{{ g.name }}</div>
+            <div class="item-meta">{{ g.members_count | number }} members</div>
+            <div class="item-action">
+              <a mat-stroked-button [routerLink]="'/groups/' + g.id">View Group</a>
+            </div>
           </div>
         </div>
       </div>
@@ -57,7 +59,7 @@
 
 <!-- ── Create Group Dialog ─────────────────────────────────────── -->
 <div class="edit-overlay" *ngIf="isCreating" (click)="cancelCreate()"></div>
-<div class="edit-dialog card" *ngIf="isCreating" [formGroup]="createForm"
+<div class="edit-dialog card ui-controls" *ngIf="isCreating" [formGroup]="createForm"
      appModalDialog dialogLabel="Create Group" (dismiss)="cancelCreate()">
   <div class="edit-dialog-header">
     <h2>Create Group</h2>

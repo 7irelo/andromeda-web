@@ -1,0 +1,22 @@
+// The card every settings section sits in. Shared by the settings components.
+.settings-section {
+  padding: var(--space-6);
+  font-size: 14px;
+
+  h2 { margin: 0 0 var(--space-4); font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: 0; }
+  h3 { margin: var(--space-6) 0 var(--space-2); font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: 0; }
+  p { margin: 0 0 var(--space-3); }
+  .text-secondary { font-size: 13px; }
+
+  @media (max-width: 600px) { padding: var(--space-4); }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  > mat-icon { flex: none; width: 20px; height: 20px; font-size: 20px; color: var(--text-muted); }
+}
+
+.grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }

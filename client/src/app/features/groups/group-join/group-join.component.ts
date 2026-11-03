@@ -12,11 +12,11 @@ import { GroupInvitePreview } from '../../../models/group.model';
     selector: 'app-group-join',
     imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
     template: `
-    <div class="join-page">
-      <div class="loading-center" *ngIf="loading"><mat-spinner diameter="40"></mat-spinner></div>
+    <div class="join-page ui-controls">
+      <div class="state-center" *ngIf="loading"><mat-spinner diameter="40"></mat-spinner></div>
 
       <div class="card join-card" *ngIf="preview as p">
-        <img class="cover" [src]="p.group.cover_photo || 'assets/default-cover.png'" alt="" />
+        <div class="item-cover"><img *ngIf="p.group.cover_photo" [src]="p.group.cover_photo" alt="" /></div>
         <div class="body">
           <p class="text-secondary text-sm">You've been invited to join</p>
           <h1>{{ p.group.name }}</h1>
@@ -43,28 +43,29 @@ import { GroupInvitePreview } from '../../../models/group.model';
       </div>
 
       <div class="card error-card" *ngIf="error">
-        <mat-icon>link_off</mat-icon>
+        <mat-icon aria-hidden="true">link_off</mat-icon>
         <p>{{ error }}</p>
         <a mat-stroked-button routerLink="/groups">Browse groups</a>
       </div>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../../shared/styles/ui-controls.scss', '../../../shared/styles/ui-cards.scss'],
     styles: [`
-    .join-page { max-width: 560px; margin: 0 auto; padding: 24px 16px; }
-    .join-card { overflow: hidden; padding: 0; }
-    .cover { width: 100%; height: 160px; object-fit: cover; display: block; }
-    .body { padding: 20px 24px; display: flex; flex-direction: column; gap: 6px; }
-    .body h1 { font-size: 24px; font-weight: 800; }
-    .description { margin-top: 8px; line-height: 1.6; }
-    .rules { margin-top: 12px; }
-    .rules h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-    .rules ol { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+    .join-page { max-width: 520px; margin: 0 auto; padding: var(--space-6) var(--space-4); }
+    .join-card { overflow: hidden; }
+    .body { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-5); font-size: 14px; }
+    .body p { margin: 0; }
+    .body h1 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
+    .description { margin-top: var(--space-2) !important; }
+    .rules { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .rules h3 { margin: 0 0 var(--space-2); font-size: 14px; line-height: 20px; font-weight: 600; }
+    .rules ol { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding-left: var(--space-5); font-size: 13px; }
     .rules p { color: var(--text-secondary); }
-    .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-    .error-card { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px; text-align: center; }
-    .error-card mat-icon { font-size: 40px; width: 40px; height: 40px; opacity: .5; }
-    .loading-center { display: flex; justify-content: center; padding: 60px; }
+    .actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+    .error-card { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-8); text-align: center; font-size: 14px; }
+    .error-card p { margin: 0; }
+    .error-card mat-icon { width: 32px; height: 32px; font-size: 32px; color: var(--text-muted); }
   `]
 })
 export class GroupJoinComponent implements OnInit {
