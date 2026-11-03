@@ -214,6 +214,9 @@ if CELERY_BROKER_URL.startswith('vercel'):
     CELERY_TASK_SEND_SENT_EVENT = False
     CELERY_TASK_ACKS_LATE = True
     CELERY_TASK_TIME_LIMIT = 280  # inside the free plan's 300 s function limit
+    # No worker function gets built for Django inside Vercel Services, so queued tasks would
+    # never run. Tasks here are short (notifications, emails, exports): run them in the request.
+    CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_TASK_ALWAYS_EAGER', 'True') == 'True'
 
 # ── Periodic tasks ────────────────────────────────────────────
 from celery.schedules import crontab  # noqa: E402
