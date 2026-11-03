@@ -1,22 +1,51 @@
-:host { display: contents; }
-
 .avatar-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  border: none;
-  background: none;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 10px;
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
   cursor: pointer;
-  padding: 0;
-  border-radius: 50%;
-  transition: transform .1s;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
 
-  &:hover { transform: scale(1.05); }
+  &:hover { background: var(--surface-2); }
 
-  .avatar {
-    border: 2.5px solid var(--primary);
-    box-shadow: 0 0 0 2px var(--primary-light);
+  img {
+    flex: none;
+    object-fit: cover;
+    border-radius: 50%;
   }
+}
+
+.who {
+  flex: 1;
+  min-width: 0;
+}
+
+.who-name,
+.who-handle {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.who-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.who-handle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 1100px) and (min-width: 601px) {
+  .avatar-btn { justify-content: center; padding: 6px 0; }
+  .who { display: none; }
 }

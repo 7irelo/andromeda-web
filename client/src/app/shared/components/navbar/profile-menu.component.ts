@@ -20,7 +20,11 @@ import { User } from '../../../models/user.model';
   template: `
     <button type="button" class="avatar-btn" [matMenuTriggerFor]="profileMenu"
             aria-label="Account menu" i18n-aria-label="@@nav.accountMenu">
-      <img [ngSrc]="user()?.avatar_url || 'assets/default-avatar.png'" alt="" class="avatar sm" width="32" height="32" />
+      <img [ngSrc]="user()?.avatar_url || 'assets/default-avatar.png'" alt="" width="36" height="36" />
+      <span class="who">
+        <span class="who-name">{{ user()?.full_name }}</span>
+        <span class="who-handle">&#64;{{ user()?.username }}</span>
+      </span>
     </button>
 
     <mat-menu #profileMenu="matMenu">

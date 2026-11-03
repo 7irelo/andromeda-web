@@ -26,7 +26,8 @@ import { ThemeService } from './core/services/theme.service';
     main { min-height: 100vh; }
     main:focus { outline: none; }
     main.with-nav {
-      padding-top: 56px;
+      padding-top: var(--header-height);
+      padding-left: var(--shell-sidebar);
       padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
     }
     .offline-banner {

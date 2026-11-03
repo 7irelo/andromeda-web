@@ -30,13 +30,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
   announcement = '';
 
   readonly navItems = [
-    { icon: 'home', label: $localize`:@@nav.feed:Feed`, route: '/feed' },
-    { icon: 'people', label: $localize`:@@nav.friends:Friends`, route: '/friends' },
-    { icon: 'group', label: $localize`:@@nav.groups:Groups`, route: '/groups' },
-    { icon: 'play_circle', label: $localize`:@@nav.watch:Watch`, route: '/watch' },
+    { icon: 'home', label: $localize`:@@nav.homeLink:Home`, route: '/feed' },
+    { icon: 'search', label: $localize`:@@nav.explore:Explore`, route: '/search' },
     { icon: 'storefront', label: $localize`:@@nav.marketplace:Marketplace`, route: '/marketplace' },
-    { icon: 'auto_stories', label: $localize`:@@nav.pages:Pages`, route: '/pages' },
+    { icon: 'chat_bubble_outline', label: $localize`:@@nav.messages:Messages`, route: '/chat' },
+    { icon: 'notifications_none', label: $localize`:@@nav.notifications:Notifications`, route: '/notifications' },
+    { icon: 'people_outline', label: $localize`:@@nav.friends:Friends`, route: '/friends' },
+    { icon: 'groups', label: $localize`:@@nav.groups:Groups`, route: '/groups' },
+    { icon: 'play_circle_outline', label: $localize`:@@nav.watch:Watch`, route: '/watch' },
+    { icon: 'flag', label: $localize`:@@nav.pages:Pages`, route: '/pages' },
+    { icon: 'bookmark_border', label: $localize`:@@nav.saved:Saved`, route: '/saved' },
   ];
+  readonly profileLabel = $localize`:@@nav.profile:Profile`;
+  readonly settingsLabel = $localize`:@@nav.settings:Settings`;
   readonly messengerLabel = $localize`:@@nav.messenger:Messenger`;
   readonly notificationsLabel = $localize`:@@nav.notifications:Notifications`;
   readonly chatsLabel = $localize`:@@nav.chats:Chats`;
