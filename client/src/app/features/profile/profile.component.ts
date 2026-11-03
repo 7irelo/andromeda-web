@@ -31,7 +31,7 @@ import { ImageCropperComponent, ImageCropperResult } from '../../shared/componen
     ],
     templateUrl: './profile.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrls: ['./profile.component.scss']
+    styleUrls: ['../../shared/styles/ui-controls.scss', '../../shared/styles/entity.scss', '../../shared/styles/ui-cards.scss', './profile.component.scss']
 })
 export class ProfileComponent implements OnInit, OnChanges, OnDestroy {
   @Input() username!: string;

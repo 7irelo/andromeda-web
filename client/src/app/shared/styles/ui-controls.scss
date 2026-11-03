@@ -1,0 +1,104 @@
+// Compact Material controls, the page frame and hand-built dialogs. Tokens only.
+
+// ── Compact Material controls (inherited by child components) ───────────────
+.ui-controls {
+  // Toggles, checkboxes and focused fields use the one indigo accent, readable in both themes.
+  --mat-sys-primary: var(--primary);
+  --mat-sys-on-primary: var(--surface);
+  --mat-sys-primary-container: var(--surface);
+  --mat-sys-on-primary-container: var(--primary);
+  --mat-button-filled-container-height: 36px;
+  --mat-button-outlined-container-height: 36px;
+  --mat-button-text-container-height: 36px;
+  --mat-button-filled-label-text-size: 13px;
+  --mat-button-outlined-label-text-size: 13px;
+  --mat-button-text-label-text-size: 13px;
+  --mat-button-filled-horizontal-padding: 14px;
+  --mat-button-outlined-horizontal-padding: 14px;
+  --mat-icon-button-state-layer-size: 36px;
+  --mat-form-field-container-height: 44px;
+  --mat-form-field-container-vertical-padding: 10px;
+  --mat-form-field-container-text-size: 14px;
+  --mat-form-field-outlined-label-text-size: 14px;
+
+  @media (max-width: 600px) {
+    --mat-button-filled-container-height: var(--touch-target);
+    --mat-button-outlined-container-height: var(--touch-target);
+    --mat-button-text-container-height: var(--touch-target);
+    --mat-icon-button-state-layer-size: var(--touch-target);
+  }
+}
+
+// color="warn" would be solid indigo here, and white text only goes on --primary-strong.
+.btn-danger {
+  --mat-button-outlined-label-text-color: var(--danger-text);
+  --mat-button-outlined-outline-color: var(--danger-text);
+}
+
+// ── Page frame ──────────────────────────────────────────────────────────────
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-6);
+
+  @media (max-width: 600px) { padding: var(--space-4); }
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+
+  h1 { margin: 0; font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -.01em; }
+  p { margin: 2px 0 0; font-size: 13px; color: var(--text-secondary); }
+}
+
+.muted-note { margin: 0; font-size: 13px; color: var(--text-secondary); }
+.state-center { display: flex; justify-content: center; padding: var(--space-12); }
+
+
+// ── Hand-built dialogs ──────────────────────────────────────────────────────
+.edit-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0, 0, 0, .5); }
+
+.edit-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  width: min(520px, calc(100vw - 32px));
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+}
+
+.edit-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border);
+  h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: 0; }
+}
+
+.edit-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  overflow-y: auto;
+}
+
+.edit-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border);
+}

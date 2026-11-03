@@ -22,35 +22,56 @@ import { PageManageComponent } from '../page-manage/page-manage.component';
         MatTooltipModule, MatSnackBarModule, PostCardComponent, PageManageComponent,
     ],
     template: `
-    <div class="page-detail" *ngIf="page">
-      <div class="cover">
-        <img [src]="page.cover_photo || 'assets/default-cover.png'" alt="" />
-      </div>
-      <div class="header">
-        <img class="avatar-lg" [src]="page.avatar || 'assets/default-avatar.png'" [alt]="page.name" />
-        <div class="title">
-          <h1>
-            {{ page.name }}
-            <mat-icon class="verified" *ngIf="page.is_verified" matTooltip="Verified page" aria-label="Verified">verified</mat-icon>
-          </h1>
-          <p class="text-secondary text-sm">&#64;{{ page.username }} · {{ categoryLabel }} · {{ page.followers_count | number }} followers</p>
+    <div class="page ui-controls" *ngIf="page">
+      <header class="entity">
+        <div class="entity-cover">
+          <img *ngIf="page.cover_photo" [src]="page.cover_photo" alt="" />
         </div>
-        <div class="header-actions">
-          <button mat-flat-button color="primary" *ngIf="!page.is_following" (click)="follow()">
-            <mat-icon>add</mat-icon> Follow
-          </button>
-          <button mat-stroked-button *ngIf="page.is_following" (click)="unfollow()">
-            <mat-icon>check</mat-icon> Following
-          </button>
+        <div class="entity-body">
+          <div class="entity-avatar square">
+            <img [src]="page.avatar || 'assets/default-avatar.png'" [alt]="page.name" />
+          </div>
+          <div class="entity-main">
+            <div class="entity-head">
+              <div class="entity-title">
+                <h1>
+                  {{ page.name }}
+                  <mat-icon class="verified" *ngIf="page.is_verified" matTooltip="Verified page" aria-label="Verified">verified</mat-icon>
+                </h1>
+                <p>&#64;{{ page.username }} · {{ categoryLabel }}</p>
+              </div>
+              <div class="entity-actions">
+                <button mat-flat-button color="primary" *ngIf="!page.is_following" (click)="follow()">
+                  <mat-icon>add</mat-icon> Follow
+                </button>
+                <button mat-stroked-button *ngIf="page.is_following" (click)="unfollow()">
+                  <mat-icon>check</mat-icon> Following
+                </button>
+              </div>
+            </div>
+            <div class="entity-foot">
+              <div class="entity-about">
+                <p *ngIf="page.description">{{ page.description }}</p>
+              </div>
+              <dl class="entity-stats">
+                <div>
+                  <dt>Followers</dt>
+                  <dd>{{ page.followers_count | number }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <mat-tab-group animationDuration="0ms" (selectedIndexChange)="onTab($event)">
+      <mat-tab-group class="entity-tabs" mat-stretch-tabs="false" animationDuration="0ms" (selectedIndexChange)="onTab($event)">
         <mat-tab label="Posts">
           <div class="tab-body">
-            <app-post-card *ngFor="let p of posts" [post]="p" (postDeleted)="onPostDeleted($event)"></app-post-card>
-            <p class="text-secondary" *ngIf="postsLoaded && posts.length === 0">No posts yet.</p>
-            <button mat-stroked-button *ngIf="postsNext" (click)="loadPosts(postsPage + 1)">Load more</button>
+            <div class="feed-col">
+              <app-post-card *ngFor="let p of posts" [post]="p" (postDeleted)="onPostDeleted($event)"></app-post-card>
+              <p class="muted-note" *ngIf="postsLoaded && posts.length === 0">No posts yet.</p>
+              <button mat-stroked-button class="load-more" *ngIf="postsNext" (click)="loadPosts(postsPage + 1)">Load more</button>
+            </div>
           </div>
         </mat-tab>
 
@@ -58,8 +79,8 @@ import { PageManageComponent } from '../page-manage/page-manage.component';
           <div class="tab-body">
             <div class="card section">
               <h3>About</h3>
-              <p class="text-secondary">{{ page.description || 'No description yet.' }}</p>
-              <ul class="contact">
+              <p>{{ page.description || 'No description yet.' }}</p>
+              <ul class="info-list">
                 <li *ngIf="page.website">
                   <mat-icon>language</mat-icon>
                   <a [href]="safeWebsite" target="_blank" rel="noopener noreferrer nofollow">{{ page.website }}</a>
@@ -74,14 +95,14 @@ import { PageManageComponent } from '../page-manage/page-manage.component';
 
         <mat-tab label="Followers">
           <div class="tab-body">
-            <div class="followers-grid">
+            <div class="member-grid">
               <a *ngFor="let u of followers" class="member-card" [routerLink]="'/profile/' + u.username">
                 <img [src]="u.avatar_url || 'assets/default-avatar.png'" class="avatar md" [alt]="u.username" />
                 <span class="font-semibold text-sm">{{ u.full_name }}</span>
               </a>
             </div>
-            <p class="text-secondary" *ngIf="followersLoaded && followers.length === 0">No followers yet.</p>
-            <button mat-stroked-button *ngIf="followersNext" (click)="loadFollowers(followersPage + 1)">Load more</button>
+            <p class="muted-note" *ngIf="followersLoaded && followers.length === 0">No followers yet.</p>
+            <button mat-stroked-button class="load-more" *ngIf="followersNext" (click)="loadFollowers(followersPage + 1)">Load more</button>
           </div>
         </mat-tab>
 
@@ -93,42 +114,21 @@ import { PageManageComponent } from '../page-manage/page-manage.component';
       </mat-tab-group>
     </div>
 
-    <div class="loading-center" *ngIf="loading"><mat-spinner diameter="40"></mat-spinner></div>
-    <div class="empty-state" *ngIf="notFound">
-      <mat-icon>auto_stories</mat-icon>
+    <div class="state-center" *ngIf="loading"><mat-spinner diameter="40"></mat-spinner></div>
+    <div class="empty-state ui-controls" *ngIf="notFound">
+      <mat-icon aria-hidden="true">auto_stories</mat-icon>
       <p>This page doesn't exist.</p>
       <a mat-stroked-button routerLink="/pages">Browse pages</a>
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../../shared/styles/ui-controls.scss', '../../../shared/styles/entity.scss', '../../../shared/styles/ui-cards.scss'],
     styles: [`
-    .page-detail { max-width: 860px; margin: 0 auto; padding: 16px; }
-    .cover { height: 220px; border-radius: 16px; overflow: hidden; background: var(--gradient-accent); }
-    .cover img { width: 100%; height: 100%; object-fit: cover; }
-    .header { display: flex; align-items: flex-end; gap: 16px; padding: 0 16px; margin-top: -40px; flex-wrap: wrap; }
-    .avatar-lg {
-      width: 96px; height: 96px; border-radius: 20px; object-fit: cover;
-      border: 4px solid var(--surface); box-shadow: var(--shadow); background: var(--surface);
-    }
-    .title { flex: 1; min-width: 200px; padding-bottom: 4px; }
-    .title h1 { font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
-    .verified { color: var(--primary); }
-    .header-actions { padding-bottom: 8px; }
-    .tab-body { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; }
-    .section { padding: 16px 20px; }
-    .section h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-    .contact { list-style: none; padding: 0; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-    .contact li { display: flex; align-items: center; gap: 8px; }
-    .contact mat-icon { font-size: 18px; width: 18px; height: 18px; opacity: .7; }
-    .followers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .member-card {
-      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      text-decoration: none; color: inherit;
-    }
-    .loading-center { display: flex; justify-content: center; padding: 60px; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; padding: 60px; gap: 12px; color: var(--text-secondary); }
-    .empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: .4; }
+    .load-more { align-self: center; }
+    .member-card { min-height: 56px; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-12) var(--space-4); font-size: 14px; color: var(--text-secondary); }
+    .empty-state p { margin: 0; }
+    .empty-state mat-icon { width: 32px; height: 32px; font-size: 32px; color: var(--text-muted); }
   `]
 })
 export class PageDetailComponent implements OnInit {

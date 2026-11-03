@@ -25,7 +25,7 @@ import { ModalDialogDirective } from '../../shared/a11y/modal-dialog.directive';
     ],
     templateUrl: './groups.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrls: ['./groups.component.scss']
+    styleUrls: ['../../shared/styles/ui-controls.scss', '../../shared/styles/entity.scss', '../../shared/styles/ui-cards.scss', './groups.component.scss']
 })
 export class GroupsComponent implements OnInit {
   allGroups: Group[] = [];

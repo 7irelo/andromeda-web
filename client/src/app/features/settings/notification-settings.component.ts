@@ -17,26 +17,26 @@ type Channel = 'in_app' | 'push' | 'email';
     imports: [CommonModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatSlideToggleModule, MatSnackBarModule],
     template: `
     <section class="settings-section card" *ngIf="prefs">
-      <h2><mat-icon>notifications</mat-icon> Notifications</h2>
+      <h2>Notifications</h2>
       <table class="prefs" aria-label="Notification channels">
         <thead><tr><th scope="col">Category</th><th scope="col">In app</th><th scope="col">Push</th><th scope="col">Email</th></tr></thead>
         <tbody>
           <tr *ngFor="let c of prefs.categories">
             <th scope="row">{{ c.label }}</th>
-            <td><mat-checkbox [checked]="c.in_app" [disabled]="c.locked" (change)="set(c, 'in_app', $event.checked)"
+            <td><mat-checkbox color="primary" [checked]="c.in_app" [disabled]="c.locked" (change)="set(c, 'in_app', $event.checked)"
                   [attr.aria-label]="c.label + ' in app'"></mat-checkbox></td>
-            <td><mat-checkbox [checked]="c.push" [disabled]="!prefs.push_available" (change)="set(c, 'push', $event.checked)"
+            <td><mat-checkbox color="primary" [checked]="c.push" [disabled]="!prefs.push_available" (change)="set(c, 'push', $event.checked)"
                   [attr.aria-label]="c.label + ' push'"></mat-checkbox></td>
-            <td><mat-checkbox [checked]="c.email" (change)="set(c, 'email', $event.checked)"
+            <td><mat-checkbox color="primary" [checked]="c.email" (change)="set(c, 'email', $event.checked)"
                   [attr.aria-label]="c.label + ' email'"></mat-checkbox></td>
           </tr>
         </tbody>
       </table>
 
-      <mat-slide-toggle [checked]="prefs.email_digest === 'daily'" (change)="save({ email_digest: $event.checked ? 'daily' : 'off' })">
+      <mat-slide-toggle color="primary" [checked]="prefs.email_digest === 'daily'" (change)="save({ email_digest: $event.checked ? 'daily' : 'off' })">
         Daily email of anything I haven't seen
       </mat-slide-toggle>
-      <mat-slide-toggle [checked]="prefs.listing_digest" (change)="save({ listing_digest: $event.checked })">
+      <mat-slide-toggle color="primary" [checked]="prefs.listing_digest" (change)="save({ listing_digest: $event.checked })">
         Weekly email of new marketplace listings near me
       </mat-slide-toggle>
 
@@ -52,12 +52,15 @@ type Channel = 'in_app' | 'push' | 'email';
     </section>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['./settings-section.scss', '../../shared/styles/ui-controls.scss'],
     styles: [`
-    .settings-section { padding: 24px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .prefs { width: 100%; border-collapse: collapse; }
-    .prefs th, .prefs td { padding: 4px 8px; text-align: center; }
-    .prefs th[scope=row] { text-align: left; font-weight: 400; }
-    .prefs thead th { font-size: 12px; opacity: .7; }
+    .settings-section { display: flex; flex-direction: column; gap: var(--space-3); }
+    .settings-section h2 { margin-bottom: 0; }
+    .prefs { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .prefs th, .prefs td { padding: 0; text-align: center; border-bottom: 1px solid var(--border); }
+    .prefs th[scope=row] { padding-right: var(--space-2); text-align: left; font-weight: 400; overflow-wrap: anywhere; }
+    .prefs thead th { padding-bottom: var(--space-2); font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .prefs thead th:first-child { text-align: left; }
   `]
 })
 export class NotificationSettingsComponent implements OnInit {

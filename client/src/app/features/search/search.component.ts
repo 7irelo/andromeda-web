@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BehaviorSubject, Subscription, combineLatest, switchMap, of, catchError, forkJoin } from 'rxjs';
@@ -13,23 +12,24 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
 
 @Component({
     selector: 'app-search',
-    imports: [CommonModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatIconModule, MatProgressSpinnerModule,
+    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
       PostCardComponent, EmptyStateComponent, ErrorStateComponent, SkeletonComponent],
     template: `
-    <div class="search-page">
+    <div class="search-page ui-controls">
       <h1>Results for “{{ query }}”</h1>
       <p class="text-secondary text-sm understood" *ngIf="semantic?.understood_as as u">
         Searching for <strong>{{ u.query }}</strong>
         <span *ngIf="u.since_days"> · last {{ u.since_days }} days</span>
         <span *ngIf="u.author"> · by {{ u.author }}</span>
       </p>
-      <mat-button-toggle-group [value]="type" (change)="setType($event.value)" class="tabs" aria-label="Result type">
-        <mat-button-toggle *ngFor="let t of types" [value]="t">{{ t | titlecase }}</mat-button-toggle>
-      </mat-button-toggle-group>
+      <div class="tabs" role="group" aria-label="Result type">
+        <button *ngFor="let t of types" type="button" class="tab" [class.active]="type === t"
+                [attr.aria-pressed]="type === t" (click)="setType(t)">{{ t | titlecase }}</button>
+      </div>
 
       <section class="ask card" *ngIf="type === 'all' && query.length >= 3" aria-live="polite">
         <div class="ask-head">
-          <mat-icon>auto_awesome</mat-icon>
+          <mat-icon aria-hidden="true">auto_awesome</mat-icon>
           <div class="grow">
             <div class="font-semibold">Ask Andromeda</div>
             <div class="text-secondary text-sm">An answer built only from posts, groups and listings you can see.</div>
@@ -70,19 +70,19 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
           <ng-container *ngFor="let hit of semantic!.results">
             <app-post-card *ngIf="hit.type === 'posts'" [post]="hit.item"></app-post-card>
             <a class="row card" *ngIf="hit.type === 'groups'" [routerLink]="'/groups/' + hit.item.id">
-              <mat-icon>groups</mat-icon>
+              <mat-icon aria-hidden="true">groups</mat-icon>
               <div><div class="font-semibold">{{ hit.item.name }}</div><div class="text-secondary text-sm">Group · {{ hit.item.members_count }} members</div></div>
             </a>
             <a class="row card" *ngIf="hit.type === 'pages'" [routerLink]="'/pages/' + hit.item.id">
-              <mat-icon>flag</mat-icon>
+              <mat-icon aria-hidden="true">flag</mat-icon>
               <div><div class="font-semibold">{{ hit.item.name }}</div><div class="text-secondary text-sm">Page · {{ hit.item.followers_count }} followers</div></div>
             </a>
             <a class="row card" *ngIf="hit.type === 'listings'" [routerLink]="'/marketplace/' + hit.item.id">
-              <mat-icon>storefront</mat-icon>
+              <mat-icon aria-hidden="true">storefront</mat-icon>
               <div><div class="font-semibold">{{ hit.item.title }}</div><div class="text-secondary text-sm">For sale · {{ hit.item.currency }} {{ hit.item.price }}</div></div>
             </a>
             <a class="row card" *ngIf="hit.type === 'videos'" [routerLink]="'/watch/' + hit.item.id">
-              <mat-icon>smart_display</mat-icon>
+              <mat-icon aria-hidden="true">smart_display</mat-icon>
               <div class="font-semibold">{{ hit.item.title }}</div>
             </a>
           </ng-container>
@@ -97,28 +97,28 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
           <section *ngIf="data.results.groups?.length">
             <h2>Groups</h2>
             <a class="row card" *ngFor="let g of data.results.groups" [routerLink]="'/groups/' + g.id">
-              <mat-icon>groups</mat-icon>
+              <mat-icon aria-hidden="true">groups</mat-icon>
               <div><div class="font-semibold">{{ g.name }}</div><div class="text-secondary text-sm">{{ g.members_count }} members · {{ g.privacy | titlecase }}</div></div>
             </a>
           </section>
           <section *ngIf="data.results.pages?.length">
             <h2>Pages</h2>
             <a class="row card" *ngFor="let p of data.results.pages" [routerLink]="'/pages/' + p.id">
-              <mat-icon>flag</mat-icon>
+              <mat-icon aria-hidden="true">flag</mat-icon>
               <div><div class="font-semibold">{{ p.name }}</div><div class="text-secondary text-sm">{{ p.followers_count }} followers</div></div>
             </a>
           </section>
           <section *ngIf="data.results.listings?.length">
             <h2>Marketplace</h2>
             <a class="row card" *ngFor="let l of data.results.listings" [routerLink]="'/marketplace/' + l.id">
-              <mat-icon>storefront</mat-icon>
+              <mat-icon aria-hidden="true">storefront</mat-icon>
               <div><div class="font-semibold">{{ l.title }}</div><div class="text-secondary text-sm">{{ l.currency }} {{ l.price }}</div></div>
             </a>
           </section>
           <section *ngIf="data.results.videos?.length">
             <h2>Videos</h2>
             <a class="row card" *ngFor="let v of data.results.videos" [routerLink]="'/watch/' + v.id">
-              <mat-icon>smart_display</mat-icon>
+              <mat-icon aria-hidden="true">smart_display</mat-icon>
               <div class="font-semibold">{{ v.title }}</div>
             </a>
           </section>
@@ -132,23 +132,38 @@ import { EmptyStateComponent, ErrorStateComponent, SkeletonComponent } from '../
     </div>
   `,
     changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrls: ['../../shared/styles/ui-controls.scss'],
     styles: [`
-    .search-page { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
-    h1 { font-size: 22px; margin-bottom: 8px; }
-    h2 { font-size: 16px; margin: 24px 0 8px; }
-    .understood { margin: 0 0 12px; }
-    .tabs { flex-wrap: wrap; margin-bottom: 8px; }
-    section { display: flex; flex-direction: column; gap: 8px; }
-    .row { display: flex; align-items: center; gap: 12px; padding: 12px; color: inherit; text-decoration: none; }
-    .empty { margin-top: 32px; text-align: center; }
-    .loading-center { display: flex; justify-content: center; padding: 40px; }
-    .ask { margin-top: 16px; padding: 16px; gap: 12px; }
-    .ask-head { display: flex; align-items: center; gap: 12px; }
-    .grow { flex: 1; }
-    .answer p { margin: 0 0 8px; line-height: 1.5; }
-    .answer ul { margin: 0 0 8px; padding-left: 20px; }
-    .cite { margin-left: 4px; font-size: 12px; text-decoration: none; }
-    .sources { margin: 0 0 8px; padding-left: 20px; }
+    .search-page { max-width: 760px; margin: 0 auto; padding: var(--space-6); }
+    h1 { margin: 0 0 var(--space-2); font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
+    h2 { margin: var(--space-6) 0 var(--space-1); font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: 0; }
+    .understood { margin: 0 0 var(--space-3); }
+    .tabs { display: flex; gap: var(--space-1); overflow-x: auto; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+    .tab {
+      flex: none; min-width: var(--touch-target); min-height: var(--touch-target); padding: 0 var(--space-3);
+      background: none; border: 0; color: var(--text-secondary);
+      font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+    .tab:hover { color: var(--text-primary); }
+    .tab.active { color: var(--primary); box-shadow: inset 0 -2px 0 var(--primary); }
+    section { display: flex; flex-direction: column; gap: var(--space-2); }
+    .row {
+      display: flex; align-items: center; gap: var(--space-3); min-height: var(--touch-target); padding: var(--space-3) var(--space-4);
+      color: inherit; font-size: 14px; overflow-wrap: anywhere; transition: border-color var(--motion-fast);
+    }
+    .row:hover { border-color: var(--border-strong); text-decoration: none; }
+    .row > mat-icon { flex: none; width: 20px; height: 20px; font-size: 20px; color: var(--text-muted); }
+    .ask { margin-top: var(--space-4); padding: var(--space-4); font-size: 14px; }
+    .ask-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+    .ask-head > mat-icon { flex: none; color: var(--primary); }
+    .grow { flex: 1 1 200px; min-width: 0; }
+    .answer { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .answer p { margin: 0 0 var(--space-2); }
+    .answer ul { margin: 0 0 var(--space-2); padding-left: var(--space-5); }
+    .cite { margin-left: var(--space-1); font-size: 12px; }
+    .sources { margin: 0 0 var(--space-2); padding-left: var(--space-5); }
+    mat-spinner { margin-top: var(--space-3); }
+    @media (max-width: 600px) { .search-page { padding: var(--space-4); } }
   `]
 })
 export class SearchComponent implements OnInit, OnDestroy {
